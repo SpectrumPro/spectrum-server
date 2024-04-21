@@ -4,7 +4,7 @@
 class_name EngineComponent extends Object
 ## Base class for an engine components, contains functions for storing metadata, and uuid's
 
-signal user_meta_changed(origin: EngineComponent, key: String, value: Variant) ## Emitted when an item is added, edited, or deleted from user_meta, if no value is present it meanes that the key has been deleted
+signal user_meta_changed(key: String, value: Variant) ## Emitted when an item is added, edited, or deleted from user_meta, if no value is present it meanes that the key has been deleted
 signal name_changed(new_name: String) ## Emitted when the name of this object has changed
 signal selected(is_selected: bool)
 signal delete_request(origin: EngineComponent)
@@ -35,7 +35,7 @@ func set_user_meta(key: String, value: Variant, no_signal: bool = false):
 	user_meta[key] = value
 	
 	if not no_signal:
-		user_meta_changed.emit(self, key, value)
+		user_meta_changed.emit(key, value)
 
 
 func get_user_meta(key: String, default = null) -> Variant: 

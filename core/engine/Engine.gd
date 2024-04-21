@@ -4,20 +4,20 @@
 class_name CoreEngine extends Node
 ## The core engine that powers Spectrum
 
-signal universe_name_changed(universe: Universe, new_name: String) ## Emitted when any of the universes in this engine have there name changed
-signal universes_added(universe: Array[Universe])
-signal universes_removed(universe_uuids: Array[String])
-signal universe_selection_changed(selected_universes: Array[Universe])
+signal on_universe_name_changed(universe: Universe, new_name: String) ## Emitted when any of the universes in this engine have there name changed
+signal on_universes_added(universe: Array[Universe], all_uuids: Array[String])
+signal on_universes_removed(universe_uuids: Array)
+signal on_universe_selection_changed(selected_universes: Array)
 
-signal fixture_name_changed(fixture: Fixture, new_name)
-signal fixture_added(fixture: Array[Fixture])
-signal fixture_removed(fixture_uuid: Array)
-signal fixture_selection_changed(selected_fixtures: Array[Fixture])
+signal on_fixture_name_changed(fixture: Fixture, new_name)
+signal on_fixture_added(fixture: Array)
+signal on_fixture_removed(fixture_uuid: Array)
+signal on_fixture_selection_changed(selected_fixtures: Array)
 
-signal scenes_added(scene: Array[Scene])
-signal scenes_removed(scene_uuids: Array)
+signal on_scenes_added(scene: Array)
+signal on_scenes_removed(scene_uuids: Array)
 
-signal output_timer() ## Emited [call_interval] number of times per second
+signal _output_timer() ## Emited [call_interval] number of times per second
 
 var universes: Dictionary = {}
 var fixtures: Dictionary = {}
@@ -49,6 +49,8 @@ func _ready() -> void:
 	reload_io_plugins()
 	reload_fixtures()
 
+	Server.add_networked_object("engine", self)
+
 
 func _process(delta: float) -> void:
 	# Accumulate the time
@@ -57,7 +59,7 @@ func _process(delta: float) -> void:
 	# Check if enough time has passed since the last function call
 	if accumulated_time >= call_interval:
 		# Call the function
-		output_timer.emit()
+		_output_timer.emit()
 		
 		# Subtract the interval from the accumulated time
 		accumulated_time -= call_interval
@@ -91,7 +93,7 @@ func load(file_path) -> void:
 		
 		var new_scene: Scene = new_scene(Scene.new(), true, serialized_scene, scene_uuid)
 		
-		scenes_added.emit(scenes)
+		on_scenes_added.emit(scenes)
 #endregion
 
 
@@ -99,6 +101,8 @@ func load(file_path) -> void:
 func new_universe(name: String = "New Universe", no_signal: bool = false, serialised_data: Dictionary = {}, uuid: String = "") -> Universe:
 	## Adds a new universe
 	
+	print("making new universe: ", name)
+
 	var new_universe: Universe = Universe.new()
 	
 	new_universe.engine = self
@@ -114,7 +118,7 @@ func new_universe(name: String = "New Universe", no_signal: bool = false, serial
 	universes[new_universe.uuid] = new_universe
 
 	if not no_signal:
-		universes_added.emit([new_universe])
+		on_universes_added.emit([new_universe])
 	
 	_connect_universe_signals(new_universe)
 	
@@ -126,22 +130,22 @@ func _connect_universe_signals(universe: Universe):
 	
 	universe.name_changed.connect(
 		func(new_name: String):
-			universe_name_changed.emit(universe, new_name)
+			on_universe_name_changed.emit(universe, new_name)
 	)
 	
 	universe.fixture_name_changed.connect(
 		func(fixture: Fixture, new_name: String):
-			fixture_name_changed.emit(fixture, new_name)
+			on_fixture_name_changed.emit(fixture, new_name)
 	)
 	
 	universe.fixtures_added.connect(
 		func(fixtures: Array[Fixture]):
-			fixture_added.emit(fixtures)
+			on_fixture_added.emit(fixtures)
 	)
 	
 	universe.fixtures_deleted.connect(
 		func(fixture_uuids: Array):
-			fixture_removed.emit(fixture_uuids)
+			on_fixture_removed.emit(fixture_uuids)
 	)
 
 
@@ -159,7 +163,7 @@ func remove_universe(universe: Universe, no_signal: bool = false) -> bool:
 		universe.free()
 		
 		if not no_signal:
-			universes_removed.emit([uuid])
+			on_universes_removed.emit([uuid])
 		
 		return true
 
@@ -178,7 +182,7 @@ func remove_universes(universes_to_remove: Array, no_signal: bool = false) -> vo
 		remove_universe(universe, true)
 	
 	if not no_signal:
-		universes_removed.emit(uuids)
+		on_universes_removed.emit(uuids)
 
 
 func serialize_universes() -> Dictionary:
@@ -201,7 +205,7 @@ func select_universes(universes_to_select: Array, no_signal: bool = false) -> vo
 			universe.set_selected(true)
 	
 	if not no_signal:
-		universe_selection_changed.emit(selected_universes)
+		on_universe_selection_changed.emit(selected_universes)
 
 
 func set_universe_selection(universes_to_select: Array) -> void:
@@ -220,7 +224,7 @@ func deselect_universes(universes_to_deselect: Array, no_signal: bool = false) -
 			universe.set_selected(false)
 	
 	if not no_signal:
-		universe_selection_changed.emit(selected_universes)
+		on_universe_selection_changed.emit(selected_universes)
 
 #endregion
 
@@ -281,7 +285,7 @@ func select_fixtures(fixtures: Array, no_signal: bool = false) -> void:
 			fixture.set_selected(true)
 	
 	if not no_signal:
-		fixture_selection_changed.emit(selected_fixtures)
+		on_fixture_selection_changed.emit(selected_fixtures)
 
 
 func set_fixture_selection(fixtures: Array) -> void:
@@ -299,7 +303,7 @@ func deselect_fixtures(fixtures: Array, no_signal: bool = false) -> void:
 			fixture.set_selected(false)
 	
 	if not no_signal:
-		fixture_selection_changed.emit(selected_fixtures)
+		on_fixture_selection_changed.emit(selected_fixtures)
 #endregion
 
 
@@ -320,7 +324,7 @@ func new_scene(scene: Scene = Scene.new(), no_signal: bool = false, serialized_d
 	scenes[scene.uuid] = scene
 	
 	if not no_signal:
-		scenes_added.emit([scene])
+		on_scenes_added.emit([scene])
 	
 	return scene
 
@@ -339,7 +343,7 @@ func remove_scenes(scenes_to_remove: Array, no_signal: bool = false) -> void:
 	
 	
 	if not no_signal:
-		scenes_removed.emit(uuids)
+		on_scenes_removed.emit(uuids)
 
 
 func serialize_scenes() -> Dictionary:
