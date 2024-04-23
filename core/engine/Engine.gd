@@ -30,8 +30,8 @@ var input_plugins: Dictionary = {}
 var output_plugins: Dictionary = {}
 
 const fixture_path: String = "res://core/fixtures/"
-const input_plugin_path: String = "res://core/io_plugins/input_plugins/"
-const output_plugin_path: String = "res://core/io_plugins/output_plugins/"
+# const input_plugin_path: String = "res://core/io_plugins/input_plugins/"
+const output_plugin_path: String = "res://core/output_plugins/"
 
 var current_file_name: String = ""
 var current_file_path: String = ""
@@ -41,6 +41,8 @@ var programmer = Programmer.new()
 var call_interval: float = 1.0 / 45.0  # 1 second divided by 45
 
 var accumulated_time: float = 0.0
+
+var object_test: RefCounted
 
 func _ready() -> void:
 	programmer.engine = self
@@ -65,14 +67,18 @@ func _process(delta: float) -> void:
 		accumulated_time -= call_interval
 
 
+func serialize() -> Dictionary:
+	var serialized_data: Dictionary = {}
+	
+	serialized_data.universes = serialize_universes()
+	serialized_data.scenes = serialize_scenes()
+
+	return serialized_data
+
 #region Save Load
 func save(file_name: String = current_file_name, file_path: String = current_file_name) -> Error:
-	var save_file: Dictionary = {}
 	
-	save_file.universes = serialize_universes()
-	save_file.scenes = serialize_scenes()
-	
-	return Utils.save_json_to_file(file_path, file_name, save_file)
+	return Utils.save_json_to_file(file_path, file_name, serialize())
 
 
 func load(file_path) -> void:
@@ -91,7 +97,7 @@ func load(file_path) -> void:
 	for scene_uuid: String in serialized_data.get("scenes", {}):
 		var serialized_scene: Dictionary = serialized_data.scenes[scene_uuid]
 		
-		var new_scene: Scene = new_scene(Scene.new(), true, serialized_scene, scene_uuid)
+		new_scene(Scene.new(), true, serialized_scene, scene_uuid)
 		
 		on_scenes_added.emit(scenes)
 #endregion
@@ -240,14 +246,18 @@ func reload_io_plugins() -> void:
 	for plugin in output_plugin_folder.get_files():
 		var uninitialized_plugin = ResourceLoader.load(output_plugin_path + plugin)
 		
-		var initialized_plugin: DataIOPlugin = uninitialized_plugin.new()
+		var initialized_plugin: DataOutputPlugin = uninitialized_plugin.new()
 		var plugin_name: String = initialized_plugin.name
-		
+		 
 		if plugin_name in output_plugins.keys():
-			plugin_name = plugin_name +  " " + UUID_Util.v4()
+			continue
 		
-		output_plugins[plugin] = {"plugin":uninitialized_plugin, "plugin_name":plugin_name}
-		initialized_plugin.free()
+		# object_test = weakref(initialized_plugin)
+
+		# _output_timer.connect(func(): print(object_test.get_reference_count()))
+
+
+		output_plugins[plugin_name] = uninitialized_plugin
 #endregion
 
 

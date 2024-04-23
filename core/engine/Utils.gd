@@ -18,15 +18,18 @@ static func save_json_to_file(file_path: String, file_name: String, json: Dictio
 	return file_access.get_error()
 
 
-static func objects_to_uuids(data):
+static func objects_to_uuids(data, just_uuid: bool = false):
 	## Checks if there are any Objects in the data passed, also checks inside of arrays and dictionarys. If any are found, they are replaced with there uuid, if no uuid if found, it will be null instead 
 	match typeof(data):
 		TYPE_OBJECT:
-			return {
-					"_object_ref": str(data.get("uuid")),
-					"_serialized_object": data.serialize(),
-					"_file_path": data.get_script().get_path()
-				}
+			if just_uuid:
+				return str(data.get("uuid"))
+			else:
+				return {
+						"_object_ref": str(data.get("uuid")),
+						"_serialized_object": data.serialize(),
+						"_file_path": data.get_script().get_path()
+					}
 		TYPE_DICTIONARY:
 			var new_dict = {}
 			for key in data.keys():

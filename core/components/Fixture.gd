@@ -68,15 +68,16 @@ func _init(i: Dictionary = {}) -> void:
 
 func serialize() -> Dictionary:
 	## Returnes serialized infomation about this fixture
-	print(uuid)
-	return {
-		"universe":universe.uuid,
-		"channel":channel,
-		"mode":mode,
-		"position":Utils.serialize_variant(position),
-		"meta":meta,
-		"user_meta": serialize_meta(),
-	}
+
+	var serialized_data: Dictionary = super.serialize()
+
+	serialized_data.universe = universe.uuid
+	serialized_data.chanel = channel
+	serialized_data.mode = mode
+	serialized_data.position = position
+	serialized_data.meta = meta
+
+	return serialized_data
 
 
 func recompile_data() -> void:
@@ -96,7 +97,7 @@ func recompile_data() -> void:
 
 
 func delete() -> void:
-	delete_request.emit(self)
+	super.delete()
 	
 	var empty_data: Dictionary = {}
 	

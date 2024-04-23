@@ -2,63 +2,68 @@
 # All rights reserved.
 
 class_name Universe extends EngineComponent
-## Enngie class for handling universes, and there outputs
+## Engine component for handling universes, and there outputs
 
 signal fixture_name_changed(fixture: Fixture, new_name: String)
 signal fixtures_added(fixtures: Array[Fixture])
 signal fixtures_deleted(fixture_uuids: Array)
 
-signal outputs_added(outputs: Array[DataIOPlugin])
-signal outputs_removed(output_uuids: Array[String])
+signal outputs_added(outputs: Array[DataOutputPlugin]) ## Emited when an output or outputs are added
+signal outputs_removed(outputs: Array[DataOutputPlugin]) ## Emited when an output or outputs are removed
 
 var fixtures: Dictionary = {} ## Dictionary containing all the fixtures in this universe
 var outputs: Dictionary = {} ## Dictionary containing all the outputs in this universe
 
-var dmx_data: Dictionary = {}
+var dmx_data: Dictionary = {} ## Dictionary containing the current dmx data of this universe, this is constantly updated, so modifying this manualy will cause unexpected outcomes
 
-var engine: CoreEngine ## The CoreEngine class this universe belongs to
+## Adds a new output to this universe, output must be in [member CoreEngine.output_plugins]. Otherwise a DataOutputPlugin will be added
+func new_output(type: String, no_signal: bool = false) -> DataOutputPlugin:	
+	
+	var new_output: DataOutputPlugin
 
-var last_call_time: float = 0.0
+	# Check if type is a valid DataOutputPlugin, if not create a new instance of DataOutputPlugin
+	if type in Core.output_plugins:
+		new_output = Core.output_plugins[type].new()
+	else:
+		new_output = DataOutputPlugin.new()
 
-func new_output(type = ArtNetOutput, no_signal: bool = false) -> DataIOPlugin:
-	## Adds a new output of type to this universe
-	
-	var new_output: DataIOPlugin = type.new()
-	
-	engine.output_timer.connect(new_output.send_packet)
-	
-	outputs[new_output.uuid] = new_output
-	
-	if not no_signal:
-		outputs_added.emit([new_output])
-	
+	add_output(new_output, no_signal)
+
 	return new_output
 
 
-func remove_output(output: DataIOPlugin, no_signal: bool = false) -> void:
-	## Removes an output
+## Adds a already created output plugin to this universe
+func add_output(output: DataOutputPlugin, no_signal: bool = false) -> void:
+	Core._output_timer.connect(output.output)
 	
-	var uuid = output.uuid
-	outputs.erase(uuid)
-	
-	output.delete()
-	output.free()
+	outputs[output.uuid] = output
 	
 	if not no_signal:
-		outputs_removed.emit([uuid])
+		outputs_added.emit([output])
 
 
-func remove_outputs(outputs_to_remove: Array, no_signal: bool = false):
-	## Remove more than one output at once
-	
-	var uuids: Array[String] = []
-	
-	for output: DataIOPlugin in outputs_to_remove:
-		uuids.append(output.uuid)
-		remove_output(output, true)
+## Removes an output from this universe. This does not delete the output, but will only disconnect it from this universe 
+func remove_output(output: DataOutputPlugin, no_signal: bool = false) -> void:
+	outputs.erase(output.uuid)
+
+	Core._output_timer.disconnect(output.output)
 	
 	if not no_signal:
-		outputs_removed.emit(uuids)
+		outputs_removed.emit([output])
+
+
+## Removes a list of outputs, see [method Universe.remove_output]
+func remove_outputs(outputs_to_remove: Array, no_signal: bool = false) -> void:
+	
+	var removed_outputs: Array[DataOutputPlugin] = []
+	
+	for output in outputs_to_remove:
+		if output is DataOutputPlugin:
+			remove_output(output, true)
+			removed_outputs.append(output)
+	
+	if not no_signal:
+		outputs_removed.emit(removed_outputs)
 
 
 func new_fixture(manifest: Dictionary, mode:int, channel: int = -1, quantity:int = 1, offset:int = 0, uuid: String = "", no_signal: bool = false) -> bool:
@@ -82,7 +87,7 @@ func new_fixture(manifest: Dictionary, mode:int, channel: int = -1, quantity:int
 
 		
 		fixtures[channel_index] = new_fixture
-		engine.fixtures[new_fixture.uuid] = new_fixture
+		Core.fixtures[new_fixture.uuid] = new_fixture
 		just_added_fixtures.append(new_fixture)
 		
 	if not no_signal:
@@ -95,11 +100,11 @@ func remove_fixture(fixture: Fixture, no_signal: bool = false):
 	
 	var fixture_uuid: String = fixture.uuid
 	
-	if fixture in engine.selected_fixtures:
-		engine.deselect_fixtures([fixture])
+	if fixture in Core.selected_fixtures:
+		Core.deselect_fixtures([fixture])
 	
 	fixtures.erase(fixture.channel)
-	engine.fixtures.erase(fixture.uuid)
+	Core.fixtures.erase(fixture.uuid)
 	fixture.delete()
 	fixture.free()
 	
@@ -139,16 +144,10 @@ func set_data(data: Dictionary):
 
 
 func _compile_and_send():
-	#var current_time = Time.get_ticks_msec() / 1000.0  # Convert milliseconds to seconds
-	#
-	#if current_time - last_call_time >= Core.call_interval:
 	var compiled_dmx_data: Dictionary = dmx_data
 	for output in outputs.values():
 		output.set_data(compiled_dmx_data)
 		
-
-		#last_call_time = current_time
-
 
 func serialize() -> Dictionary:
 	## Serializes this universe
@@ -156,19 +155,18 @@ func serialize() -> Dictionary:
 	var serialized_outputs = {}
 	var serialized_fixtures = {}
 	
-	for output: DataIOPlugin in outputs.values():
+	for output: DataOutputPlugin in outputs.values():
 		serialized_outputs[output.uuid] = output.serialize()
 	
 	for fixture: Fixture in fixtures.values():
 		serialized_fixtures[fixture.uuid] = fixture.serialize()
 		
+	var serialized_data: Dictionary = super.serialize()
 	
-	return {
-		"name":name,
-		"fixtures":serialized_fixtures,
-		"outputs":serialized_outputs,
-		"user_meta":serialize_meta()
-	}
+	serialized_data.outputs = serialized_outputs
+	serialized_data.fixtures = serialized_fixtures
+
+	return serialized_data
 
 
 func load_from(serialised_data: Dictionary) -> void:
@@ -198,7 +196,7 @@ func load_from(serialised_data: Dictionary) -> void:
 		
 		
 		fixtures[channel] = new_fixture
-		engine.fixtures[new_fixture.uuid] = new_fixture
+		Core.fixtures[new_fixture.uuid] = new_fixture
 		
 	
 	fixtures_added.emit(fixtures.values())
@@ -207,60 +205,11 @@ func load_from(serialised_data: Dictionary) -> void:
 	for output_uuid: String in serialised_data.get("outputs"):
 		var serialised_output: Dictionary = serialised_data.outputs[output_uuid]
 		
-		var new_output: DataIOPlugin = engine.output_plugins[serialised_output.file].plugin.new(serialised_output)
+		var new_output: DataOutputPlugin = Core.output_plugins[serialised_output.file].plugin.new(serialised_output)
 		new_output.uuid = output_uuid
-		engine.output_timer.connect(new_output.send_packet)
+		Core.output_timer.connect(new_output.send_packet)
 		
 		
 		outputs[new_output.uuid] = new_output
 	
 	outputs_added.emit(outputs.values())
-
-
-#func get_fixtures():
-	#return universe.fixtures
-	#
-#func get_fixture(fixture_uuid):
-	#pass
-#
-
-
-
-
-#
-#func set_desk_data(dmx_data):
-	#universe.desk_data.merge(dmx_data)
-	#_compile_and_send()
-#
-#func get_desk_data():
-	#return universe.desk_data
-#
-
-
-#
-#func from(serialized_universe):
-	#universe.name = serialized_universe.name
-	#universe.uuid = serialized_universe.uuid
-	#
-	#for fixture_channel in serialized_universe.fixtures:
-		#var fixture = serialized_universe.fixtures[fixture_channel]
-		#var options = {
-			#"channel":int(fixture_channel),
-			#"mode":fixture.mode,
-			#"name":fixture.display_name,
-			#"quantity":1,
-			#"offset":0,
-			#"virtual_fixtures":fixture.get("virtual_fixtures", [])
-		#}
-		#new_fixture(Globals.fixtures[fixture.fixture_brand][fixture.fixture_name], options)
-	#
-	#for output_uuid in serialized_universe.outputs:
-		#var input = serialized_universe.outputs[output_uuid]
-		#match input.type:
-			#"Empty":
-				#universe.outputs[output_uuid] = EmptyInput.new()
-			#"Art-Net":
-				#universe.outputs[output_uuid] = ArtNetOutput.new()
-				#universe.outputs[output_uuid].from(input)
-				#universe.outputs[output_uuid].connect_to_host()
-#
