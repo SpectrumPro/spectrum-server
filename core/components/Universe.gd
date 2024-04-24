@@ -4,12 +4,12 @@
 class_name Universe extends EngineComponent
 ## Engine component for handling universes, and there outputs
 
-signal fixture_name_changed(fixture: Fixture, new_name: String)
-signal fixtures_added(fixtures: Array[Fixture])
-signal fixtures_deleted(fixture_uuids: Array)
+signal on_fixture_name_changed(fixture: Fixture, new_name: String)
+signal on_fixtures_added(fixtures: Array[Fixture])
+signal on_fixtures_deleted(fixture_uuids: Array)
 
-signal outputs_added(outputs: Array[DataOutputPlugin]) ## Emited when an output or outputs are added
-signal outputs_removed(outputs: Array[DataOutputPlugin]) ## Emited when an output or outputs are removed
+signal on_outputs_added(outputs: Array[DataOutputPlugin]) ## Emited when an output or outputs are added
+signal on_outputs_removed(outputs: Array[DataOutputPlugin]) ## Emited when an output or outputs are removed
 
 var fixtures: Dictionary = {} ## Dictionary containing all the fixtures in this universe
 var outputs: Dictionary = {} ## Dictionary containing all the outputs in this universe
@@ -39,7 +39,7 @@ func add_output(output: DataOutputPlugin, no_signal: bool = false) -> void:
 	outputs[output.uuid] = output
 	
 	if not no_signal:
-		outputs_added.emit([output])
+		on_outputs_added.emit([output])
 
 
 ## Removes an output from this universe. This does not delete the output, but will only disconnect it from this universe 
@@ -49,7 +49,7 @@ func remove_output(output: DataOutputPlugin, no_signal: bool = false) -> void:
 	Core._output_timer.disconnect(output.output)
 	
 	if not no_signal:
-		outputs_removed.emit([output])
+		on_outputs_removed.emit([output])
 
 
 ## Removes a list of outputs, see [method Universe.remove_output]
@@ -63,7 +63,7 @@ func remove_outputs(outputs_to_remove: Array, no_signal: bool = false) -> void:
 			removed_outputs.append(output)
 	
 	if not no_signal:
-		outputs_removed.emit(removed_outputs)
+		on_outputs_removed.emit(removed_outputs)
 
 
 func new_fixture(manifest: Dictionary, mode:int, channel: int = -1, quantity:int = 1, offset:int = 0, uuid: String = "", no_signal: bool = false) -> bool:
@@ -91,7 +91,7 @@ func new_fixture(manifest: Dictionary, mode:int, channel: int = -1, quantity:int
 		just_added_fixtures.append(new_fixture)
 		
 	if not no_signal:
-		fixtures_added.emit(just_added_fixtures)
+		on_fixtures_added.emit(just_added_fixtures)
 	
 	return true
 
@@ -109,7 +109,7 @@ func remove_fixture(fixture: Fixture, no_signal: bool = false):
 	fixture.free()
 	
 	if not no_signal:
-		fixtures_deleted.emit([fixture_uuid])
+		on_fixtures_deleted.emit([fixture_uuid])
 
 
 func remove_fixtures(fixtures_to_remove: Array, no_signal: bool = false) -> void:
@@ -122,7 +122,7 @@ func remove_fixtures(fixtures_to_remove: Array, no_signal: bool = false) -> void
 		remove_fixture(fixture, true)
 	
 	if not no_signal:
-		fixtures_deleted.emit(uuids)
+		on_fixtures_deleted.emit(uuids)
 
 
 func is_channel_used(channels: Array) -> bool: 
@@ -149,24 +149,17 @@ func _compile_and_send():
 		output.set_data(compiled_dmx_data)
 		
 
-func serialize() -> Dictionary:
-	## Serializes this universe
+## Serializes this universe
+func on_serialize_request() -> Dictionary:
 	
 	var serialized_outputs = {}
-	var serialized_fixtures = {}
-	
+
 	for output: DataOutputPlugin in outputs.values():
 		serialized_outputs[output.uuid] = output.serialize()
 	
-	for fixture: Fixture in fixtures.values():
-		serialized_fixtures[fixture.uuid] = fixture.serialize()
-		
-	var serialized_data: Dictionary = super.serialize()
-	
-	serialized_data.outputs = serialized_outputs
-	serialized_data.fixtures = serialized_fixtures
-
-	return serialized_data
+	return {
+		"outputs": serialized_outputs
+	}
 
 
 func load_from(serialised_data: Dictionary) -> void:
@@ -199,7 +192,7 @@ func load_from(serialised_data: Dictionary) -> void:
 		Core.fixtures[new_fixture.uuid] = new_fixture
 		
 	
-	fixtures_added.emit(fixtures.values())
+	on_fixtures_added.emit(fixtures.values())
 	
 	
 	for output_uuid: String in serialised_data.get("outputs"):
@@ -212,4 +205,4 @@ func load_from(serialised_data: Dictionary) -> void:
 		
 		outputs[new_output.uuid] = new_output
 	
-	outputs_added.emit(outputs.values())
+	on_outputs_added.emit(outputs.values())

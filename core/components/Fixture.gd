@@ -59,7 +59,7 @@ func _init(i: Dictionary = {}) -> void:
 	if "uuid" in i:
 		self.uuid = i.uuid
 	
-	self.name_changed.connect(
+	self.on_name_changed.connect(
 		func(new_name: String):
 			universe.fixture_name_changed.emit(self, new_name)
 	)

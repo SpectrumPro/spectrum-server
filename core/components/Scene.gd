@@ -32,7 +32,7 @@ func set_save_data(saved_data: Dictionary) -> void:
 	save_data = saved_data
 	
 	for fixture: Fixture in save_data.keys():
-		fixture.delete_request.connect(func(deleted_fixture: Fixture): save_data.erase(deleted_fixture))
+		fixture.on_delete_request.connect(func(deleted_fixture: Fixture): save_data.erase(deleted_fixture))
 
 
 func serialize() -> Dictionary:

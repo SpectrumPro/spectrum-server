@@ -4,192 +4,230 @@
 class_name CoreEngine extends Node
 ## The core engine that powers Spectrum
 
-signal on_universe_name_changed(universe: Universe, new_name: String) ## Emitted when any of the universes in this engine have there name changed
-signal on_universes_added(universe: Array[Universe], all_uuids: Array[String])
-signal on_universes_removed(universe_uuids: Array)
-signal on_universe_selection_changed(selected_universes: Array)
 
-signal on_fixture_name_changed(fixture: Fixture, new_name)
-signal on_fixture_added(fixture: Array)
-signal on_fixture_removed(fixture_uuid: Array)
-signal on_fixture_selection_changed(selected_fixtures: Array)
+## Emitted when any of the universes in this engine have there name changed
+signal on_universe_name_changed(universe: Universe, new_name: String) 
 
-signal on_scenes_added(scene: Array)
-signal on_scenes_removed(scene_uuids: Array)
+## Emited when a universe / universes are added to this engine, contains a list of all universe uuids for server-client synchronization
+signal on_universes_added(universes: Array[Universe], universe_uuids: Array[String]) 
 
-signal _output_timer() ## Emited [call_interval] number of times per second
+## Emited when a universe / universes are removed from this engine, contains a list of all universe uuids for server-client synchronization
+signal on_universes_removed(universes: Array[Universe], universe_uuids: Array[String])
 
-var universes: Dictionary = {}
-var fixtures: Dictionary = {}
-var fixtures_definitions: Dictionary = {}
-var scenes: Dictionary = {} 
-var selected_fixtures: Array[Fixture] = []
-var selected_universes: Array[Universe] = []
 
-var input_plugins: Dictionary = {}
+## Emitted when any of the fixtures in any of the universes in this engine have there name changed
+signal on_fixture_name_changed(fixture: Fixture, new_name: String) 
+
+## Emited when a fixture / fixtures are added to any of the universes in this engine, contains a list of all fixture uuids for server-client synchronization
+signal on_fixtures_added(fixtures: Array[Fixture], fixture_uuids: Array[String])
+
+## Emited when a fixture / fixtures are removed from any of the universes in this engine, contains a list of all fixture uuids for server-client synchronization
+signal on_fixtures_removed(fixtures: Array[Fixture], fixture_uuids: Array[String])
+
+
+## Emited when a scene / scenes are added to this engine, contains a list of all scene uuids for server-client synchronization
+signal on_scenes_added(scenes: Array[Scene], scene_uuids: Array[String])
+
+## Emited when a scene / scenes are removed from this engine, contains a list of all scene uuids for server-client synchronization
+signal on_scenes_removed(scenes: Array[Scene], scene_uuids: Array[String])
+
+
+signal _output_timer() ## Emited [member CoreEngine.call_interval] number of times per second.
+
+
+## Dictionary containing all universes in this engine, do not modify this at runtime unless you know what you are doing, instead call [method CoreEngine.add_universe]
+var universes: Dictionary = {} 
+
+## Dictionary containing all fixtures in this engine, do not modify this at runtime unless you know what you are doing, instead call [method CoreEngine.add_fixture]
+var fixtures: Dictionary = {} 
+
+## Dictionary containing all scenes in this engine, do not modify this at runtime unless you know what you are doing, instead call [method CoreEngine.add_scene]
+var scenes: Dictionary = {}
+
+
+## Dictionary containing fixture definiton file, stored in [member CoreEngine.fixture_path]
+var fixtures_definitions: Dictionary = {} 
+
+## Dictionary containing all of the output plugins, sotred in [member CoreEngine.output_plugin_path]
 var output_plugins: Dictionary = {}
 
-const fixture_path: String = "res://core/fixtures/"
-# const input_plugin_path: String = "res://core/io_plugins/input_plugins/"
-const output_plugin_path: String = "res://core/output_plugins/"
-
-var current_file_name: String = ""
-var current_file_path: String = ""
-
-var programmer = Programmer.new()
-
+## Output frequency of this engine, defaults to 45hz. defined as 1.0 / desired frequency
 var call_interval: float = 1.0 / 45.0  # 1 second divided by 45
 
-var accumulated_time: float = 0.0
+var _accumulated_time: float = 0.0 ## Used as an internal refernce for timeimg call_interval correctly
 
-var object_test: RefCounted
 
-func _ready() -> void:
-	programmer.engine = self
-	
+const fixture_path: String = "res://core/fixtures/" ## File path for fixture definitons
+const output_plugin_path: String = "res://core/output_plugins/" ## File path for output plugin definitons
+
+
+func _ready() -> void:	
+	# Set low processor mode to true, to avoid using too much system resources 
 	OS.set_low_processor_usage_mode(true)
-	reload_io_plugins()
-	reload_fixtures()
 
+	# Load io plugins and fixtures
+	output_plugins = get_io_plugins(output_plugin_path)
+	fixtures_definitions = get_fixture_definitions(fixture_path)
+
+	# Add self to networked objects to allow for client to server comunication
 	Server.add_networked_object("engine", self)
 
 
 func _process(delta: float) -> void:
 	# Accumulate the time
-	accumulated_time += delta
+	_accumulated_time += delta
 	
 	# Check if enough time has passed since the last function call
-	if accumulated_time >= call_interval:
+	if _accumulated_time >= call_interval:
 		# Call the function
 		_output_timer.emit()
 		
 		# Subtract the interval from the accumulated time
-		accumulated_time -= call_interval
+		_accumulated_time -= call_interval
 
 
+## Serializes all elements of this engine, used for file saving, and network synchronization
 func serialize() -> Dictionary:
-	var serialized_data: Dictionary = {}
-	
-	serialized_data.universes = serialize_universes()
-	serialized_data.scenes = serialize_scenes()
+	return {
+		"universes": serialize_universes(),
+		"fixtues": serialize_fixtures(),
+		"scenes": serialize_scenes()
+	}
 
-	return serialized_data
 
-#region Save Load
-func save(file_name: String = current_file_name, file_path: String = current_file_name) -> Error:
+## Saves this engine to disk
+func save(file_name: String = "", file_path: String = "") -> Error:
 	
 	return Utils.save_json_to_file(file_path, file_name, serialize())
 
 
+## Loads a save file and deserialize the data, WIP
 func load(file_path) -> void:
-	## Loads a save file and deserialize the data
 	
-	var saved_file = FileAccess.open(file_path, FileAccess.READ)
-	var serialized_data: Dictionary = JSON.parse_string(saved_file.get_as_text())
+	# var saved_file = FileAccess.open(file_path, FileAccess.READ)
+	# var serialized_data: Dictionary = JSON.parse_string(saved_file.get_as_text())
 	
-	## Loops through each universe in the save file (if any), and loads them into the engine
-	for universe_uuid: String in serialized_data.get("universes", {}):
-		var serialized_universe: Dictionary = serialized_data.universes[universe_uuid]
+	# ## Loops through each universe in the save file (if any), and loads them into the engine
+	# for universe_uuid: String in serialized_data.get("universes", {}):
+	# 	var serialized_universe: Dictionary = serialized_data.universes[universe_uuid]
 		
-		var new_universe: Universe = new_universe(serialized_universe.name, false, serialized_universe, universe_uuid)
-		universes[new_universe.uuid] = new_universe
+	# 	var new_universe: Universe = new_universe(serialized_universe.name, false, serialized_universe, universe_uuid)
+	# 	universes[new_universe.uuid] = new_universe
 	
-	for scene_uuid: String in serialized_data.get("scenes", {}):
-		var serialized_scene: Dictionary = serialized_data.scenes[scene_uuid]
+	# for scene_uuid: String in serialized_data.get("scenes", {}):
+	# 	var serialized_scene: Dictionary = serialized_data.scenes[scene_uuid]
 		
-		new_scene(Scene.new(), true, serialized_scene, scene_uuid)
+	# 	new_scene(Scene.new(), true, serialized_scene, scene_uuid)
 		
-		on_scenes_added.emit(scenes)
-#endregion
+	# 	on_scenes_added.emit(scenes)
+	pass
 
 
-#region Universes
-func new_universe(name: String = "New Universe", no_signal: bool = false, serialised_data: Dictionary = {}, uuid: String = "") -> Universe:
-	## Adds a new universe
+## Adds a new universe to this engine, if [pram universe] is defined, it will be added, if no universe is defined, one will be created with the name passed
+func add_universe(name: String = "New Universe", universe: Universe = null, no_signal: bool = false) -> Universe:
 	
-	print("making new universe: ", name)
+	# if universe is not defined, create a new one, and set its name to be the name passed to this function
+	if not universe:
+		universe = Universe.new()
+		universe.name = name
 
-	var new_universe: Universe = Universe.new()
-		
-	if serialised_data:
-		new_universe.load_from(serialised_data)
-	else:
-		new_universe.name = name
-	
-	if uuid:
-		new_universe.uuid = uuid
-	
-	universes[new_universe.uuid] = new_universe
+	print(universe.name)
 
+	print(name)
+
+	universes[universe.uuid] = universe
+	
+	_connect_universe_signals(universe)
+	Server.add_networked_object(universe.uuid, universe) # Add this new universe to networked objects, to allow it to be controled remotley
+	
 	if not no_signal:
-		on_universes_added.emit([new_universe], universes.keys())
-	
-	_connect_universe_signals(new_universe)
-	Server.add_networked_object(new_universe.uuid, new_universe)
-	
-	return new_universe
+		on_universes_added.emit([universe], universes.keys())
+
+	return universe
 
 
+## Adds mutiple universes to this engine at once, [pram universes_to_add] can be a array of [Universe]s or a array of [pram n] length, where [pram n] is the number of universes to be added
+func add_universes(universes_to_add: Array, no_signal: bool = false) -> Array[Universe]:
+
+	var just_added_universes: Array = []
+
+	for item in universes_to_add:
+		if item is Universe:
+			just_added_universes.append(add_universe("", item, true))
+		else:
+			just_added_universes.append(add_universe("New Universe", Universe.new(), true))
+
+	on_universes_added.emit(just_added_universes, universes.keys())
+
+	return just_added_universes
+
+
+## Connects all the signals of the new universe to the signals of this engine
 func _connect_universe_signals(universe: Universe):
-	## Connects all the signals of the new universe to the signals of this engine
 	
-	universe.name_changed.connect(
+	universe.on_name_changed.connect(
 		func(new_name: String): 
 			on_universe_name_changed.emit(universe, new_name)
 	)
 	
-	universe.fixture_name_changed.connect(
+	universe.on_fixture_name_changed.connect(
 		func(fixture: Fixture, new_name: String):
 			on_fixture_name_changed.emit(fixture, new_name)
 	)
 	
-	universe.fixtures_added.connect(
-		func(fixtures: Array[Fixture]):
-			on_fixture_added.emit(fixtures)
+	universe.on_fixtures_added.connect(
+		func(p_fixtures: Array[Fixture]):
+			
+			for fixture: Fixture in p_fixtures:
+				fixtures[fixture.uuid] = fixture
+
+			on_fixtures_added.emit(p_fixtures, fixtures.keys())
 	)
 	
-	universe.fixtures_deleted.connect(
-		func(fixture_uuids: Array):
-			on_fixture_removed.emit(fixture_uuids)
+	universe.on_fixtures_deleted.connect(
+		func(p_fixtures: Array):
+
+			for fixture: Fixture in p_fixtures:
+				fixtures.erase(fixture.uuid)
+
+			on_fixtures_removed.emit(p_fixtures, fixtures.keys())
 	)
 
 
+## Removes a universe from this engine
 func remove_universe(universe: Universe, no_signal: bool = false) -> bool: 
-	## Removes a universe
 	
+	# Check if this universe is part of this engine
 	if universe in universes.values():
 		
-		universes.erase(universe.uuid)				
+		universes.erase(universe.uuid)			
+
 		if not no_signal:
-			on_universes_removed.emit([universe.uuid])
+			on_universes_removed.emit([universe])
 		
 		return true
-
+	
+	# If not return false
 	else:
+		print("Universe: ", universe.uuid, " is not part of this engine")
 		return false
 
 
+## Removes mutiple universes at once from this engine
 func remove_universes(universes_to_remove: Array, no_signal: bool = false) -> void:
-	## Removes mutiple universes at once
-	
-	print(universes_to_remove)
-	print(universes)
 
-	var uuids: Array = []
+	var just_removed_universes: Array = []
 	
 	for universe: Universe in universes_to_remove:
 		if remove_universe(universe, true):
-			uuids.append(universe.uuid)
-		else:
-			print("Universe: ", universe.uuid, " is not part of this engine")
-		
+			just_removed_universes.append(universe)		
 	
 	if not no_signal:
-		on_universes_removed.emit(uuids)
+		on_universes_removed.emit(just_removed_universes)
 
 
+## Serializes all universes and returnes them in a dictionary 
 func serialize_universes() -> Dictionary:
-	## Serializes all universes and returnes them in a dictionary 
 	
 	var serialized_universes: Dictionary = {}
 	
@@ -199,134 +237,65 @@ func serialize_universes() -> Dictionary:
 	return serialized_universes
 
 
-func select_universes(universes_to_select: Array, no_signal: bool = false) -> void:
-	## Selects all the fixtures passed to this function
+## Returns all output plugins into a dictionary containing the uninitialized object, from the folder defined in [pram folder]
+func get_io_plugins(folder: String) -> Dictionary:
 	
-	for universe: Universe in universes_to_select:
-		if universe not in selected_universes:
-			selected_universes.append(universe)
-			universe.set_selected(true)
+	var uninitialized_output_plugins: Dictionary = {}
 	
-	if not no_signal:
-		on_universe_selection_changed.emit(selected_universes)
-
-
-func set_universe_selection(universes_to_select: Array) -> void:
-	## Changes the selection to be the universes passed to this function
-
-	deselect_universes(selected_universes, true)
-	select_universes(universes_to_select)
-
-
-func deselect_universes(universes_to_deselect: Array, no_signal: bool = false) -> void:
-	## Selects all the fixtures passed to this function
-	
-	for universe: Universe in universes_to_deselect.duplicate():
-		if universe in selected_universes:
-			selected_universes.erase(universe)
-			universe.set_selected(false)
-	
-	if not no_signal:
-		on_universe_selection_changed.emit(selected_universes)
-
-#endregion
-
-
-#region IO
-func reload_io_plugins() -> void:
-	## Loads all output plugins from the folder
-	
-	output_plugins = {}
-	
-	var output_plugin_folder : DirAccess = DirAccess.open(output_plugin_path)
+	var output_plugin_folder : DirAccess = DirAccess.open(folder)
 	
 	for plugin in output_plugin_folder.get_files():
-		var uninitialized_plugin = ResourceLoader.load(output_plugin_path + plugin)
+		var uninitialized_plugin = ResourceLoader.load(folder + plugin)
 		
 		var initialized_plugin: DataOutputPlugin = uninitialized_plugin.new()
 		var plugin_name: String = initialized_plugin.name
-		 
-		if plugin_name in output_plugins.keys():
-			continue
-		
-		# object_test = weakref(initialized_plugin)
 
-		# _output_timer.connect(func(): print(object_test.get_reference_count()))
-
-
-		output_plugins[plugin_name] = uninitialized_plugin
-#endregion
-
-
-#region Fixtures 
-
-
-func reload_fixtures() -> void:
-	## Loads fixture definition files from a folder
+		uninitialized_output_plugins[plugin_name] = uninitialized_plugin
 	
-	fixtures_definitions = {}
+	return uninitialized_output_plugins
+
+
+
+## Returns fixture definition files from the folder defined in [pram folder]
+func get_fixture_definitions(folder: String) -> Dictionary:
 	
-	var access = DirAccess.open(fixture_path)
+	var loaded_fixtures_definitions: Dictionary = {}
+	
+	var access = DirAccess.open(folder)
 	
 	for fixture_folder in access.get_directories():
 		
-		for fixture in access.open(fixture_path+"/"+fixture_folder).get_files():
+		for fixture in access.open(folder+"/"+fixture_folder).get_files():
 			
-			var manifest_file = FileAccess.open(fixture_path+fixture_folder+"/"+fixture, FileAccess.READ)
+			var manifest_file = FileAccess.open(folder+fixture_folder+"/"+fixture, FileAccess.READ)
 			var manifest = JSON.parse_string(manifest_file.get_as_text())
 			
-			manifest.info.file_path = fixture_path+fixture_folder+"/"+fixture
+			manifest.info.file_path = folder+fixture_folder+"/"+fixture
 			
-			if fixtures_definitions.has(manifest.info.brand):
-				fixtures_definitions[manifest.info.brand][manifest.info.name] = manifest
+			if loaded_fixtures_definitions.has(manifest.info.brand):
+				loaded_fixtures_definitions[manifest.info.brand][manifest.info.name] = manifest
 			else:
-				fixtures_definitions[manifest.info.brand] = {manifest.info.name:manifest}
+				loaded_fixtures_definitions[manifest.info.brand] = {manifest.info.name:manifest}
+	return loaded_fixtures_definitions
 
 
-func select_fixtures(fixtures: Array, no_signal: bool = false) -> void:
-	## Selects all the fixtures passed to this function
+## Returns serialised version of all the fixtures in this universe
+func serialize_fixtures() -> Dictionary:
+	var serialized_fixtures: Dictionary = {}
+
+	for fixture: Fixture in fixtures.values():
+		serialized_fixtures[fixture.uuid] = fixture.serialize()
 	
-	for fixture: Fixture in fixtures:
-		if fixture not in selected_fixtures:
-			selected_fixtures.append(fixture)
-			fixture.set_selected(true)
-	
-	if not no_signal:
-		on_fixture_selection_changed.emit(selected_fixtures)
+	return serialized_fixtures
 
 
-func set_fixture_selection(fixtures: Array) -> void:
-	## Changes the selection to be the fixtures passed to this function
-	
-	deselect_fixtures(selected_fixtures, true)
-	select_fixtures(fixtures)
 
-func deselect_fixtures(fixtures: Array, no_signal: bool = false) -> void:
-	## Deselects all the fixtures pass to this function
-	
-	for fixture: Fixture in fixtures.duplicate():
-		if fixture in selected_fixtures:
-			selected_fixtures.erase(fixture)
-			fixture.set_selected(false)
-	
-	if not no_signal:
-		on_fixture_selection_changed.emit(selected_fixtures)
-#endregion
-
-
-#region Scenes
-
-func new_scene(scene: Scene = Scene.new(), no_signal: bool = false, serialized_data: Dictionary = {}, uuid: String = "") -> Scene:
+func add_scene(name: String = "New Scene", scene: Scene = null, no_signal: bool = false) -> Scene:
 	## Adds a scene to this engine, creats a new one if none is passed
 	
-	if uuid:
-		scene.uuid = uuid
-	
-	scene.engine = self
-	
-	if serialized_data:
-		scene.load_from(serialized_data)
-	
+	if not scene:
+		scene = Scene.new()
+		scene.name = name
 	
 	scenes[scene.uuid] = scene
 	
@@ -336,25 +305,58 @@ func new_scene(scene: Scene = Scene.new(), no_signal: bool = false, serialized_d
 	return scene
 
 
-func remove_scenes(scenes_to_remove: Array, no_signal: bool = false) -> void:
-	## Removes a scene from this engine
+
+## Adds mutiple scenes to this engine at once, [pram scenes_to_add] can be a array of [Scenes]s or a array of [pram n] length, where [pram n] is the number of scenes to be added
+func add_scenes(scenes_to_add: Array, no_signal: bool = false) -> Array[Scene]:
+
+	var just_added_scenes: Array = []
+
+	for item in scenes_to_add:
+		if item is Scene:
+			just_added_scenes.append(add_scene("", item, true))
+		else:
+			just_added_scenes.append(add_scene("New Scene", Scene.new(), true))
+
+			
+	on_scenes_added.emit(just_added_scenes, scenes.keys())
+
+	return just_added_scenes
+
+
+## Removes a scene from this engine
+func remove_scene(scene: Scene, no_signal: bool = false) -> bool:
 	
-	var uuids: Array = []
+	# Check if this scene is part of this engine
+	if scene in scene.values():
+		
+		scenes.erase(scene.uuid)			
+
+		if not no_signal:
+			on_scenes_removed.emit([scene])
+		
+		return true
+	
+	# If not return false
+	else:
+		print("Scene: ", scene.uuid, " is not part of this engine")
+		return false
+
+
+## Removes mutiple scenes from this engine
+func remove_scenes(scenes_to_remove: Array, no_signal: bool = false) -> void:
+	
+	var just_removed_universes: Array = []
 	
 	for scene: Scene in scenes_to_remove:
-		uuids.append(scene.uuid)
-		scenes.erase(scene.uuid)
-		
-		scene.delete()
-		scene.free()
-	
+		if remove_scene(scene):
+			just_removed_universes.append(scene)
 	
 	if not no_signal:
-		on_scenes_removed.emit(uuids)
+		on_scenes_removed.emit(just_removed_universes)
 
 
+## Serializes all scenes and returnes them in a dictionary 
 func serialize_scenes() -> Dictionary:
-	## Serializes all scenes and returnes them in a dictionary 
 	
 	var serialized_scenes: Dictionary = {}
 	
@@ -364,9 +366,7 @@ func serialize_scenes() -> Dictionary:
 	return serialized_scenes
 
 
-#endregion
-
-
+## Animates a value, use this function if your script extends object but you want to use a tween. As none node scripts cant use tweens
 func animate(function: Callable, from: Variant, to: Variant, duration: int) -> void:
 	var animation = get_tree().create_tween()
 	animation.tween_method(function, from, to, duration)

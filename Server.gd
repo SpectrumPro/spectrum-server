@@ -90,8 +90,6 @@ func add_networked_object(object_name: String, object: Object) -> void:
 				})
 
 		)
-	
-	print(_networked_objects)
 
 
 func remove_networked_object(object_name: String) -> void:
@@ -120,7 +118,7 @@ func _on_web_socket_server_client_disconnected(peer_id):
 func _on_web_socket_server_message_received(peer_id, message):
 	
 	message = str_to_var(message)
-
+	
 	if not message is Dictionary:
 		return
 
