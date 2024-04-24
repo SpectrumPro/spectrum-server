@@ -91,7 +91,7 @@ func add_networked_object(object_name: String, object: Object) -> void:
 
 		)
 	
-
+	print(_networked_objects)
 
 
 func remove_networked_object(object_name: String) -> void:
@@ -124,20 +124,28 @@ func _on_web_socket_server_message_received(peer_id, message):
 	if not message is Dictionary:
 		return
 
-	if "call" in message and message.get("for", "") in _networked_objects:
+	var command: Dictionary = Utils.uuids_to_objects(message, _networked_objects)
+
+	if "call" in command and command.get("for", "") in _networked_objects:
 		var networked_object: Dictionary = _networked_objects[message.for]
 
-		var method: Dictionary = networked_object.functions.get(message.call, {})
+		var method: Dictionary = networked_object.functions.get(command.call, {})
 
 		if not method:
 			return
 
-		if "args" in message:
-			for index in len(message.args):
-				if not typeof(message.args[index]) == method.args.values()[index]:
-					print("Type of data: ", message.args[index],  " does not match type: ", type_string(method.args.values()[index]), " required by: ", method.callable)
+		if "args" in command:
+			for index in len(command.args):
+				if not typeof(command.args[index]) == method.args.values()[index]:
+					print("Type of data: ", command.args[index],  " does not match type: ", type_string(method.args.values()[index]), " required by: ", method.callable)
 					return
 
 		print("Calling Methord: ", method.callable)
-		method.callable.callv(message.get("args", []))
+		var result: Variant = method.callable.callv(command.get("args", []))
+
+		if "callback_id" in command:
+			send({
+				"callback_id": command.get("callback_id", ""),
+				"response": result
+			})
 	# MainSocketServer.send(-peer_id, "[%d] Says: %s" % [peer_id, message])

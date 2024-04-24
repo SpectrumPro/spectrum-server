@@ -110,9 +110,7 @@ func new_universe(name: String = "New Universe", no_signal: bool = false, serial
 	print("making new universe: ", name)
 
 	var new_universe: Universe = Universe.new()
-	
-	new_universe.engine = self
-	
+		
 	if serialised_data:
 		new_universe.load_from(serialised_data)
 	else:
@@ -124,9 +122,10 @@ func new_universe(name: String = "New Universe", no_signal: bool = false, serial
 	universes[new_universe.uuid] = new_universe
 
 	if not no_signal:
-		on_universes_added.emit([new_universe])
+		on_universes_added.emit([new_universe], universes.keys())
 	
 	_connect_universe_signals(new_universe)
+	Server.add_networked_object(new_universe.uuid, new_universe)
 	
 	return new_universe
 
@@ -135,7 +134,7 @@ func _connect_universe_signals(universe: Universe):
 	## Connects all the signals of the new universe to the signals of this engine
 	
 	universe.name_changed.connect(
-		func(new_name: String):
+		func(new_name: String): 
 			on_universe_name_changed.emit(universe, new_name)
 	)
 	
@@ -160,16 +159,9 @@ func remove_universe(universe: Universe, no_signal: bool = false) -> bool:
 	
 	if universe in universes.values():
 		
-		universe.delete()
-		universes.erase(universe.uuid)
-		selected_universes.erase(universe)
-		
-		var uuid: String = universe.uuid
-		
-		universe.free()
-		
+		universes.erase(universe.uuid)				
 		if not no_signal:
-			on_universes_removed.emit([uuid])
+			on_universes_removed.emit([universe.uuid])
 		
 		return true
 
@@ -180,12 +172,17 @@ func remove_universe(universe: Universe, no_signal: bool = false) -> bool:
 func remove_universes(universes_to_remove: Array, no_signal: bool = false) -> void:
 	## Removes mutiple universes at once
 	
+	print(universes_to_remove)
+	print(universes)
+
 	var uuids: Array = []
 	
 	for universe: Universe in universes_to_remove:
-		uuids.append(universe.uuid)
-		deselect_universes([universe], no_signal)
-		remove_universe(universe, true)
+		if remove_universe(universe, true):
+			uuids.append(universe.uuid)
+		else:
+			print("Universe: ", universe.uuid, " is not part of this engine")
+		
 	
 	if not no_signal:
 		on_universes_removed.emit(uuids)

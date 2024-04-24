@@ -45,12 +45,12 @@ static func objects_to_uuids(data, just_uuid: bool = false):
 
 
 static func uuids_to_objects(data: Variant, networked_objects: Dictionary):
-	## Checks if there are any uuids in the data passed, also checks inside of arrays and dictionarys. If any are found, they are replaced with there object refenrce, if no object refernce is found, it will seralised from the file passed
+	## Checks if there are any uuids in the data passed, also checks inside of arrays and dictionarys. If any are found, they are replaced with there object refenrce, if no object refernce is found, null is returned
 	match typeof(data):
 		TYPE_DICTIONARY:
 			if "_object_ref" in data.keys():
 				if data._object_ref in networked_objects.keys():
-					return networked_objects[data._object_ref]
+					return networked_objects[data._object_ref].object
 
 				elif "_serialized_object" in data.keys() and "_file_path" in data.keys():
 					var uninitialized_object = ResourceLoader.load(data._file_path)
