@@ -115,3 +115,7 @@ static func get_htp_color(color_1: Color, color_2: Color) -> Color:
 
 	return result_color
 
+
+## Place holder function to check if a fixture manifest is valid
+static func is_valid_fixture_manifest(manifest: Dictionary) -> bool:
+	return true
