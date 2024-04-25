@@ -24,9 +24,11 @@ func _ready() -> void:
 	print("Listing on port %s, supported protocols: %s" % [PORT, MainSocketServer.supported_protocols])
 
 
-func add_networked_object(object_name: String, object: Object) -> void:
+func add_networked_object(object_name: String, object: Object) -> bool:
 	## Adds an object to the networked_objects dictnary, allowing for networked functions for the object
 
+	if object_name in _networked_objects.keys():
+		return false	
 
 	var new_networked_config: Dictionary = {
 		"object": object,
@@ -91,6 +93,7 @@ func add_networked_object(object_name: String, object: Object) -> void:
 
 		)
 
+	return true
 
 func remove_networked_object(object_name: String) -> void:
 	## Removes an object to the networked_objects dictnary
