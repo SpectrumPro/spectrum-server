@@ -15,6 +15,7 @@ var uuid: String = "" ## Uuid of the current component, do not modify at runtime
 
 func _init(p_uuid: String = UUID_Util.v4()) -> void:
 	uuid = p_uuid
+	print("I am: ", uuid)
 
 
 ## Sets user_meta from the given value
@@ -58,32 +59,36 @@ func set_name(new_name) -> void:
 func serialize() -> Dictionary:
 	
 	var serialized_data: Dictionary = {}
-
-	# Check if child class has on_serialize_request method, if so call it, and append it to EngineComponent's serialized data
-	if self.has_method("on_serialize_request"):
-		serialized_data = self.get("on_serialize_request").call()
+	serialized_data = _on_serialize_request()
 	
 	serialized_data.uuid = uuid
 	serialized_data.name = name
 	serialized_data.meta = get_all_user_meta()
-
+	
 	return serialized_data
+
+
+## Overide this function to serialize your object
+func _on_serialize_request() -> Dictionary:
+	return {}
 
 
 ## Always call this function when you want to delete this component. 
 ## As godot uses reference counting, this object will not truly be deleted untill no other script holds a refernce to it.
 func delete() -> void:
-
-	# Check if child class has on_delete_requested method, if so call it
-	if self.has_method("on_delete_requested"):
-		self.get("on_delete_requested").call()
-
+	_on_delete_request()
+	
 	on_delete_requested.emit()
+	
+	print(uuid, " Has had a delete request send. Currently has:", str(get_reference_count()), " refernces")
 
-	print(self, "Has had a delete request send. Currently has:", str(get_reference_count()), " refernces")
+
+## Overide this function to handle delete requests
+func _on_delete_request() -> void:
+	return
 
 
 ## Debug function to tell if this component is freed from memory
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
-		print("\"", self.name, "\" Is being freed")
+		print("\"", self.name, "\" Is being freed, uuid: ", self.uuid)

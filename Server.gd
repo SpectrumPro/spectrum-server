@@ -8,6 +8,8 @@ extends Node
 var _networked_objects: Dictionary = {} ## Stores all the objects that will be networked 
 
 
+var _networked_objects_delete_callbacks: Dictionary = {}
+
 const PORT: int = 3824 ## Port to listen to
 
 func _ready() -> void:
@@ -24,7 +26,7 @@ func _ready() -> void:
 	print("Listing on port %s, supported protocols: %s" % [PORT, MainSocketServer.supported_protocols])
 
 
-func add_networked_object(object_name: String, object: Object) -> bool:
+func add_networked_object(object_name: String, object: Object, delete_signal: Signal = Signal()) -> bool:
 	## Adds an object to the networked_objects dictnary, allowing for networked functions for the object
 
 	if object_name in _networked_objects.keys():
@@ -34,6 +36,14 @@ func add_networked_object(object_name: String, object: Object) -> bool:
 		"object": object,
 		"functions": {},
 	}
+
+	if not delete_signal.is_null():
+		_networked_objects_delete_callbacks[object_name] = {
+			"callable":remove_networked_object.bind(object_name),
+			"signal":delete_signal
+			}
+		 
+		delete_signal.connect(_networked_objects_delete_callbacks[object_name].callable)
 
 	var method_list: Array = object.get_script().get_script_method_list()
 
@@ -95,9 +105,15 @@ func add_networked_object(object_name: String, object: Object) -> bool:
 
 	return true
 
-func remove_networked_object(object_name: String) -> void:
-	## Removes an object to the networked_objects dictnary
 
+func remove_networked_object(object_name: String) -> void:
+	print("Removing Networked Object: ", object_name)
+	if _networked_objects_delete_callbacks.has(object_name):
+		print(_networked_objects_delete_callbacks)
+		print(_networked_objects_delete_callbacks[object_name].signal.get_connections())
+		(_networked_objects_delete_callbacks[object_name].signal as Signal).disconnect(_networked_objects_delete_callbacks[object_name].callable)
+		_networked_objects_delete_callbacks.erase(object_name)
+		
 	_networked_objects.erase(object_name)
 
 

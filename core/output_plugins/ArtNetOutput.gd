@@ -69,7 +69,7 @@ func output() -> void:
 	
 
 ## Called when this output is requested to serialize its config
-func on_serialize_request():
+func _on_serialize_request():
 	
 	return {
 		"ip_address": ip_address,
@@ -79,5 +79,5 @@ func on_serialize_request():
 
 
 ## Called when this object is requested to be deleted
-func on_delete_request():
+func _on_delete_request():
 	stop()

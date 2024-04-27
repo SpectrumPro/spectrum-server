@@ -56,6 +56,34 @@ var call_interval: float = 1.0 / 45.0  # 1 second divided by 45
 
 var _accumulated_time: float = 0.0 ## Used as an internal refernce for timeimg call_interval correctly
 
+## Folowing functions are for connecting universe signals to engine signals, they are defined as vairables so they can be dissconnected when universe is to be deleted
+func _universe_on_name_changed(new_name: String, universe: Universe): 
+	on_universe_name_changed.emit(universe, new_name)
+	
+
+func _universe_on_fixture_name_changed(fixture: Fixture, new_name: String):
+	on_fixture_name_changed.emit(fixture, new_name)
+
+
+func _universe_on_fixtures_added(p_fixtures: Array[Fixture]):
+	for fixture: Fixture in p_fixtures:
+		fixtures[fixture.uuid] = fixture
+
+	on_fixtures_added.emit(p_fixtures, fixtures.keys())
+
+func _universe_on_fixtures_removed(p_fixtures: Array):
+	for fixture: Fixture in p_fixtures:
+		fixtures.erase(fixture.uuid)
+
+	on_fixtures_removed.emit(p_fixtures, fixtures.keys())
+
+## Stores callables that are connected to universe signals [br]
+## When connecting [member Engine._universe_on_name_changed] to the universe, you need to bind the universe object to the callable, using _universe_on_name_changed.bind(universe) [br]
+## how ever this has the side effect of creating new refernce and can cause a memory leek, as universes will not be freed [br]
+## To counter act this, _universe_signal_connections stored as Universe:Dictionary{"callable": Callable}. Stores the copy of [member Engine._universe_on_name_changed] that is returned when it is .bind(universe) [br]
+## This allows the callable to be dissconnected from the universe, and freed from memory
+var _universe_signal_connections: Dictionary = {}
+
 
 const fixture_path: String = "res://core/fixtures/" ## File path for fixture definitons
 const output_plugin_path: String = "res://core/output_plugins/" ## File path for output plugin definitons
@@ -123,7 +151,7 @@ func load(file_path) -> void:
 	pass
 
 
-## Adds a new universe to this engine, if [pram universe] is defined, it will be added, if no universe is defined, one will be created with the name passed
+## Adds a new universe to this engine, if [param universe] is defined, it will be added, if no universe is defined, one will be created with the name passed
 func add_universe(name: String = "New Universe", universe: Universe = null, no_signal: bool = false) -> Universe:
 	
 	# if universe is not defined, create a new one, and set its name to be the name passed to this function
@@ -131,14 +159,11 @@ func add_universe(name: String = "New Universe", universe: Universe = null, no_s
 		universe = Universe.new()
 		universe.name = name
 
-	print(universe.name)
-
-	print(name)
-
 	universes[universe.uuid] = universe
 	
 	_connect_universe_signals(universe)
-	Server.add_networked_object(universe.uuid, universe) # Add this new universe to networked objects, to allow it to be controled remotley
+
+	Server.add_networked_object(universe.uuid, universe, universe.on_delete_requested) # Add this new universe to networked objects, to allow it to be controled remotley
 	
 	if not no_signal:
 		on_universes_added.emit([universe], universes.keys())
@@ -146,7 +171,7 @@ func add_universe(name: String = "New Universe", universe: Universe = null, no_s
 	return universe
 
 
-## Adds mutiple universes to this engine at once, [pram universes_to_add] can be a array of [Universe]s or a array of [pram n] length, where [pram n] is the number of universes to be added
+## Adds mutiple universes to this engine at once, [param universes_to_add] can be a array of [Universe]s or a array of [param n] length, where [param n] is the number of universes to be added
 func add_universes(universes_to_add: Array, no_signal: bool = false) -> Array[Universe]:
 
 	var just_added_universes: Array = []
@@ -165,42 +190,59 @@ func add_universes(universes_to_add: Array, no_signal: bool = false) -> Array[Un
 ## Connects all the signals of the new universe to the signals of this engine
 func _connect_universe_signals(universe: Universe):
 	
-	universe.on_name_changed.connect(
-		func(new_name: String): 
-			on_universe_name_changed.emit(universe, new_name)
-	)
+	print("Connecting Signals")
+
+	_universe_signal_connections[universe] = {
+		"_universe_on_name_changed": _universe_on_name_changed.bind(universe),
+		"remove_universe": remove_universe.bind(universe, false, false)
+		}
+
+	universe.on_name_changed.connect(_universe_signal_connections[universe]._universe_on_name_changed)
+
+	universe.on_delete_requested.connect(_universe_signal_connections[universe].remove_universe)
 	
-	universe.on_fixture_name_changed.connect(
-		func(fixture: Fixture, new_name: String):
-			on_fixture_name_changed.emit(fixture, new_name)
-	)
+
+	universe.on_fixture_name_changed.connect(_universe_on_fixture_name_changed)
 	
-	universe.on_fixtures_added.connect(
-		func(p_fixtures: Array[Fixture]):
-			
-			for fixture: Fixture in p_fixtures:
-				fixtures[fixture.uuid] = fixture
-
-			on_fixtures_added.emit(p_fixtures, fixtures.keys())
-	)
+	universe.on_fixtures_added.connect(_universe_on_fixtures_added)
 	
-	universe.on_fixtures_deleted.connect(
-		func(p_fixtures: Array):
+	universe.on_fixtures_removed.connect(_universe_on_fixtures_removed)
 
-			for fixture: Fixture in p_fixtures:
-				fixtures.erase(fixture.uuid)
 
-			on_fixtures_removed.emit(p_fixtures, fixtures.keys())
-	)
 
+## Disconnects all the signals of the universe to the signals of this engine
+func _disconnect_universe_signals(universe: Universe):
+	
+	print("Disconnecting Signals")
+
+	universe.on_name_changed.disconnect(_universe_signal_connections[universe]._universe_on_name_changed)
+	
+	universe.on_delete_requested.disconnect(_universe_signal_connections[universe].remove_universe)
+
+
+	universe.on_fixture_name_changed.disconnect(_universe_on_fixture_name_changed)
+	
+	universe.on_fixtures_added.disconnect(_universe_on_fixtures_added)
+	
+	universe.on_fixtures_removed.disconnect(_universe_on_fixtures_removed)
+
+
+	_universe_signal_connections[universe] = {}
+	_universe_signal_connections.erase(universe)
 
 ## Removes a universe from this engine
-func remove_universe(universe: Universe, no_signal: bool = false) -> bool: 
+func remove_universe(universe: Universe, no_signal: bool = false, delete_object: bool = true) -> bool: 
 	
 	# Check if this universe is part of this engine
 	if universe in universes.values():
 		
-		universes.erase(universe.uuid)			
+		universes.erase(universe.uuid)		
+
+		_disconnect_universe_signals(universe)
+
+		if delete_object:
+			universe.delete()
+
 
 		if not no_signal:
 			on_universes_removed.emit([universe])
@@ -214,12 +256,12 @@ func remove_universe(universe: Universe, no_signal: bool = false) -> bool:
 
 
 ## Removes mutiple universes at once from this engine
-func remove_universes(universes_to_remove: Array, no_signal: bool = false) -> void:
+func remove_universes(universes_to_remove: Array, no_signal: bool = false, delete_object: bool = true) -> void:
 
 	var just_removed_universes: Array = []
 	
 	for universe: Universe in universes_to_remove:
-		if remove_universe(universe, true):
+		if remove_universe(universe, true, delete_object):
 			just_removed_universes.append(universe)		
 	
 	if not no_signal:
@@ -237,7 +279,7 @@ func serialize_universes() -> Dictionary:
 	return serialized_universes
 
 
-## Returns all output plugins into a dictionary containing the uninitialized object, from the folder defined in [pram folder]
+## Returns all output plugins into a dictionary containing the uninitialized object, from the folder defined in [param folder]
 func get_io_plugins(folder: String) -> Dictionary:
 	
 	var uninitialized_output_plugins: Dictionary = {}
@@ -256,7 +298,7 @@ func get_io_plugins(folder: String) -> Dictionary:
 
 
 
-## Returns fixture definition files from the folder defined in [pram folder]
+## Returns fixture definition files from the folder defined in [param folder]
 func get_fixture_definitions(folder: String) -> Dictionary:
 	
 	var loaded_fixtures_definitions: Dictionary = {}
@@ -306,7 +348,7 @@ func add_scene(name: String = "New Scene", scene: Scene = null, no_signal: bool 
 
 
 
-## Adds mutiple scenes to this engine at once, [pram scenes_to_add] can be a array of [Scenes]s or a array of [pram n] length, where [pram n] is the number of scenes to be added
+## Adds mutiple scenes to this engine at once, [param scenes_to_add] can be a array of [Scenes]s or a array of [param n] length, where [param n] is the number of scenes to be added
 func add_scenes(scenes_to_add: Array, no_signal: bool = false) -> Array[Scene]:
 
 	var just_added_scenes: Array = []
