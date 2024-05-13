@@ -52,16 +52,16 @@ static func uuids_to_objects(data: Variant, networked_objects: Dictionary):
 				if data._object_ref in networked_objects.keys():
 					return networked_objects[data._object_ref].object
 
-				elif "_serialized_object" in data.keys() and "_file_path" in data.keys():
+				elif "_file_path" in data.keys():
 					var uninitialized_object = ResourceLoader.load(data._file_path)
 
 					if uninitialized_object:
 						var initialized_object = uninitialized_object.new()
 
-						if initialized_object.has_method("load_from"):
+						if initialized_object.has_method("load_from") and "_serialized_object" in data.keys():
 							initialized_object.load_from(data._serialized_object)
 
-							return initialized_object
+						return initialized_object
 				else:
 					return null
 

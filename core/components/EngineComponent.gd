@@ -15,7 +15,8 @@ var uuid: String = "" ## Uuid of the current component, do not modify at runtime
 
 func _init(p_uuid: String = UUID_Util.v4()) -> void:
 	uuid = p_uuid
-	print("I am: ", uuid)
+	print(uuid)
+	
 
 
 ## Sets user_meta from the given value
@@ -65,6 +66,7 @@ func serialize() -> Dictionary:
 	serialized_data.name = name
 	serialized_data.meta = get_all_user_meta()
 	
+	print(serialized_data)
 	return serialized_data
 
 

@@ -32,7 +32,12 @@ func stop():
 
 ## Called when this output it told to output
 func output() -> void:
-	
+
+	if not _udp_peer.is_bound():
+		return
+
+	print("Art-Net")
+
 	var packet = PackedByteArray()
 	
 	# Art-Net ID ('Art-Net')

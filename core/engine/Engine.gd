@@ -65,13 +65,13 @@ func _universe_on_fixture_name_changed(fixture: Fixture, new_name: String):
 	on_fixture_name_changed.emit(fixture, new_name)
 
 
-func _universe_on_fixtures_added(p_fixtures: Array[Fixture]):
+func _universe_on_fixtures_added(p_fixtures: Array[Fixture], fixture_uuids: Array):
 	for fixture: Fixture in p_fixtures:
 		fixtures[fixture.uuid] = fixture
 
 	on_fixtures_added.emit(p_fixtures, fixtures.keys())
 
-func _universe_on_fixtures_removed(p_fixtures: Array):
+func _universe_on_fixtures_removed(p_fixtures: Array, fixture_uuids: Array):
 	for fixture: Fixture in p_fixtures:
 		fixtures.erase(fixture.uuid)
 
@@ -91,7 +91,7 @@ const output_plugin_path: String = "res://core/output_plugins/" ## File path for
 
 func _ready() -> void:	
 	# Set low processor mode to true, to avoid using too much system resources 
-	OS.set_low_processor_usage_mode(true)
+	OS.set_low_processor_usage_mode(false)
 
 	# Load io plugins and fixtures
 	output_plugins = get_io_plugins(output_plugin_path)
@@ -158,16 +158,25 @@ func add_universe(name: String = "New Universe", universe: Universe = null, no_s
 	if not universe:
 		universe = Universe.new()
 		universe.name = name
-
+	print("add_universe | after init | ", universe.get_reference_count())
+	
+	
 	universes[universe.uuid] = universe
+	print("add_universe | after add to universes | ", universe.get_reference_count())
+	
 	
 	_connect_universe_signals(universe)
-
+	print("add_universe | after add signals | ", universe.get_reference_count())
+	
+	
 	Server.add_networked_object(universe.uuid, universe, universe.on_delete_requested) # Add this new universe to networked objects, to allow it to be controled remotley
+	print("add_universe | after add network object | ", universe.get_reference_count())
+	
 	
 	if not no_signal:
 		on_universes_added.emit([universe], universes.keys())
-
+	print("add_universe | after signal emit | ", universe.get_reference_count())	
+	
 	return universe
 
 
@@ -233,19 +242,19 @@ func _disconnect_universe_signals(universe: Universe):
 ## Removes a universe from this engine
 func remove_universe(universe: Universe, no_signal: bool = false, delete_object: bool = true) -> bool: 
 	
+	print("remove_universe | befour anything | ", universe.get_reference_count())
+	
 	# Check if this universe is part of this engine
 	if universe in universes.values():
+		universes.erase(universe.uuid)
 		
-		universes.erase(universe.uuid)		
-
-		_disconnect_universe_signals(universe)
-
-		if delete_object:
-			universe.delete()
-
-
+		_disconnect_universe_signals(universe)		
+		
 		if not no_signal:
 			on_universes_removed.emit([universe])
+
+		if delete_object:
+			universe.delete()		
 		
 		return true
 	
@@ -264,7 +273,7 @@ func remove_universes(universes_to_remove: Array, no_signal: bool = false, delet
 		if remove_universe(universe, true, delete_object):
 			just_removed_universes.append(universe)		
 	
-	if not no_signal:
+	if not no_signal and just_removed_universes:
 		on_universes_removed.emit(just_removed_universes)
 
 
@@ -318,7 +327,13 @@ func get_fixture_definitions(folder: String) -> Dictionary:
 				loaded_fixtures_definitions[manifest.info.brand][manifest.info.name] = manifest
 			else:
 				loaded_fixtures_definitions[manifest.info.brand] = {manifest.info.name:manifest}
+
 	return loaded_fixtures_definitions
+
+
+## Returnes all currently loaded fixture definitions
+func get_loaded_fixtures_definitions() -> Dictionary:
+	return fixtures_definitions
 
 
 ## Returns serialised version of all the fixtures in this universe

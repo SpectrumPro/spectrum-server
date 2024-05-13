@@ -17,10 +17,10 @@ signal on_fixtures_removed(fixtures: Array[Fixture], fixture_uuids: Array[String
 
 
 ## Emited when a output / outputs are added to this universe, contains a list of all output uuids for server-client synchronization
-signal on_outputs_added(outputs: Array[DataOutputPlugin], otuput_uuids: Array[String])
+signal on_outputs_added(outputs: Array[DataOutputPlugin], output_uuids: Array[String])
 
 ## Emited when a output / outputs are removed from this universe, contains a list of all output uuids for server-client synchronization
-signal on_outputs_removed(outputs: Array[DataOutputPlugin], otuput_uuids: Array[String])
+signal on_outputs_removed(outputs: Array[DataOutputPlugin], output_uuids: Array[String])
 
 
 ## Dictionary containing all the fixtures in this universe, stored as channel:Array[fixture]
@@ -47,7 +47,7 @@ func add_output(name: String = "New Output", output: DataOutputPlugin = null, no
 	outputs[output.uuid] = output
 	
 	Core._output_timer.connect(output.output)
-	Server.add_networked_object(output.uuid, output) # Add this new output to networked objects, to allow it to be controled remotely
+	Server.add_networked_object(output.uuid, output, output.on_delete_requested) # Add this new output to networked objects, to allow it to be controled remotely
 	
 	if not no_signal:
 		on_outputs_added.emit([output], outputs.keys())
@@ -72,12 +72,15 @@ func add_outputs(outputs_to_add: Array, no_signal: bool = false) -> Array[DataOu
 
 
 ## Removes a output from this engine
-func remove_output(output: DataOutputPlugin, no_signal: bool = false) -> bool: 
+func remove_output(output: DataOutputPlugin, no_signal: bool = false, delete_object: bool = true) -> bool: 
 	
 	# Check if this output is part of this universe
 	if output in outputs.values():
 		
 		outputs.erase(output.uuid)			
+
+		if delete_object:
+			output.delete()
 
 		if not no_signal:
 			on_outputs_removed.emit([output])
@@ -91,15 +94,15 @@ func remove_output(output: DataOutputPlugin, no_signal: bool = false) -> bool:
 
 
 ## Removes mutiple outputs from this universe
-func remove_outputs(outputs_to_remove: Array, no_signal: bool = false) -> void:
+func remove_outputs(outputs_to_remove: Array, no_signal: bool = false, delete_object: bool = true) -> void:
 
 	var just_removed_outputs: Array = []
-	
+
 	for output: DataOutputPlugin in outputs_to_remove:
-		if remove_output(output, true):
+		if remove_output(output, true, delete_object):
 			just_removed_outputs.append(output)		
 	
-	if not no_signal:
+	if not no_signal and just_removed_outputs:
 		on_outputs_removed.emit(just_removed_outputs)
 
 
@@ -116,7 +119,7 @@ func add_fixture(fixture: Fixture, channel: int = -1, no_signal: bool = false) -
 	
 	fixture.channel = fixture_channel
 
-	if not fixture_channels[fixture_channel]:
+	if not fixture_channels.get(fixture_channel):
 		fixture_channels[fixture_channel] = []
 	
 	fixture_channels[fixture_channel].append(fixture)
@@ -166,7 +169,7 @@ func add_fixtures_from_manifest(fixture_manifest: Dictionary, mode:int, start_ch
 			just_added_fixtures.append(new_fixture)
 		
 	if not no_signal:
-		on_fixtures_added.emit(just_added_fixtures)
+		on_fixtures_added.emit(just_added_fixtures, fixtures.keys())
 	
 	return just_added_fixtures
 
@@ -198,7 +201,7 @@ func remove_fixtures(fixtures_to_remove: Array, no_signal: bool = false) -> void
 		if remove_fixture(fixture, true):
 			just_removed_fixtures.append(fixture)		
 	
-	if not no_signal:
+	if not no_signal and just_removed_fixtures:
 		on_outputs_removed.emit(just_removed_fixtures)
 		
 
@@ -259,20 +262,21 @@ func load_from(serialised_data: Dictionary) -> void:
 	for fixture_uuid: String in serialised_data.get("fixtures", {}):
 		var serialised_fixture: Dictionary = serialised_data.fixtures[fixture_uuid]
 		
-		var fixture_brand: String = serialised_fixture.get("meta", {}).get("fixture_brand", "Generic")
-		var fixture_name: String = serialised_fixture.get("meta", {}).get("fixture_name", "Dimmer")
+		# var fixture_brand: String = serialised_fixture.get("meta", {}).get("fixture_brand", "Generic")
+		# var fixture_name: String = serialised_fixture.get("meta", {}).get("fixture_name", "Dimmer")
 		
-		var fixture_manifest: Dictionary = Core.fixtures_definitions[fixture_brand][fixture_name]
+		# var fixture_manifest: Dictionary = Core.fixtures_definitions[fixture_brand][fixture_name]
 		var channel: int = serialised_fixture.get("channel", 1)
 		
-		var new_fixture = Fixture.new({
-			"universe": self,
-			"channel": channel,
-			"mode": serialised_fixture.get("mode", 0),
-			"manifest": fixture_manifest,
-			"uuid": fixture_uuid
-		})
-		
+		var new_fixture = Fixture.new()
+
+# {
+# 			"universe": self,
+# 			"channel": channel,
+# 			"mode": serialised_fixture.get("mode", 0),
+# 			"manifest": fixture_manifest,
+# 			"uuid": fixture_uuid
+# 		})		
 		
 		fixtures[channel] = new_fixture
 		Core.fixtures[new_fixture.uuid] = new_fixture

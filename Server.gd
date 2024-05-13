@@ -109,8 +109,6 @@ func add_networked_object(object_name: String, object: Object, delete_signal: Si
 func remove_networked_object(object_name: String) -> void:
 	print("Removing Networked Object: ", object_name)
 	if _networked_objects_delete_callbacks.has(object_name):
-		print(_networked_objects_delete_callbacks)
-		print(_networked_objects_delete_callbacks[object_name].signal.get_connections())
 		(_networked_objects_delete_callbacks[object_name].signal as Signal).disconnect(_networked_objects_delete_callbacks[object_name].callable)
 		_networked_objects_delete_callbacks.erase(object_name)
 		

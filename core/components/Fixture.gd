@@ -33,51 +33,15 @@ var current_input_data: Dictionary = {}
 var _compiled_dmx_data: Dictionary
 
 
-func _init(i: Dictionary = {}) -> void:
-	## Init function to create a new fixture, from a set of prexisting infomation. If no infomation is passed a blank fixture is returne
-	
-	if not i:
-		return
-	
-	universe = i.universe as Universe
-	channel = i.channel as int
-	mode = i.mode as int
-	length = len(i.manifest.modes.values()[mode].channels)
-	manifest = i.manifest as Dictionary
-	channel_ranges = i.manifest.get("channels", {})
-	channels = i.manifest.modes.values()[mode].channels
-	
-	var p = Utils.deserialize_variant(i.get("position", ""))
-	if p is Vector2:
-		position = p
-	
-	meta.fixture_brand = i.manifest.info.brand
-	meta.fixture_name = i.manifest.info.name
-	
-	self.name = i.manifest.info.brand + " | " + i.manifest.info.name
-	
-	if "uuid" in i:
-		self.uuid = i.uuid
-	
-	self.on_name_changed.connect(
-		func(new_name: String):
-			universe.fixture_name_changed.emit(self, new_name)
-	)
-	
-	super._init()
-
-func serialize() -> Dictionary:
+func _on_serialize_request() -> Dictionary:
 	## Returnes serialized infomation about this fixture
 
-	var serialized_data: Dictionary = super.serialize()
-
-	serialized_data.universe = universe.uuid
-	serialized_data.chanel = channel
-	serialized_data.mode = mode
-	serialized_data.position = position
-	serialized_data.meta = meta
-
-	return serialized_data
+	return {
+		"channel": channel,
+		"mode": mode,
+		"position": position,
+		"meta": meta
+	}
 
 
 func recompile_data() -> void:
@@ -96,8 +60,7 @@ func recompile_data() -> void:
 	universe.set_data(_compiled_dmx_data)
 
 
-func delete() -> void:
-	super.delete()
+func _on_delete_request() -> void:
 	
 	var empty_data: Dictionary = {}
 	
