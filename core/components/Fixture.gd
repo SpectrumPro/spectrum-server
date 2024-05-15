@@ -4,9 +4,11 @@
 class_name Fixture extends EngineComponent
 ## Engine class to control parameters of fixtures
 
-signal color_changed(color: Color) ## Emitted when the color of this fixture is changed 
-signal mode_changed(mode: int) ## Emitted when the mode of the fixture is changed
-signal channel_changed(new_channel: int) ## Emitted when the channel of the fixture is changed
+signal on_color_changed(color: Color) ## Emitted when the color of this fixture is changed 
+signal on_mode_changed(mode: int) ## Emitted when the mode of the fixture is changed
+signal on_channel_changed(new_channel: int) ## Emitted when the channel of the fixture is changed
+
+signal _fixture_data_changed(data: Dictionary) ## Emitted when any of the channels of this fixture are changed, emitted as channel:value for all channels this fixtures uses
 
 ## Contains metadata infomation about this fixture
 var meta: Dictionary = { 
@@ -56,8 +58,7 @@ func recompile_data() -> void:
 					highest_valued_data["color"] = Utils.get_htp_color(highest_valued_data.get("color", Color()), current_input_data[input_data_id].color)
 	
 	_set_color(highest_valued_data.get("color", Color.BLACK))
-	
-	universe.set_data(_compiled_dmx_data)
+	_fixture_data_changed.emit(_compiled_dmx_data)
 
 
 func _on_delete_request() -> void:
@@ -78,7 +79,7 @@ func _set_color(color: Color) -> void:
 	if "ColorIntensityBlue" in channels:
 		_compiled_dmx_data[int(channels.find("ColorIntensityBlue") + channel)] = color.b8
 	
-	color_changed.emit(color)
+	on_color_changed.emit(color)
 
 
 func set_color(color: Color, id: String = "overide") -> void:
