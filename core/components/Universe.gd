@@ -240,7 +240,7 @@ func _on_serialize_request() -> Dictionary:
 		serialized_fixtures[channel] = []
 
 		for fixture: Fixture in fixture_channels[channel]:
-			serialized_fixtures[channel].append(fixture.uuid)
+			serialized_fixtures[channel].append(fixture.serialize())
 	
 	return {
 		"outputs": serialized_outputs,

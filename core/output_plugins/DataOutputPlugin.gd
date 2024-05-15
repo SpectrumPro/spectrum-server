@@ -50,3 +50,18 @@ func set_plugin_name(new_name):
     plugin_name = new_name
 
     self.name = new_name
+
+
+func _on_serialize_request() -> Dictionary:    
+
+    var serialized_data: Dictionary = {}
+    serialized_data = _on_data_output_plugin_serialize_request()
+	
+    serialized_data.file_name = get_script().get_path().get_file()
+	
+    return serialized_data
+
+
+## Override this function to serialize your output plugin
+func _on_data_output_plugin_serialize_request() -> Dictionary:
+    return {}

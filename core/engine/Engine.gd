@@ -118,7 +118,7 @@ func _process(delta: float) -> void:
 func serialize() -> Dictionary:
 	return {
 		"universes": serialize_universes(),
-		"fixtues": serialize_fixtures(),
+		# "fixtures": serialize_fixtures(),
 		"scenes": serialize_scenes()
 	}
 
@@ -288,14 +288,10 @@ func get_io_plugins(folder: String) -> Dictionary:
 	
 	for plugin in output_plugin_folder.get_files():
 		var uninitialized_plugin = ResourceLoader.load(folder + plugin)
-		
-		var initialized_plugin: DataOutputPlugin = uninitialized_plugin.new()
-		var plugin_name: String = initialized_plugin.name
 
-		uninitialized_output_plugins[plugin_name] = uninitialized_plugin
+		uninitialized_output_plugins[plugin] = uninitialized_plugin
 	
 	return uninitialized_output_plugins
-
 
 
 ## Returns fixture definition files from the folder defined in [param folder]
