@@ -139,15 +139,16 @@ func _on_web_socket_server_message_received(peer_id, message):
 	if not message is Dictionary:
 		return
 
-	var command: Dictionary = Utils.uuids_to_objects(message, _networked_objects)
-
-	if "call" in command and command.get("for", "") in _networked_objects:
+	if "call" in message and message.get("for", "") in _networked_objects:
 		var networked_object: Dictionary = _networked_objects[message.for]
 
-		var method: Dictionary = networked_object.functions.get(command.call, {})
+		var method: Dictionary = networked_object.functions.get(message.call, {})
 
 		if not method:
 			return
+		
+		var command: Dictionary = Utils.uuids_to_objects(message, _networked_objects)
+
 
 		if "args" in command:
 			for index in len(command.args):

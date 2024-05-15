@@ -157,25 +157,16 @@ func add_universe(name: String = "New Universe", universe: Universe = null, no_s
 	# if universe is not defined, create a new one, and set its name to be the name passed to this function
 	if not universe:
 		universe = Universe.new()
-		universe.name = name
-	print("add_universe | after init | ", universe.get_reference_count())
+		universe.name = name	
 	
+	universes[universe.uuid] = universe	
 	
-	universes[universe.uuid] = universe
-	print("add_universe | after add to universes | ", universe.get_reference_count())
-	
-	
-	_connect_universe_signals(universe)
-	print("add_universe | after add signals | ", universe.get_reference_count())
-	
+	_connect_universe_signals(universe)	
 	
 	Server.add_networked_object(universe.uuid, universe, universe.on_delete_requested) # Add this new universe to networked objects, to allow it to be controled remotley
-	print("add_universe | after add network object | ", universe.get_reference_count())
-	
 	
 	if not no_signal:
 		on_universes_added.emit([universe], universes.keys())
-	print("add_universe | after signal emit | ", universe.get_reference_count())	
 	
 	return universe
 

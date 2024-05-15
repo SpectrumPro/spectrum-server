@@ -67,7 +67,7 @@ func _on_delete_request() -> void:
 	for i in _compiled_dmx_data:
 		empty_data[i] = 0
 	
-	universe.set_data(empty_data)
+	# universe.set_data(empty_data)
 
 
 func _set_color(color: Color) -> void:

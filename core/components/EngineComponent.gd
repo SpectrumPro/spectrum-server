@@ -66,7 +66,6 @@ func serialize() -> Dictionary:
 	serialized_data.name = name
 	serialized_data.meta = get_all_user_meta()
 	
-	print(serialized_data)
 	return serialized_data
 
 

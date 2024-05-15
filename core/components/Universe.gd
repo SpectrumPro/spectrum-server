@@ -126,7 +126,8 @@ func add_fixture(fixture: Fixture, channel: int = -1, no_signal: bool = false) -
 
 	fixtures[fixture.uuid] = fixture
 
-	Server.add_networked_object(fixture.uuid, fixture)
+	Server.add_networked_object(fixture.uuid, fixture, fixture.on_delete_requested)
+	fixture.on_delete_requested.connect(remove_fixture.bind(fixture), CONNECT_ONE_SHOT)
 
 	if not no_signal:
 		on_fixtures_added.emit([fixture], fixtures.keys())
@@ -165,6 +166,7 @@ func add_fixtures_from_manifest(fixture_manifest: Dictionary, mode:int, start_ch
 		channel_index += len(fixture_manifest.modes.values()[mode].channels) * index
 		
 		var new_fixture = Fixture.new()
+		new_fixture.name = fixture_manifest.info.name
 		if add_fixture(new_fixture, channel_index, true):
 			just_added_fixtures.append(new_fixture)
 		
@@ -269,6 +271,7 @@ func load_from(serialised_data: Dictionary) -> void:
 		var channel: int = serialised_fixture.get("channel", 1)
 		
 		var new_fixture = Fixture.new()
+	
 
 # {
 # 			"universe": self,

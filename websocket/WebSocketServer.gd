@@ -85,6 +85,7 @@ func _create_peer() -> WebSocketPeer:
 	var ws = WebSocketPeer.new()
 	ws.supported_protocols = supported_protocols
 	ws.handshake_headers = handshake_headers
+	ws.outbound_buffer_size = 100 * 1024 * 1024 # Set buffer size to 50MB
 	return ws
 
 
