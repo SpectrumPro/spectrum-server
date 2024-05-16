@@ -15,6 +15,7 @@ func init():
 	self.plugin_name = "Art-Net Output"
 	self.plugin_authors = ["Liam Sherwin"]
 	self.plugin_description = "Outputs dmx data over Art-Net"
+	start()
 
 
 ## Called when this output is started
@@ -35,8 +36,6 @@ func output() -> void:
 
 	if not _udp_peer.is_bound():
 		return
-
-	print("Art-Net")
 
 	var packet = PackedByteArray()
 	

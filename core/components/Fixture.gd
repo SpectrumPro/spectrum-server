@@ -35,6 +35,13 @@ var current_input_data: Dictionary = {}
 var _compiled_dmx_data: Dictionary
 
 
+func set_manifest(manifest: Dictionary) -> void:
+	length = len(manifest.modes.values()[mode].channels)
+	manifest = manifest as Dictionary
+	channel_ranges = manifest.get("channels", {})
+	channels = manifest.modes.values()[mode].channels
+
+
 func _on_serialize_request() -> Dictionary:
 	## Returnes serialized infomation about this fixture
 
@@ -78,7 +85,7 @@ func _set_color(color: Color) -> void:
 		_compiled_dmx_data[int(channels.find("ColorIntensityGreen") + channel)] = color.g8
 	if "ColorIntensityBlue" in channels:
 		_compiled_dmx_data[int(channels.find("ColorIntensityBlue") + channel)] = color.b8
-	
+	print(channels)
 	on_color_changed.emit(color)
 
 

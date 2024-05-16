@@ -128,6 +128,7 @@ func add_fixture(fixture: Fixture, channel: int = -1, no_signal: bool = false) -
 
 	Server.add_networked_object(fixture.uuid, fixture, fixture.on_delete_requested)
 	fixture.on_delete_requested.connect(remove_fixture.bind(fixture), CONNECT_ONE_SHOT)
+	fixture._fixture_data_changed.connect(self.set_data)
 
 	if not no_signal:
 		on_fixtures_added.emit([fixture], fixtures.keys())
@@ -143,10 +144,11 @@ func add_fixture_from_manifest(fixture_manifest: Dictionary, mode: int, channel:
 		return false
 
 	var fixture: Fixture = Fixture.new()
-	fixture.manifest = fixture_manifest
+	fixture.name = fixture_manifest.info.name
 	fixture.channel = channel
 	fixture.mode = mode
-
+	fixture.set_manifest(fixture_manifest)
+	
 	return add_fixture(fixture, -1, no_signal)
 
 
@@ -167,6 +169,9 @@ func add_fixtures_from_manifest(fixture_manifest: Dictionary, mode:int, start_ch
 		
 		var new_fixture = Fixture.new()
 		new_fixture.name = fixture_manifest.info.name
+		new_fixture.mode = mode
+		new_fixture.set_manifest(fixture_manifest)
+
 		if add_fixture(new_fixture, channel_index, true):
 			just_added_fixtures.append(new_fixture)
 		
@@ -183,6 +188,8 @@ func remove_fixture(fixture: Fixture, no_signal: bool = false) -> bool:
 
 		fixtures.erase(fixture.uuid)
 		fixture_channels[fixture.channel].erase(fixture)
+
+		fixture._fixture_data_changed.disconnect(self.set_data)
 
 		if not fixture_channels[fixture.channel]:
 			fixture_channels.erase(fixture.channel)
@@ -226,8 +233,8 @@ func set_data(data: Dictionary):
 
 func _compile_and_send():
 	var compiled_dmx_data: Dictionary = dmx_data
-	for output in outputs.values():
-		output.set_data(compiled_dmx_data)
+	for output: DataOutputPlugin in outputs.values():
+		output.dmx_data = compiled_dmx_data
 		
 
 ## Serializes this universe
