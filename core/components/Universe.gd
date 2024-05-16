@@ -183,6 +183,9 @@ func remove_fixture(fixture: Fixture, no_signal: bool = false) -> bool:
 
 		fixtures.erase(fixture.uuid)
 		fixture_channels[fixture.channel].erase(fixture)
+
+		if not fixture_channels[fixture.channel]:
+			fixture_channels.erase(fixture.channel)
 		
 		if not no_signal:
 			on_fixtures_removed.emit([fixture], fixtures.keys())

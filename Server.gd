@@ -152,7 +152,10 @@ func _on_web_socket_server_message_received(peer_id, message):
 
 		if "args" in command:
 			for index in len(command.args):
-				if not typeof(command.args[index]) == method.args.values()[index]:
+				# Check if the type of the arg passed by the client matches the arg expected by the function, if not stop now to avoid a crash, ignore if the expected type is null, as this could also be Variant
+				if not typeof(command.args[index]) == method.args.values()[index] and not method.args.values()[index] == 0:
+					print(typeof(command.args[index]))
+					print(method.args.values()[index])
 					print("Type of data: ", command.args[index],  " does not match type: ", type_string(method.args.values()[index]), " required by: ", method.callable)
 					return
 
