@@ -8,8 +8,11 @@ static func save_json_to_file(file_path: String, file_name: String, json: Dictio
 	
 	var file_access: FileAccess = FileAccess.open(file_path+"/"+file_name, FileAccess.WRITE)
 	
+	print(file_path+"/"+file_name)
+
 	if FileAccess.get_open_error():
 		return FileAccess.get_open_error()
+		
 	
 	print(JSON.stringify(json, "\t"))
 	file_access.store_string(JSON.stringify(json, "\t"))
@@ -56,10 +59,10 @@ static func uuids_to_objects(data: Variant, networked_objects: Dictionary):
 					var uninitialized_object = ResourceLoader.load(data._file_path)
 
 					if uninitialized_object:
-						var initialized_object = uninitialized_object.new()
+						var initialized_object = uninitialized_object.new(data._object_ref)
 
-						if initialized_object.has_method("load_from") and "_serialized_object" in data.keys():
-							initialized_object.load_from(data._serialized_object)
+						if initialized_object.has_method("load") and "_serialized_object" in data.keys():
+							initialized_object.load(data._serialized_object)
 
 						return initialized_object
 				else:

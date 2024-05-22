@@ -115,7 +115,7 @@ func add_fixture(fixture: Fixture, channel: int = -1, no_signal: bool = false) -
 	if fixture in fixtures.values():
 		return false
 
-	var fixture_channel = fixture.channel if channel == -1 else channel
+	var fixture_channel: int = fixture.channel if channel == -1 else channel
 	
 	fixture.channel = fixture_channel
 
@@ -133,7 +133,7 @@ func add_fixture(fixture: Fixture, channel: int = -1, no_signal: bool = false) -
 	if not no_signal:
 		on_fixtures_added.emit([fixture], fixtures.keys())
 	
-	return true
+	return fixture
 
 
 ## Adds a new fixture to this universe, from a fixture manifest [br]
@@ -147,9 +147,9 @@ func add_fixture_from_manifest(fixture_manifest: Dictionary, mode: int, channel:
 	fixture.name = fixture_manifest.info.name
 	fixture.channel = channel
 	fixture.mode = mode
-	fixture.set_manifest(fixture_manifest)
+	fixture.set_manifest(fixture_manifest, fixture_manifest.info.manifest_path)
 	
-	return add_fixture(fixture, -1, no_signal)
+	return add_fixture(fixture, channel, no_signal)
 
 
 ## Adds mutiple new fixtures to this universe, from a fixture manifest [br]
@@ -166,13 +166,9 @@ func add_fixtures_from_manifest(fixture_manifest: Dictionary, mode:int, start_ch
 	for index: int in range(quantity):
 		var channel_index = start_channel + offset
 		channel_index += len(fixture_manifest.modes.values()[mode].channels) * index
-		
-		var new_fixture = Fixture.new()
-		new_fixture.name = fixture_manifest.info.name
-		new_fixture.mode = mode
-		new_fixture.set_manifest(fixture_manifest)
 
-		if add_fixture(new_fixture, channel_index, true):
+		var new_fixture = add_fixture_from_manifest(fixture_manifest, mode, channel_index, true)
+		if new_fixture:
 			just_added_fixtures.append(new_fixture)
 		
 	if not no_signal:
@@ -231,6 +227,7 @@ func set_data(data: Dictionary):
 	_compile_and_send()
 
 
+## Compile the dmx data, and send to the outputs
 func _compile_and_send():
 	var compiled_dmx_data: Dictionary = dmx_data
 	for output: DataOutputPlugin in outputs.values():
@@ -251,7 +248,7 @@ func _on_serialize_request() -> Dictionary:
 
 		for fixture: Fixture in fixture_channels[channel]:
 			serialized_fixtures[channel].append(fixture.serialize())
-	
+
 	return {
 		"outputs": serialized_outputs,
 		"fixtures": serialized_fixtures
@@ -263,49 +260,51 @@ func _on_delete_request():
 	remove_outputs(outputs.values())
 
 
-func load_from(serialised_data: Dictionary) -> void:
-	## Loads this universe from a serialised universe
-	
-	self.name = serialised_data.get("name", "")
-	
-	fixtures = {}
-	outputs = {}
-	
-	for fixture_uuid: String in serialised_data.get("fixtures", {}):
-		var serialised_fixture: Dictionary = serialised_data.fixtures[fixture_uuid]
+## Loads this universe from a serialised universe
+func _on_load_request(serialized_data: Dictionary) -> void:
 		
-		# var fixture_brand: String = serialised_fixture.get("meta", {}).get("fixture_brand", "Generic")
-		# var fixture_name: String = serialised_fixture.get("meta", {}).get("fixture_name", "Dimmer")
-		
-		# var fixture_manifest: Dictionary = Core.fixtures_definitions[fixture_brand][fixture_name]
-		var channel: int = serialised_fixture.get("channel", 1)
-		
-		var new_fixture = Fixture.new()
-	
+	var just_added_fixtures: Array[Fixture] = []
+	var just_added_output: Array[DataOutputPlugin] = []
 
-# {
-# 			"universe": self,
-# 			"channel": channel,
-# 			"mode": serialised_fixture.get("mode", 0),
-# 			"manifest": fixture_manifest,
-# 			"uuid": fixture_uuid
-# 		})		
+	for fixture_channel: String in serialized_data.get("fixtures", []):
+		for serialized_fixture: Dictionary in serialized_data.fixtures[fixture_channel]:
+			var new_fixture: Fixture = Fixture.new(serialized_fixture.get("uuid"))
+			new_fixture.load(serialized_fixture)
+			
+			add_fixture(new_fixture, -1, true)
+			just_added_fixtures.append(new_fixture)
+			
+	on_fixtures_added.emit(just_added_fixtures, fixtures.keys())
+	
+	for output_uuid: String in serialized_data.get("outputs", {}).keys():
+		if serialized_data.outputs[output_uuid].get("file_name", "") in Core.output_plugins.keys():
+			var new_output: DataOutputPlugin = Core.output_plugins[serialized_data.outputs[output_uuid].file_name].new(output_uuid)
+			new_output.load(serialized_data.outputs[output_uuid])
+			
+			add_output("New Output", new_output, true)
+			just_added_output.append(new_output)
+
+	on_outputs_added.emit(just_added_output, outputs.keys())
+
+	# for fixture_uuid: String in serialized_data.get("fixtures", {}):
+	# 	var serialised_fixture: Dictionary = serialized_data.fixtures[fixture_uuid]
+	# 	var channel: int = serialised_fixture.get("channel", 1)
 		
-		fixtures[channel] = new_fixture
-		Core.fixtures[new_fixture.uuid] = new_fixture
+	# 	var new_fixture = Fixture.new()
+	# 	new_fixture.load(serialised_fixture)
+
+	# 	add_fixture(new_fixture, channel, true)			
+	# 	just_added_fixtures.append(new_fixture)
 		
 	
-	on_fixtures_added.emit(fixtures.values())
 	
 	
-	for output_uuid: String in serialised_data.get("outputs"):
-		var serialised_output: Dictionary = serialised_data.outputs[output_uuid]
+	# for output_uuid: String in serialized_data.get("outputs"):
+	# 	var serialised_output: Dictionary = serialized_data.outputs[output_uuid]
 		
-		var new_output: DataOutputPlugin = Core.output_plugins[serialised_output.file].plugin.new(serialised_output)
-		new_output.uuid = output_uuid
-		Core.output_timer.connect(new_output.send_packet)
+	# 	var new_output: DataOutputPlugin = Core.output_plugins[serialised_output.file].plugin.new(serialised_output)
+	# 	new_output.load(serialised_output)
 		
-		
-		outputs[new_output.uuid] = new_output
+	# 	add_output(new_output.name, new_output, true)
+	# 	just_added_output.append(new_output)
 	
-	on_outputs_added.emit(outputs.values())

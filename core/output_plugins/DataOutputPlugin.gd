@@ -15,9 +15,9 @@ var dmx_data: Dictionary = {} ## Dictionary containing the dmx data for this out
 
 
 ## Checks if a child class has the "init" function, if so it calls it.
-func _init() -> void:
+func _init(p_uuid: String = UUID_Util.v4()) -> void:
 
-    super._init()
+    super._init(p_uuid)
     self.name = plugin_name
     if has_method("init"):
         self.get("init").call()

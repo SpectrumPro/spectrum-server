@@ -15,7 +15,7 @@ var uuid: String = "" ## Uuid of the current component, do not modify at runtime
 
 func _init(p_uuid: String = UUID_Util.v4()) -> void:
 	uuid = p_uuid
-	print(uuid)
+	print("I am: ", uuid)
 	
 
 
@@ -87,6 +87,19 @@ func delete() -> void:
 ## Overide this function to handle delete requests
 func _on_delete_request() -> void:
 	return
+
+
+## Loades this object from a serialized version
+func load(serialized_data: Dictionary) -> void:
+	name = serialized_data.get("name", "Unnamed EngineComponent")
+	user_meta = serialized_data.get("user_meta", {})
+	
+	_on_load_request(serialized_data)
+
+
+## Overide this function to handle load requests
+func _on_load_request(serialized_data: Dictionary) -> void:
+	pass
 
 
 ## Debug function to tell if this component is freed from memory

@@ -2,7 +2,7 @@
 # All rights reserved.
 
 class_name Fixture extends EngineComponent
-## Engine class to control parameters of fixtures
+## Engine class to control parameters of fixtures, when calling load() be sure to also call set_manifest(), as fixtures do not seralise manifests, only manifest paths
 
 signal on_color_changed(color: Color) ## Emitted when the color of this fixture is changed 
 signal on_mode_changed(mode: int) ## Emitted when the mode of the fixture is changed
@@ -10,36 +10,36 @@ signal on_channel_changed(new_channel: int) ## Emitted when the channel of the f
 
 signal _fixture_data_changed(data: Dictionary) ## Emitted when any of the channels of this fixture are changed, emitted as channel:value for all channels this fixtures uses
 
-## Contains metadata infomation about this fixture
-var meta: Dictionary = { 
-	"fixture_brand":"",
-	"fixture_name":"",
-	"display_name":"",
-}
-
-var universe: Universe ## The universe this fixture is patched to
 var channel: int ## Universe channel of this fixture
 var length: int ## Channel length, from start channel, to end channel
 var mode: int ## Current mode
+
 var manifest: Dictionary ## Fixture manifest
+var manifest_path: String ## Stores the file path to this fixtures manifest, if one exists 
 var channels: Array ## Channels this fixture uses, and what they do
-var channel_ranges: Dictionary ## What happenes at each channel, at each value
-
-var position: Vector2 = Vector2.ZERO
+var channel_ranges: Dictionary ## What happenes on each channel, at each value range
 
 
-## Contains all the parameters inputted by other function in spectrum, ie scenes, programmer, ect. 
+var position: Vector2 = Vector2.ZERO ## Position of this fixture in space, unused currently, but will be used for pixel mapping at some point
+
+
+## Contains all the parameters inputted by other function, ie scenes, programmers, animations, ect. 
 ## Each input it added to this dict with a id for each item, allowing for HTP and LTP calculations
 var current_input_data: Dictionary = {} 
 
 var _compiled_dmx_data: Dictionary
 
 
-func set_manifest(manifest: Dictionary) -> void:
-	length = len(manifest.modes.values()[mode].channels)
-	manifest = manifest as Dictionary
-	channel_ranges = manifest.get("channels", {})
-	channels = manifest.modes.values()[mode].channels
+func set_manifest(p_manifest: Dictionary, p_manifest_path: String = "") -> void:
+	length = len(p_manifest.modes.values()[mode].channels)
+	manifest = p_manifest
+	channel_ranges = p_manifest.get("channels", {})
+	channels = p_manifest.modes.values()[mode].channels
+
+	if p_manifest_path:
+		manifest_path = p_manifest_path
+	else:
+		print(name, ": set_manifest() was called with out specifiing \"manifest_path\", this fixture may not work when loaded from a save file")
 
 
 func _on_serialize_request() -> Dictionary:
@@ -48,9 +48,29 @@ func _on_serialize_request() -> Dictionary:
 	return {
 		"channel": channel,
 		"mode": mode,
-		"position": position,
-		"meta": meta
+		"position": [position.x, position.y],
+		"manifest_path": manifest_path
 	}
+
+
+func _on_delete_request() -> void:
+	
+	var empty_data: Dictionary = {}
+	
+	for i in _compiled_dmx_data:
+		empty_data[i] = 0
+	
+	_fixture_data_changed.emit(empty_data)
+
+
+func _on_load_request(serialized_data: Dictionary) -> void:
+	channel = serialized_data.get("channel", 1)
+	mode = serialized_data.get("mode", 1)
+	position = Vector2(serialized_data.get("position", [0,0])[0], serialized_data.get("position", [0,0])[1])
+	manifest_path = serialized_data.get("manifest_path", "")
+
+	if not manifest_path:
+		print(name, ": Was loaded with out specifying a manifest_path, unless a seprate script loads a manifest, i will be useless after a file reload")
 
 
 func recompile_data() -> void:
@@ -68,15 +88,6 @@ func recompile_data() -> void:
 	_fixture_data_changed.emit(_compiled_dmx_data)
 
 
-func _on_delete_request() -> void:
-	
-	var empty_data: Dictionary = {}
-	
-	for i in _compiled_dmx_data:
-		empty_data[i] = 0
-	
-	# universe.set_data(empty_data)
-
 
 func _set_color(color: Color) -> void:
 	if "ColorIntensityRed" in channels:
@@ -85,7 +96,6 @@ func _set_color(color: Color) -> void:
 		_compiled_dmx_data[int(channels.find("ColorIntensityGreen") + channel)] = color.g8
 	if "ColorIntensityBlue" in channels:
 		_compiled_dmx_data[int(channels.find("ColorIntensityBlue") + channel)] = color.b8
-	print(channels)
 	on_color_changed.emit(color)
 
 

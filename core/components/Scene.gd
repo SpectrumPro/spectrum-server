@@ -6,50 +6,61 @@ class_name Scene extends EngineComponent
 
 signal state_changed(is_enabled: bool) ## Emmitted when this scene is enabled or dissabled
 
-var fade_in_speed: int = 2 ## Fade in speed in seconds
-var fade_out_speed: int = 2 ## Fade out speed in seconds
-
-var engine: CoreEngine ## The CoreEngine this scene is a part of
+var fade_in_speed: float = 2 ## Fade in speed in seconds
+var fade_out_speed: float = 2 ## Fade out speed in seconds
 
 var enabled: bool = false: set = set_enabled ## The current state of this scene
 var save_data: Dictionary = {} ## Saved data for this scene
 
+var current_animation: Tween = null
 
 func set_enabled(is_enabled: bool) -> void:
 	## Enabled or dissables this scene
 	
 	enabled = is_enabled
+
+	if current_animation:
+		current_animation.pause()
 	
+	var new_current_animation: Tween = Core.create_tween()
+	new_current_animation.set_parallel(true)
+
 	if is_enabled:
 		for fixture: Fixture in save_data:
-			Core.animate(func(color): fixture.set_color(color, uuid), Color.BLACK, save_data[fixture].color, fade_in_speed)
+			new_current_animation.tween_method(fixture.set_color.bind(uuid), Color.BLACK, save_data[fixture].color, fade_in_speed)
 	else:
 		for fixture: Fixture in save_data:
-			Core.animate(func(color): fixture.set_color(color, uuid), fixture.current_input_data[uuid].color, Color.BLACK, fade_out_speed)
+			new_current_animation.tween_method(fixture.set_color.bind(uuid), fixture.current_input_data[uuid].color, Color.BLACK, fade_out_speed)
+
+	current_animation = new_current_animation
+
+func set_fade_in_speed(p_fade_in_speed: float) -> void:
+	fade_in_speed = p_fade_in_speed
+
+
+func set_fade_out_speed(p_fade_out_speed: float) -> void:
+	fade_out_speed = p_fade_out_speed
 
 
 func set_save_data(saved_data: Dictionary) -> void:
 	save_data = saved_data
 	
 	for fixture: Fixture in save_data.keys():
-		fixture.on_delete_request.connect(func(deleted_fixture: Fixture): save_data.erase(deleted_fixture))
+		fixture.on_delete_requested.connect(func(deleted_fixture: Fixture): save_data.erase(deleted_fixture))
 
 
-func serialize() -> Dictionary:
+func _on_serialize_request() -> Dictionary:
 	## Serializes this scene and returnes it in a dictionary
 	
 	return {
-		"name": self.name,
 		"fade_in_speed": fade_in_speed,
 		"fade_out_speed": fade_out_speed,
 		"save_data": serialize_save_data()
 	}
 
 
-func load_from(serialized_data: Dictionary) -> void:
-	
-	self.name = serialized_data.get("name", "")
-	
+func _on_load_request(serialized_data: Dictionary) -> void:
+		
 	fade_in_speed = serialized_data.get("fade_in_speed", fade_in_speed)
 	fade_out_speed = serialized_data.get("fade_out_speed", fade_out_speed)
 	
@@ -82,6 +93,6 @@ func deserialize_save_data(serialized_data: Dictionary) -> Dictionary:
 		for saved_property: String in fixture_save:
 			deserialized_fixture_save[saved_property] = Utils.deserialize_variant(fixture_save[saved_property])
 		
-		deserialized_save_data[engine.fixtures[fixture_uuid]] = deserialized_fixture_save
+		deserialized_save_data[Core.fixtures[fixture_uuid]] = deserialized_fixture_save
 		
 	return deserialized_save_data

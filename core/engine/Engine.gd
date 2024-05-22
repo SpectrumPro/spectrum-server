@@ -84,6 +84,8 @@ func _universe_on_fixtures_removed(p_fixtures: Array, fixture_uuids: Array):
 ## This allows the callable to be dissconnected from the universe, and freed from memory
 var _universe_signal_connections: Dictionary = {}
 
+var home_path := OS.get_environment("USERPROFILE") if OS.has_feature("windows") else OS.get_environment("HOME")
+var show_library_location: String = home_path + "/.spectrum"
 
 const fixture_path: String = "res://core/fixtures/" ## File path for fixture definitons
 const output_plugin_path: String = "res://core/output_plugins/" ## File path for output plugin definitons
@@ -92,6 +94,9 @@ const output_plugin_path: String = "res://core/output_plugins/" ## File path for
 func _ready() -> void:	
 	# Set low processor mode to true, to avoid using too much system resources 
 	OS.set_low_processor_usage_mode(false)
+	
+	if not DirAccess.dir_exists_absolute(show_library_location):
+		print("The folder \"show_library_location\" does not exist, creating one now, errcode: ", DirAccess.make_dir_absolute(show_library_location))
 
 	# Load io plugins and fixtures
 	output_plugins = get_io_plugins(output_plugin_path)
@@ -116,40 +121,62 @@ func _process(delta: float) -> void:
 
 ## Serializes all elements of this engine, used for file saving, and network synchronization
 func serialize() -> Dictionary:
+	print(
+		{
+		"universes": serialize_universes(),
+		"scenes": serialize_scenes()
+	}
+	)
 	return {
 		"universes": serialize_universes(),
-		# "fixtures": serialize_fixtures(),
 		"scenes": serialize_scenes()
 	}
 
 
 ## Saves this engine to disk
-func save(file_name: String = "", file_path: String = "") -> Error:
+func save(file_name: String = "") -> void:
 	
-	return Utils.save_json_to_file(file_path, file_name, serialize())
+	print(Utils.save_json_to_file(show_library_location, file_name, serialize()))
 
 
-## Loads a save file and deserialize the data, WIP
-func load(file_path) -> void:
-	
-	# var saved_file = FileAccess.open(file_path, FileAccess.READ)
-	# var serialized_data: Dictionary = JSON.parse_string(saved_file.get_as_text())
-	
-	# ## Loops through each universe in the save file (if any), and loads them into the engine
-	# for universe_uuid: String in serialized_data.get("universes", {}):
-	# 	var serialized_universe: Dictionary = serialized_data.universes[universe_uuid]
-		
-	# 	var new_universe: Universe = new_universe(serialized_universe.name, false, serialized_universe, universe_uuid)
-	# 	universes[new_universe.uuid] = new_universe
-	
-	# for scene_uuid: String in serialized_data.get("scenes", {}):
-	# 	var serialized_scene: Dictionary = serialized_data.scenes[scene_uuid]
-		
-	# 	new_scene(Scene.new(), true, serialized_scene, scene_uuid)
-		
-	# 	on_scenes_added.emit(scenes)
-	pass
+## Get serialized data from a file, and load it into this engine
+func load_from_file(file_name: String) -> void:
+	var saved_file = FileAccess.open(show_library_location + "/" + file_name, FileAccess.READ)
+	var serialized_data: Dictionary = JSON.parse_string(saved_file.get_as_text())
 
+	print(serialized_data)
+
+	self.load(serialized_data) # Use self.load as load() is a gdscript global function
+
+
+## Loads serialized data into this engine
+func load(serialized_data: Dictionary) -> void:
+
+
+	# Loops through each universe in the save file (if any), and adds them into the engine
+	for universe_uuid: String in serialized_data.get("universes", {}):
+		var new_universe: Universe = Universe.new(universe_uuid)
+
+		add_universe("New Universe", new_universe)
+		new_universe.load(serialized_data.universes[universe_uuid])
+
+	
+	# Loops through each scene in the save file (if any), and adds them into the engine
+	for scene_uuid: String in serialized_data.get("scenes", {}):
+		var new_scene: Scene = Scene.new(scene_uuid)
+
+		add_scene("New Scene", new_scene)
+		new_scene.load(serialized_data.scenes[scene_uuid])
+
+
+func get_all_shows_from_library() -> Array[String]:
+
+	var shows: Array[String] = []
+
+	for file_name in DirAccess.open(show_library_location).get_files():
+		shows.append(file_name)
+
+	return shows
 
 ## Adds a new universe to this engine, if [param universe] is defined, it will be added, if no universe is defined, one will be created with the name passed
 func add_universe(name: String = "New Universe", universe: Universe = null, no_signal: bool = false) -> Universe:
@@ -159,15 +186,20 @@ func add_universe(name: String = "New Universe", universe: Universe = null, no_s
 		universe = Universe.new()
 		universe.name = name	
 	
-	universes[universe.uuid] = universe	
+	if not universe.uuid in universes:
+
+		universes[universe.uuid] = universe	
+		
+		_connect_universe_signals(universe)	
+		
+		Server.add_networked_object(universe.uuid, universe, universe.on_delete_requested) # Add this new universe to networked objects, to allow it to be controled remotley
+		
+		if not no_signal:
+			on_universes_added.emit([universe], universes.keys())
 	
-	_connect_universe_signals(universe)	
-	
-	Server.add_networked_object(universe.uuid, universe, universe.on_delete_requested) # Add this new universe to networked objects, to allow it to be controled remotley
-	
-	if not no_signal:
-		on_universes_added.emit([universe], universes.keys())
-	
+	else:
+		print("Universe: ", universe.uuid, " is already in this engine")
+
 	return universe
 
 
@@ -308,7 +340,7 @@ func get_fixture_definitions(folder: String) -> Dictionary:
 			var manifest_file = FileAccess.open(folder+fixture_folder+"/"+fixture, FileAccess.READ)
 			var manifest = JSON.parse_string(manifest_file.get_as_text())
 			
-			manifest.info.file_path = folder+fixture_folder+"/"+fixture
+			manifest.info.manifest_path = fixture_folder+"/"+fixture
 			
 			if loaded_fixtures_definitions.has(manifest.info.brand):
 				loaded_fixtures_definitions[manifest.info.brand][manifest.info.name] = manifest
@@ -334,37 +366,23 @@ func serialize_fixtures() -> Dictionary:
 
 
 
-func add_scene(name: String = "New Scene", scene: Scene = null, no_signal: bool = false) -> Scene:
+func add_scene(name: String = "New Scene", scene: Scene = Scene.new(), no_signal: bool = false) -> Scene:
 	## Adds a scene to this engine, creats a new one if none is passed
 	
-	if not scene:
-		scene = Scene.new()
-		scene.name = name
+	if not scene.uuid in scenes:
+
+		scenes[scene.uuid] = scene
+		
+		Server.add_networked_object(scene.uuid, scene, scene.on_delete_requested)
+		scene.on_delete_requested.connect(remove_scene.bind(scene), CONNECT_ONE_SHOT)
+
+		if not no_signal:
+			on_scenes_added.emit([scene], scenes.keys())
 	
-	scenes[scene.uuid] = scene
-	
-	if not no_signal:
-		on_scenes_added.emit([scene])
-	
+	else:
+		print("Scene: ", scene.uuid, " is already in this engine")
+
 	return scene
-
-
-
-## Adds mutiple scenes to this engine at once, [param scenes_to_add] can be a array of [Scenes]s or a array of [param n] length, where [param n] is the number of scenes to be added
-func add_scenes(scenes_to_add: Array, no_signal: bool = false) -> Array[Scene]:
-
-	var just_added_scenes: Array = []
-
-	for item in scenes_to_add:
-		if item is Scene:
-			just_added_scenes.append(add_scene("", item, true))
-		else:
-			just_added_scenes.append(add_scene("New Scene", Scene.new(), true))
-
-			
-	on_scenes_added.emit(just_added_scenes, scenes.keys())
-
-	return just_added_scenes
 
 
 ## Removes a scene from this engine
@@ -411,6 +429,7 @@ func serialize_scenes() -> Dictionary:
 
 
 ## Animates a value, use this function if your script extends object but you want to use a tween. As none node scripts cant use tweens
-func animate(function: Callable, from: Variant, to: Variant, duration: int) -> void:
+func animate(function: Callable, from: Variant, to: Variant, duration: int) -> Tween:
 	var animation = get_tree().create_tween()
 	animation.tween_method(function, from, to, duration)
+	return animation
