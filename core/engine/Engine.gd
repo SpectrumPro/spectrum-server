@@ -31,6 +31,9 @@ signal on_scenes_added(scenes: Array[Scene], scene_uuids: Array[String])
 ## Emited when a scene / scenes are removed from this engine, contains a list of all scene uuids for server-client synchronization
 signal on_scenes_removed(scenes: Array[Scene], scene_uuids: Array[String])
 
+## Emitted when a scene has tis name changed, contains a list of all scene uuids for server-client synchronization
+signal scene_name_changed(scene: Scene, new_name: String, scene_uuids: Array[String]) 
+
 
 signal _output_timer() ## Emited [member CoreEngine.call_interval] number of times per second.
 
@@ -83,6 +86,16 @@ func _universe_on_fixtures_removed(p_fixtures: Array, fixture_uuids: Array):
 ## To counter act this, _universe_signal_connections stored as Universe:Dictionary{"callable": Callable}. Stores the copy of [member Engine._universe_on_name_changed] that is returned when it is .bind(universe) [br]
 ## This allows the callable to be dissconnected from the universe, and freed from memory
 var _universe_signal_connections: Dictionary = {}
+
+
+## Folowing functions are for connecting Scene signals to Engine signals, they are defined as vairables so they can be dissconnected when scenes are to be deleted
+func _scene_on_name_changed(new_name: String, scene: Scene) -> void:
+	scene_name_changed.emit(scene, new_name)
+
+
+## See _universe_signal_connections for details
+var _scene_signal_connections: Dictionary = {}
+
 
 var home_path := OS.get_environment("USERPROFILE") if OS.has_feature("windows") else OS.get_environment("HOME")
 var show_library_location: String = home_path + "/.spectrum"
@@ -264,9 +277,7 @@ func _disconnect_universe_signals(universe: Universe):
 
 ## Removes a universe from this engine
 func remove_universe(universe: Universe, no_signal: bool = false, delete_object: bool = true) -> bool: 
-	
-	print("remove_universe | befour anything | ", universe.get_reference_count())
-	
+		
 	# Check if this universe is part of this engine
 	if universe in universes.values():
 		universes.erase(universe.uuid)
@@ -368,34 +379,68 @@ func serialize_fixtures() -> Dictionary:
 
 func add_scene(name: String = "New Scene", scene: Scene = Scene.new(), no_signal: bool = false) -> Scene:
 	## Adds a scene to this engine, creats a new one if none is passed
-	
+	print(scene.get_reference_count())
 	if not scene.uuid in scenes:
 
 		scenes[scene.uuid] = scene
+		print(scene.get_reference_count())
 		
 		Server.add_networked_object(scene.uuid, scene, scene.on_delete_requested)
-		scene.on_delete_requested.connect(remove_scene.bind(scene), CONNECT_ONE_SHOT)
+		print(scene.get_reference_count())
+
+		_connect_scene_signals(scene)
+		print(scene.get_reference_count())
 
 		if not no_signal:
 			on_scenes_added.emit([scene], scenes.keys())
-	
+		print(scene.get_reference_count())
+
 	else:
 		print("Scene: ", scene.uuid, " is already in this engine")
 
 	return scene
 
 
+func _connect_scene_signals(scene: Scene) -> void:
+	_scene_signal_connections[scene] = {
+		"_scene_on_name_changed": _scene_on_name_changed.bind(scene),
+		"_remove_scenes": remove_scenes.bind([scene])
+		}
+	
+	scene.on_name_changed.connect(_scene_signal_connections[scene]._scene_on_name_changed)
+	scene.on_delete_requested.connect(_scene_signal_connections[scene]._remove_scenes)
+
+
+
+func _disconnect_scene_signals(scene: Scene) -> void:
+	
+	scene.on_name_changed.disconnect(_scene_signal_connections[scene]._scene_on_name_changed)
+	scene.on_delete_requested.disconnect(_scene_signal_connections[scene]._remove_scenes)
+	
+	_scene_signal_connections[scene] = {}
+	_scene_signal_connections.erase(scene)
+
+
 ## Removes a scene from this engine
-func remove_scene(scene: Scene, no_signal: bool = false) -> bool:
+func remove_scene(scene: Scene, no_signal: bool = false, delete_object: bool = true) -> bool:
+	print(scene.get_reference_count())
 	
 	# Check if this scene is part of this engine
-	if scene in scene.values():
+	if scene in scenes.values():
+		print(scene.get_reference_count())
 		
-		scenes.erase(scene.uuid)			
+		scenes.erase(scene.uuid)	
+		print(scene.get_reference_count())
+
+		_disconnect_scene_signals(scene)
+		print(scene.get_reference_count())
 
 		if not no_signal:
 			on_scenes_removed.emit([scene])
-		
+		print(scene.get_reference_count())
+		if delete_object:
+			scene.delete()	
+		print(scene.get_reference_count())
 		return true
 	
 	# If not return false
@@ -405,16 +450,17 @@ func remove_scene(scene: Scene, no_signal: bool = false) -> bool:
 
 
 ## Removes mutiple scenes from this engine
-func remove_scenes(scenes_to_remove: Array, no_signal: bool = false) -> void:
+func remove_scenes(scenes_to_remove: Array, no_signal: bool = false, delete_object: bool = true) -> void:
 	
-	var just_removed_universes: Array = []
+	var just_removed_scenes: Array = []
 	
 	for scene: Scene in scenes_to_remove:
-		if remove_scene(scene):
-			just_removed_universes.append(scene)
+		if remove_scene(scene, true, delete_object):
+			just_removed_scenes.append(scene)
 	
 	if not no_signal:
-		on_scenes_removed.emit(just_removed_universes)
+		on_scenes_removed.emit(just_removed_scenes)
+	
 
 
 ## Serializes all scenes and returnes them in a dictionary 

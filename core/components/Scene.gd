@@ -27,12 +27,20 @@ func set_enabled(is_enabled: bool) -> void:
 
 	if is_enabled:
 		for fixture: Fixture in save_data:
-			new_current_animation.tween_method(fixture.set_color.bind(uuid), Color.BLACK, save_data[fixture].color, fade_in_speed)
+			var color: Color = Color.BLACK
+			if uuid in fixture.current_input_data:
+				color = fixture.current_input_data[uuid].color
+			
+			new_current_animation.tween_method(fixture.set_color.bind(uuid), color, save_data[fixture].color, fade_in_speed)
 	else:
 		for fixture: Fixture in save_data:
-			new_current_animation.tween_method(fixture.set_color.bind(uuid), fixture.current_input_data[uuid].color, Color.BLACK, fade_out_speed)
+			var color: Color = save_data[fixture].color
+			if uuid in fixture.current_input_data:
+				color = fixture.current_input_data[uuid].color
+			new_current_animation.tween_method(fixture.set_color.bind(uuid), color, Color.BLACK, fade_out_speed)
 
 	current_animation = new_current_animation
+
 
 func set_fade_in_speed(p_fade_in_speed: float) -> void:
 	fade_in_speed = p_fade_in_speed
@@ -46,7 +54,12 @@ func set_save_data(saved_data: Dictionary) -> void:
 	save_data = saved_data
 	
 	for fixture: Fixture in save_data.keys():
-		fixture.on_delete_requested.connect(func(deleted_fixture: Fixture): save_data.erase(deleted_fixture))
+		fixture.on_delete_requested.connect(remove_fixture.bind(fixture), CONNECT_ONE_SHOT)
+
+
+## Removes a fixture from save_data
+func remove_fixture(fixture: Fixture) -> void:
+	save_data.erase(fixture)
 
 
 func _on_serialize_request() -> Dictionary:
