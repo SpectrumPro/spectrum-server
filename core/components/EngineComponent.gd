@@ -96,8 +96,6 @@ func load(serialized_data: Dictionary) -> void:
 	
 	_on_load_request(serialized_data)
 
-	print(self.name, ": Refernce Count: ", get_reference_count())
-
 
 ## Overide this function to handle load requests
 func _on_load_request(serialized_data: Dictionary) -> void:

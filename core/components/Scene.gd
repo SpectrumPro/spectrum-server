@@ -9,16 +9,15 @@ signal state_changed(is_enabled: bool) ## Emmitted when this scene is enabled or
 var fade_in_speed: float = 2 ## Fade in speed in seconds
 var fade_out_speed: float = 2 ## Fade out speed in seconds
 
-var enabled: bool = false: set = set_enabled ## The current state of this scene
+var enabled: bool = false ## The current state of this scene, do not modify this, instead call set_enabled()
 var save_data: Dictionary = {} ## Saved data for this scene
 
 var current_animation: Tween = null
 
-func set_enabled(is_enabled: bool) -> void:
-	## Enabled or dissables this scene
-	
+## Enabled or dissables this scene, will use default fade speed if none is provided
+func set_enabled(is_enabled: bool, fade_speed: float = -1) -> void:
 	enabled = is_enabled
-
+	
 	if current_animation:
 		current_animation.pause()
 	
@@ -31,13 +30,13 @@ func set_enabled(is_enabled: bool) -> void:
 			if uuid in fixture.current_input_data:
 				color = fixture.current_input_data[uuid].color
 			
-			new_current_animation.tween_method(fixture.set_color.bind(uuid), color, save_data[fixture].color, fade_in_speed)
+			new_current_animation.tween_method(fixture.set_color.bind(uuid), color, save_data[fixture].color, fade_in_speed if fade_speed == -1 else fade_speed)
 	else:
 		for fixture: Fixture in save_data:
 			var color: Color = save_data[fixture].color
 			if uuid in fixture.current_input_data:
 				color = fixture.current_input_data[uuid].color
-			new_current_animation.tween_method(fixture.set_color.bind(uuid), color, Color.BLACK, fade_out_speed)
+			new_current_animation.tween_method(fixture.set_color.bind(uuid), color, Color.BLACK, fade_out_speed if fade_speed == -1 else fade_speed)
 
 	current_animation = new_current_animation
 

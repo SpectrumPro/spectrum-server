@@ -5,6 +5,9 @@ class_name CoreEngine extends Node
 ## The core engine that powers Spectrum
 
 
+# SIGNALS:
+# Emitted when things happen in this engine, or in the Universes, Fixtures, Scenes ect... that are apart of it 
+
 ## Emitted when any of the universes in this engine have there name changed
 signal on_universe_name_changed(universe: Universe, new_name: String) 
 
@@ -31,12 +34,22 @@ signal on_scenes_added(scenes: Array[Scene], scene_uuids: Array[String])
 ## Emited when a scene / scenes are removed from this engine, contains a list of all scene uuids for server-client synchronization
 signal on_scenes_removed(scenes: Array[Scene], scene_uuids: Array[String])
 
-## Emitted when a scene has tis name changed, contains a list of all scene uuids for server-client synchronization
-signal scene_name_changed(scene: Scene, new_name: String, scene_uuids: Array[String]) 
+## Emitted when a scene has its name changed, contains a list of all scene uuids for server-client synchronization
+signal on_scene_name_changed(scene: Scene, new_name: String, scene_uuids: Array[String]) 
+
+
+## Emited when a CueList / CueLists are added to this engine, contains a list of all CueList uuids for server-client synchronization
+signal on_cue_lists_added(scenes: Array[Scene], scene_uuids: Array[String])
+
+## Emited when a CueList / CueLists are removed from this engine, contains a list of all CueList uuids for server-client synchronization
+signal on_cue_lists_removed(scenes: Array[Scene], scene_uuids: Array[String])
 
 
 signal _output_timer() ## Emited [member CoreEngine.call_interval] number of times per second.
 
+
+# OBJECT DICTIONARIES
+# Used to store all the objects (Universes, Fixtures, Scens, ect...) in this engine
 
 ## Dictionary containing all universes in this engine, do not modify this at runtime unless you know what you are doing, instead call [method CoreEngine.add_universe]
 var universes: Dictionary = {} 
@@ -47,6 +60,9 @@ var fixtures: Dictionary = {}
 ## Dictionary containing all scenes in this engine, do not modify this at runtime unless you know what you are doing, instead call [method CoreEngine.add_scene]
 var scenes: Dictionary = {}
 
+## Dictionary containing all cue lists in this engine, do not modify this at runtime unless you know what you are doing, instead call [method CoreEngine.add_cue_list]
+var cue_lists: Dictionary = {}
+
 
 ## Dictionary containing fixture definiton file, stored in [member CoreEngine.fixture_path]
 var fixtures_definitions: Dictionary = {} 
@@ -54,11 +70,17 @@ var fixtures_definitions: Dictionary = {}
 ## Dictionary containing all of the output plugins, sotred in [member CoreEngine.output_plugin_path]
 var output_plugins: Dictionary = {}
 
+
+# TIMING VALUES:
+# Used to set the process frequency of this engine, and all the objects that are apart of it
+
 ## Output frequency of this engine, defaults to 45hz. defined as 1.0 / desired frequency
 var call_interval: float = 1.0 / 45.0  # 1 second divided by 45
 
-var _accumulated_time: float = 0.0 ## Used as an internal refernce for timeimg call_interval correctly
+var _accumulated_time: float = 0.0 ## Used as an internal refernce for timing call_interval correctly
 
+
+## SIGNAL CONNECTIONS:
 ## Folowing functions are for connecting universe signals to engine signals, they are defined as vairables so they can be dissconnected when universe is to be deleted
 func _universe_on_name_changed(new_name: String, universe: Universe): 
 	on_universe_name_changed.emit(universe, new_name)
@@ -90,18 +112,25 @@ var _universe_signal_connections: Dictionary = {}
 
 ## Folowing functions are for connecting Scene signals to Engine signals, they are defined as vairables so they can be dissconnected when scenes are to be deleted
 func _scene_on_name_changed(new_name: String, scene: Scene) -> void:
-	scene_name_changed.emit(scene, new_name)
+	on_scene_name_changed.emit(scene, new_name)
 
 
 ## See _universe_signal_connections for details
 var _scene_signal_connections: Dictionary = {}
 
 
+# FILE PATHS:
+# File paths for stoage in the engine
+
 var home_path := OS.get_environment("USERPROFILE") if OS.has_feature("windows") else OS.get_environment("HOME")
+## The location for storing all the save show files
 var show_library_location: String = home_path + "/.spectrum"
 
-const fixture_path: String = "res://core/fixtures/" ## File path for fixture definitons
-const output_plugin_path: String = "res://core/output_plugins/" ## File path for output plugin definitons
+## File path for fixture definitons
+const fixture_path: String = "res://core/fixtures/" 
+
+## File path for output plugin definitons
+const output_plugin_path: String = "res://core/output_plugins/" 
 
 
 func _ready() -> void:	
@@ -134,15 +163,10 @@ func _process(delta: float) -> void:
 
 ## Serializes all elements of this engine, used for file saving, and network synchronization
 func serialize() -> Dictionary:
-	print(
-		{
-		"universes": serialize_universes(),
-		"scenes": serialize_scenes()
-	}
-	)
 	return {
 		"universes": serialize_universes(),
-		"scenes": serialize_scenes()
+		"scenes": serialize_scenes(),
+		"cue_lists": serialize_cue_lists()
 	}
 
 
@@ -155,6 +179,11 @@ func save(file_name: String = "") -> void:
 ## Get serialized data from a file, and load it into this engine
 func load_from_file(file_name: String) -> void:
 	var saved_file = FileAccess.open(show_library_location + "/" + file_name, FileAccess.READ)
+
+	if not saved_file:
+		print("Unable to open file: \"", file_name, "\", ",  error_string(FileAccess.get_open_error()))
+		return
+	
 	var serialized_data: Dictionary = JSON.parse_string(saved_file.get_as_text())
 
 	print(serialized_data)
@@ -180,6 +209,13 @@ func load(serialized_data: Dictionary) -> void:
 
 		add_scene("New Scene", new_scene)
 		new_scene.load(serialized_data.scenes[scene_uuid])
+
+	# Loops through each of the cue lists in the save file (if any), and adds them into the engine
+	for cue_list_uuid: String in serialized_data.get("cue_lists", {}):
+		var new_cue_list: CueList = CueList.new(cue_list_uuid)
+
+		add_cue_list("New Cue List", new_cue_list)
+		new_cue_list.load(serialized_data.cue_lists[cue_list_uuid])
 
 
 func get_all_shows_from_library() -> Array[String]:
@@ -379,21 +415,16 @@ func serialize_fixtures() -> Dictionary:
 
 func add_scene(name: String = "New Scene", scene: Scene = Scene.new(), no_signal: bool = false) -> Scene:
 	## Adds a scene to this engine, creats a new one if none is passed
-	print(scene.get_reference_count())
 	if not scene.uuid in scenes:
 
 		scenes[scene.uuid] = scene
-		print(scene.get_reference_count())
 		
 		Server.add_networked_object(scene.uuid, scene, scene.on_delete_requested)
-		print(scene.get_reference_count())
 
 		_connect_scene_signals(scene)
-		print(scene.get_reference_count())
 
 		if not no_signal:
 			on_scenes_added.emit([scene], scenes.keys())
-		print(scene.get_reference_count())
 
 	else:
 		print("Scene: ", scene.uuid, " is already in this engine")
@@ -423,24 +454,19 @@ func _disconnect_scene_signals(scene: Scene) -> void:
 
 ## Removes a scene from this engine
 func remove_scene(scene: Scene, no_signal: bool = false, delete_object: bool = true) -> bool:
-	print(scene.get_reference_count())
 	
 	# Check if this scene is part of this engine
 	if scene in scenes.values():
-		print(scene.get_reference_count())
 		
 		scenes.erase(scene.uuid)	
-		print(scene.get_reference_count())
 
 		_disconnect_scene_signals(scene)
-		print(scene.get_reference_count())
 
 		if not no_signal:
 			on_scenes_removed.emit([scene])
-		print(scene.get_reference_count())
+
 		if delete_object:
 			scene.delete()	
-		print(scene.get_reference_count())
 		return true
 	
 	# If not return false
@@ -472,6 +498,70 @@ func serialize_scenes() -> Dictionary:
 		serialized_scenes[scene.uuid] = scene.serialize()
 	
 	return serialized_scenes
+
+
+func add_cue_list(name: String = "New Cue List", cue_list: CueList = CueList.new(), no_signal: bool = false) -> CueList:
+	## Adds a cue_list to this engine, creats a new one if none is passed
+	if not cue_list.uuid in cue_lists:
+
+		cue_lists[cue_list.uuid] = cue_list
+		
+		Server.add_networked_object(cue_list.uuid, cue_list, cue_list.on_delete_requested)
+
+		if not no_signal:
+			on_cue_lists_added.emit([cue_list], cue_lists.keys())
+
+	else:
+		print("CueList: ", cue_list.uuid, " is already in this engine")
+
+	return cue_list
+
+
+## Removes a cue_list from this engine
+func remove_cue_list(cue_list: CueList, no_signal: bool = false, delete_object: bool = true) -> bool:
+	
+	# Check if this cue_list is part of this engine
+	if cue_list in cue_lists.values():
+		
+		cue_lists.erase(cue_list.uuid)	
+
+		if not no_signal:
+			on_cue_lists_removed.emit([cue_list])
+
+		if delete_object:
+			cue_list.delete()	
+
+		return true
+	
+	# If not return false
+	else:
+		print("CueList: ", cue_list.uuid, " is not part of this engine")
+		return false
+
+
+## Removes mutiple cue_lists from this engine
+func remove_cue_lists(cue_lists_to_remove: Array, no_signal: bool = false, delete_object: bool = true) -> void:
+	
+	var just_removed_cue_lists: Array = []
+	
+	for cue_list: CueList in cue_lists_to_remove:
+		if remove_cue_list(cue_list, true, delete_object):
+			just_removed_cue_lists.append(cue_list)
+	
+	if not no_signal:
+		on_cue_lists_removed.emit(just_removed_cue_lists)
+	
+
+
+## Serializes all cue_lists and returnes them in a dictionary 
+func serialize_cue_lists() -> Dictionary:
+	
+	var serialized_cue_lists: Dictionary = {}
+	
+	for cue_list: CueList in cue_lists.values():
+		serialized_cue_lists[cue_list.uuid] = cue_list.serialize()
+	
+	return serialized_cue_lists
 
 
 ## Animates a value, use this function if your script extends object but you want to use a tween. As none node scripts cant use tweens

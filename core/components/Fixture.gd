@@ -20,6 +20,7 @@ var channels: Array ## Channels this fixture uses, and what they do
 var channel_ranges: Dictionary ## What happenes on each channel, at each value range
 
 
+var color: Color = Color.BLACK
 var position: Vector2 = Vector2.ZERO ## Position of this fixture in space, unused currently, but will be used for pixel mapping at some point
 
 
@@ -89,17 +90,22 @@ func recompile_data() -> void:
 
 
 
-func _set_color(color: Color) -> void:
+func _set_color(p_color: Color) -> void:
+
+	if p_color.is_equal_approx(color):
+		return 
+
 	if "ColorIntensityRed" in channels:
-		_compiled_dmx_data[int(channels.find("ColorIntensityRed") + channel)] = color.r8
+		_compiled_dmx_data[int(channels.find("ColorIntensityRed") + channel)] = p_color.r8
 	if "ColorIntensityGreen" in channels:
-		_compiled_dmx_data[int(channels.find("ColorIntensityGreen") + channel)] = color.g8
+		_compiled_dmx_data[int(channels.find("ColorIntensityGreen") + channel)] = p_color.g8
 	if "ColorIntensityBlue" in channels:
-		_compiled_dmx_data[int(channels.find("ColorIntensityBlue") + channel)] = color.b8
-	on_color_changed.emit(color)
+		_compiled_dmx_data[int(channels.find("ColorIntensityBlue") + channel)] = p_color.b8
+	color = p_color
+	on_color_changed.emit(p_color)
 
 
-func set_color(color: Color, id: String = "overide") -> void:
+func set_color(color: Color, id: String = "override") -> void:
 	## Sets the color of this fixture
 	
 	if color == Color.BLACK:
