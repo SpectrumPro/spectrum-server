@@ -126,6 +126,9 @@ var home_path := OS.get_environment("USERPROFILE") if OS.has_feature("windows") 
 ## The location for storing all the save show files
 var show_library_location: String = home_path + "/.spectrum"
 
+## The main programmer for this engine, mutiple can be created, how ever this one is made automaticaly for clients to use
+var programmer: Programmer = Programmer.new()
+
 ## File path for fixture definitons
 const fixture_path: String = "res://core/fixtures/" 
 
@@ -146,6 +149,8 @@ func _ready() -> void:
 
 	# Add self to networked objects to allow for client to server comunication
 	Server.add_networked_object("engine", self)
+
+	Server.add_networked_object("programmer", programmer)
 
 
 func _process(delta: float) -> void:
@@ -207,7 +212,7 @@ func load(serialized_data: Dictionary) -> void:
 	for scene_uuid: String in serialized_data.get("scenes", {}):
 		var new_scene: Scene = Scene.new(scene_uuid)
 
-		add_scene("New Scene", new_scene)
+		add_scene(new_scene)
 		new_scene.load(serialized_data.scenes[scene_uuid])
 
 	# Loops through each of the cue lists in the save file (if any), and adds them into the engine
@@ -413,7 +418,7 @@ func serialize_fixtures() -> Dictionary:
 
 
 
-func add_scene(name: String = "New Scene", scene: Scene = Scene.new(), no_signal: bool = false) -> Scene:
+func add_scene(scene: Scene = Scene.new(), no_signal: bool = false) -> Scene:
 	## Adds a scene to this engine, creats a new one if none is passed
 	if not scene.uuid in scenes:
 
