@@ -65,7 +65,7 @@ func output() -> void:
 	
 	# DMX Channels
 	for channel in range(1, 513):
-		packet.append(dmx_data.get(channel, 0))
+		packet.append(clamp(dmx_data.get(channel, 0), 0, 255))
 	
 	# Send the packet
 	_udp_peer.put_packet(packet)

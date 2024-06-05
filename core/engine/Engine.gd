@@ -394,10 +394,10 @@ func get_fixture_definitions(folder: String) -> Dictionary:
 			
 			manifest.info.manifest_path = fixture_folder+"/"+fixture
 			
-			if loaded_fixtures_definitions.has(manifest.info.brand):
-				loaded_fixtures_definitions[manifest.info.brand][manifest.info.name] = manifest
+			if loaded_fixtures_definitions.has(fixture_folder):
+				loaded_fixtures_definitions[fixture_folder][fixture] = manifest
 			else:
-				loaded_fixtures_definitions[manifest.info.brand] = {manifest.info.name:manifest}
+				loaded_fixtures_definitions[fixture_folder] = {fixture:manifest}
 
 	return loaded_fixtures_definitions
 
