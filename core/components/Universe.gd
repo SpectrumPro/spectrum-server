@@ -256,7 +256,6 @@ func _on_serialize_request() -> Dictionary:
 
 ## Called when this universe is to be deleted, see [method EngineComponent.delete]
 func _on_delete_request():
-	remove_fixtures(fixtures.values())
 	remove_outputs(outputs.values())
 
 
