@@ -41,10 +41,10 @@ var _compiled_dmx_data: Dictionary
 
 ## Set the manifest of this fixture
 func set_manifest(p_manifest: Dictionary, p_manifest_path: String = "") -> void:
-	length = len(p_manifest.modes.values()[mode].channels)
+	length = len(p_manifest.modes.values()[mode - 1].channels)
 	manifest = p_manifest
 	channel_ranges = p_manifest.get("channels", {})
-	channels = p_manifest.modes.values()[mode].channels
+	channels = p_manifest.modes.values()[mode - 1].channels
 
 	if p_manifest_path:
 		manifest_path = p_manifest_path
@@ -70,6 +70,11 @@ func recompile_data() -> void:
 	_set_color(highest_valued_data.get("color", Color.BLACK))
 	_set_white_intensity(highest_valued_data.get("white", 0))
 	_fixture_data_changed.emit(_compiled_dmx_data)
+
+
+
+## Color Channels:
+
 
 
 ## Sets the color of this fixture
@@ -112,7 +117,6 @@ func set_white_intensity(value: int, id: String = "override") -> void:
 
 ## Internal function that really changed the white value, and emits the signal
 func _set_white_intensity(value: int) -> void:
-	print(channel)
 	if "ColorIntensityWhite" in channels:
 		_compiled_dmx_data[int(channels.find("ColorIntensityWhite") + channel)] = value
 
@@ -129,9 +133,9 @@ func _add_current_input_data(id: String, key: String, value: Variant) -> void:
 
 ## Removes some input data to this fixture
 func _remove_current_input_data(id: String, key: String) -> void:
-	current_input_data.get("id", {}).erase(key)
-	if not current_input_data.get("id", false):
-		current_input_data.erase(id) 
+	current_input_data.get(id, {}).erase(key)
+	# if not current_input_data.get(id, false):
+	# 	current_input_data.erase(id) 
 
 
 func _on_serialize_request() -> Dictionary:
