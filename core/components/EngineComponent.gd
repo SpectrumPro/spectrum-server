@@ -16,7 +16,13 @@ var uuid: String = "" ## Uuid of the current component, do not modify at runtime
 func _init(p_uuid: String = UUID_Util.v4()) -> void:
 	uuid = p_uuid
 	print("I am: ", uuid)
+
+	_component_ready()
 	
+
+## Override this function to provide a _ready function for your script
+func _component_ready() -> void:
+	pass
 
 
 ## Sets user_meta from the given value

@@ -472,6 +472,7 @@ func remove_scene(scene: Scene, no_signal: bool = false, delete_object: bool = t
 
 		if delete_object:
 			scene.delete()	
+
 		return true
 	
 	# If not return false
@@ -569,8 +570,9 @@ func serialize_cue_lists() -> Dictionary:
 	return serialized_cue_lists
 
 
-## Animates a value, use this function if your script extends object but you want to use a tween. As none node scripts cant use tweens
-func animate(function: Callable, from: Variant, to: Variant, duration: int) -> Tween:
-	var animation = get_tree().create_tween()
-	animation.tween_method(function, from, to, duration)
-	return animation
+## Creates a new Animator and adds it as a child node so it can process
+func create_animator() -> Animator:
+	var animator: Animator = Animator.new()
+	add_child(animator)
+
+	return animator

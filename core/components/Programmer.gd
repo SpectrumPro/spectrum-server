@@ -44,7 +44,15 @@ func save_to_scene(name: String = "New Scene") -> Scene:
 	
 	var new_scene: Scene = Scene.new()
 	
-	new_scene.set_save_data(save_data.duplicate(true))
+	for fixture: Fixture in save_data:
+		for channel: String in save_data[fixture].keys():
+			match channel:
+				"color":
+					new_scene.add_data(fixture, "set_color", Color.BLACK, save_data[fixture].color)
+				"white":
+					new_scene.add_data(fixture, "set_white_intensity", 0, save_data[fixture].white)
+
+
 	new_scene.name = name
 	
 	Core.add_scene(new_scene)

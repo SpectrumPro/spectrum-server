@@ -4,107 +4,146 @@
 class_name Scene extends EngineComponent
 ## Engine class for creating and recalling saved data
 
-signal state_changed(is_enabled: bool) ## Emmitted when this scene is enabled or dissabled
 
-var fade_in_speed: float = 2 ## Fade in speed in seconds
-var fade_out_speed: float = 2 ## Fade out speed in seconds
+## Emitted when this scene is _enabled or dissabled
+signal on_state_changed(is_enabled: bool)
 
-var enabled: bool = false ## The current state of this scene, do not modify this, instead call set_enabled()
-var save_data: Dictionary = {} ## Saved data for this scene
+## Emitted when the fade in or out speed is changed
+signal on_fade_speed_changed(fade_in: float, fade_out: float)
 
-var current_animation: Tween = null
+## Emitted when the current percentage step of this scene changes, ie the current position during the fade from 0 to 1.0
+signal on_percentage_step_changed(percentage: float)
 
-## Enabled or dissables this scene, will use default fade speed if none is provided
-func set_enabled(is_enabled: bool, fade_speed: float = -1) -> void:
-	enabled = is_enabled
-	
-	if current_animation:
-		current_animation.pause()
-	
-	var new_current_animation: Tween = Core.create_tween()
-	new_current_animation.set_parallel(true)
 
-	if is_enabled:
-		for fixture: Fixture in save_data:
-			var color: Color = Color.BLACK
-			if uuid in fixture.current_input_data:
-				color = fixture.current_input_data[uuid].color
-			
-			new_current_animation.tween_method(fixture.set_color.bind(uuid), color, save_data[fixture].color, fade_in_speed if fade_speed == -1 else fade_speed)
+## Fade in speed in seconds
+var fade_in_speed: float = 2 : set = set_fade_in_speed
+
+## Fade out speed in seconds
+var fade_out_speed: float = 2 : set = set_fade_out_speed
+
+
+## The current state of this scene
+var _enabled: bool = false
+
+## Saved data for this scene
+var _save_data: Dictionary = {}
+
+## The Animator used for this scene
+var _animator: Animator = Core.create_animator()
+
+
+## Called when this EngineComponent is ready
+func _component_ready() -> void:
+	_animator.steped.connect(func (step: float): 
+		var value
+
+		if _animator.length == 0:
+			value = step
+		else:
+			value = remap(step, 0, _animator.length, 0.0, 1.0)
+
+		on_percentage_step_changed.emit(value)
+	)
+
+
+## Sets the state of this scene
+func set_enabled(p_enabled: bool, fade_time: float = -1) -> void:
+	_enabled = p_enabled
+
+	# Workout wheather we are enabling or dissabling this scene, then adust the animation length to match fade time
+	if _enabled:
+		_animator.length = fade_in_speed if fade_time == -1 else fade_time
 	else:
-		for fixture: Fixture in save_data:
-			var color: Color = save_data[fixture].color
-			if uuid in fixture.current_input_data:
-				color = fixture.current_input_data[uuid].color
-			new_current_animation.tween_method(fixture.set_color.bind(uuid), color, Color.BLACK, fade_out_speed if fade_speed == -1 else fade_speed)
+		_animator.length = fade_out_speed if fade_time == -1 else fade_time
 
-	current_animation = new_current_animation
+	_animator.play_backwards = not _enabled
+	_animator.play()
+
+	on_state_changed.emit(_enabled)
+	print(_enabled)
 
 
+## Returnes the state of this scene
+func is_enabled() -> bool:
+	return _enabled
+
+
+## Set the step percentage of this scene, value ranges from 0.0 to 1.0, and is used as a percentage to control the underlaying animation
+func set_step_percentage(step: float) -> void:
+	_enabled = true if step else false
+	on_state_changed.emit(_enabled)
+
+	if _animator.length == 0:
+		_animator.length = 1 
+
+	_animator.seek_to(remap(step, 0.0, 1.0, 0, _animator.length), _animator.length)
+
+
+## Add a method to this scene
+func add_data(fixture: Fixture, method: String, default_data: Variant, data: Variant) -> void:
+
+	if fixture.get(method) is Callable:
+		_animator.animate_method(fixture.get(method).bind("scene_" + uuid), default_data, data)
+
+		if not fixture.uuid in _save_data:
+			_save_data[fixture.uuid] = []
+		
+		_save_data[fixture.uuid].append({
+			"default": default_data,
+			"data": data,
+			"method": method
+		})
+
+
+## Sets the fade in speed
 func set_fade_in_speed(p_fade_in_speed: float) -> void:
 	fade_in_speed = p_fade_in_speed
+	on_fade_speed_changed.emit(fade_in_speed, fade_out_speed)
 
 
+## Sets the fade out speed
 func set_fade_out_speed(p_fade_out_speed: float) -> void:
 	fade_out_speed = p_fade_out_speed
+	on_fade_speed_changed.emit(fade_in_speed, fade_out_speed)
 
 
-func set_save_data(saved_data: Dictionary) -> void:
-	save_data = saved_data
-	
-	for fixture: Fixture in save_data.keys():
-		fixture.on_delete_requested.connect(remove_fixture.bind(fixture), CONNECT_ONE_SHOT)
-
-
-## Removes a fixture from save_data
-func remove_fixture(fixture: Fixture) -> void:
-	save_data.erase(fixture)
-
-
+## Serializes this scene and returnes it in a dictionary
 func _on_serialize_request() -> Dictionary:
-	## Serializes this scene and returnes it in a dictionary
 	
+	var serialized_save_data: Dictionary = {}
+
+	for fixture_uuid: String in _save_data:
+		serialized_save_data[fixture_uuid] = []
+
+		var data: Array = _save_data[fixture_uuid]
+		for track in data:
+			serialized_save_data[fixture_uuid].append({
+				"default": var_to_str(track.default),
+				"data": var_to_str(track.data),
+				"method": track.method
+			})
+
 	return {
 		"fade_in_speed": fade_in_speed,
 		"fade_out_speed": fade_out_speed,
-		"save_data": serialize_save_data()
+		"save_data": serialized_save_data
 	}
 
-
+## Called when this scene is to be loaded from serialized data
 func _on_load_request(serialized_data: Dictionary) -> void:
 		
 	fade_in_speed = serialized_data.get("fade_in_speed", fade_in_speed)
 	fade_out_speed = serialized_data.get("fade_out_speed", fade_out_speed)
 	
-	set_save_data(deserialize_save_data(serialized_data.get("save_data", {})))
+	for fixture_uuid: String in serialized_data.get("save_data", {}):
+		if fixture_uuid in Core.fixtures:
+			var data: Array = serialized_data.save_data[fixture_uuid]
+			for track in data:
+				print(track)
+				print(var_to_str(Color.BLACK))
+				add_data(Core.fixtures[fixture_uuid], track.get("method", ""), str_to_var(track.get("default", 0)), str_to_var(track.get("data", 0)))
 
 
-func serialize_save_data() -> Dictionary:
-	## Serializes save_data and returnes as a dictionary
-	
-	var serialized_save_data: Dictionary = {}
-	
-	for fixture: Fixture in save_data:
-		serialized_save_data[fixture.uuid] = {}
-		for save_key in save_data[fixture]:
-			serialized_save_data[fixture.uuid][save_key] = Utils.serialize_variant(save_data[fixture][save_key])
-	
-	return serialized_save_data
-
-
-func deserialize_save_data(serialized_data: Dictionary) -> Dictionary:
-	## Deserializes save_data and returnes as a dictionary
-	
-	var deserialized_save_data: Dictionary = {}
-	
-	for fixture_uuid: String in serialized_data:
-		var fixture_save: Dictionary = serialized_data[fixture_uuid]
-		
-		var deserialized_fixture_save = {}
-		
-		for saved_property: String in fixture_save:
-			deserialized_fixture_save[saved_property] = Utils.deserialize_variant(fixture_save[saved_property])
-		
-		deserialized_save_data[Core.fixtures[fixture_uuid]] = deserialized_fixture_save
-		
-	return deserialized_save_data
+## Called when this scene is to be deleted
+func _on_delete_request() -> void:
+	_animator.delete()
