@@ -50,17 +50,26 @@ func _component_ready() -> void:
 func set_enabled(p_enabled: bool, fade_time: float = -1) -> void:
 	_enabled = p_enabled
 
-	# Workout wheather we are enabling or dissabling this scene, then adust the animation length to match fade time
+	# Workout wheather we are enabling or dissabling this scene, then adust the animation time scale to be fade_time * length
+	# _animator.length always equals 1, so setting the time scale to 0.5 will cause the animation to run at half speed
+	# This is to work around the issue where if the length is 0, the animation wont play as it will stop immediately 
 	if _enabled:
-		_animator.length = fade_in_speed if fade_time == -1 else fade_time
+		fade_time = fade_in_speed if fade_time == -1 else fade_time
+
+		_animator.time_scale = _animator.length / fade_time
+
 	else:
-		_animator.length = fade_out_speed if fade_time == -1 else fade_time
+		fade_time = fade_out_speed if fade_time == -1 else fade_time
+
+		_animator.time_scale = _animator.length / fade_time
+
 
 	_animator.play_backwards = not _enabled
 	_animator.play()
 
 	on_state_changed.emit(_enabled)
 	print(_enabled)
+	print(_animator.time_scale)
 
 
 ## Returnes the state of this scene
@@ -73,10 +82,7 @@ func set_step_percentage(step: float) -> void:
 	_enabled = true if step else false
 	on_state_changed.emit(_enabled)
 
-	if _animator.length == 0:
-		_animator.length = 1 
-
-	_animator.seek_to(remap(step, 0.0, 1.0, 0, _animator.length), _animator.length)
+	_animator.seek_to_percentage(step)
 
 
 ## Add a method to this scene
