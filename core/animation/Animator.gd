@@ -8,6 +8,9 @@ class_name Animator extends Node
 ## Emitted each time this animation completes a step
 signal steped(time: float)
 
+## Emitted when this animation has stoped playing
+signal finished
+
 
 ## Default length for this animation
 var length: float = 1 : 
@@ -21,6 +24,10 @@ var is_playing: bool = false :
 	set(state):
 		is_playing = state
 		set_process(state)
+		_stop_at = length if state else 0
+
+		if not state:
+			finished.emit()
 
 
 ## The time_scale of this animator, 1 will play back at normal speed. Do not set this to negtive, instead use play_backwards
@@ -36,14 +43,16 @@ var elapsed_time: float = 0
 ## Contains all the infomation for this animation
 var _animation_data: Dictionary = {}
 
+var _stop_at: float = -1
 
 func _ready() -> void:
 	set_process(false)
 
 
 ## Plays this animation
-func play() -> void:
+func play(stop_at: float = -1) -> void:
 	is_playing = true
+	_stop_at = stop_at
 
 
 ## Pauses this animation
@@ -73,18 +82,20 @@ func _process(delta: float) -> void:
 	if play_backwards:
 		elapsed_time -= delta * time_scale
 
-		if elapsed_time <= 0:
-			seek_to_percentage(0)
-			is_playing = false
+		if elapsed_time <= _stop_at:
+			if elapsed_time <= 0:
+				seek_to_percentage(0)
+
+			is_playing = false 
 			
 	else:
 		elapsed_time += delta * time_scale
 
-		if elapsed_time >= length:
-			seek_to_percentage(1)
-			is_playing = false
+		if elapsed_time >= _stop_at:
+			if elapsed_time >= length:
+				seek_to_percentage(1)
 
-	print(time_scale)
+			is_playing = false
 
 
 ## Seeks to percentage amount through the animator

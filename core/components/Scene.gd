@@ -31,6 +31,10 @@ var _save_data: Dictionary = {}
 ## The Animator used for this scene
 var _animator: Animator = Core.create_animator()
 
+var _time_scale_befour_flash: float  = 0
+var _time_befour_flash: float = 0
+var _backwards_befour_flash: bool = false
+var _flash_active: bool = false
 
 ## Called when this EngineComponent is ready
 func _component_ready() -> void:
@@ -84,6 +88,33 @@ func set_step_percentage(step: float) -> void:
 
 	_animator.seek_to_percentage(step)
 
+
+## Enables the scene in flash mode, this will force it to be held at 100%, and when released with flash_release, it will return to where it was befour the flash
+func flash_hold(fade_in: float = fade_in_speed) -> void:
+	if not _flash_active:
+		_time_befour_flash = _animator.elapsed_time
+		print(_time_befour_flash)
+		_time_scale_befour_flash = _animator.time_scale
+		_backwards_befour_flash = _animator.play_backwards
+	
+	_flash_active = true
+
+	_animator.time_scale = _animator.length /  fade_in
+	_animator.play_backwards = false
+	_animator.play()
+
+
+func flash_release(fade_out: float = fade_out_speed) -> void:
+	_animator.time_scale = _animator.length /  fade_out
+	_animator.play_backwards = true
+	_animator.play(_time_befour_flash)
+
+	await _animator.finished
+
+	_animator.time_scale = _time_scale_befour_flash
+	_animator.play_backwards = _backwards_befour_flash
+
+	_flash_active = false
 
 ## Add a method to this scene
 func add_data(fixture: Fixture, method: String, default_data: Variant, data: Variant) -> void:
