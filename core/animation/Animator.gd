@@ -24,7 +24,7 @@ var is_playing: bool = false :
 	set(state):
 		is_playing = state
 		set_process(state)
-		_stop_at = length if state else 0
+		# _stop_at = length if state else 0.0
 
 		if not state:
 			finished.emit()
@@ -34,7 +34,11 @@ var is_playing: bool = false :
 var time_scale: float = 1
 
 ## Whether or not to play this animation backwards
-var play_backwards: bool = false
+var play_backwards: bool = false : 
+	set(state):
+		play_backwards = state
+		_stop_at = 0.0 if state else length
+
 
 ## Elapsed time since this animation started
 var elapsed_time: float = 0
@@ -52,7 +56,9 @@ func _ready() -> void:
 ## Plays this animation
 func play(stop_at: float = -1) -> void:
 	is_playing = true
-	_stop_at = stop_at
+
+	if not stop_at == -1:
+		_stop_at = stop_at 
 
 
 ## Pauses this animation
@@ -79,6 +85,9 @@ func delete() -> void:
 func _process(delta: float) -> void:
 	_seek_to(elapsed_time)
 
+	print(elapsed_time)
+	print(_stop_at)
+
 	if play_backwards:
 		elapsed_time -= delta * time_scale
 
@@ -91,10 +100,11 @@ func _process(delta: float) -> void:
 	else:
 		elapsed_time += delta * time_scale
 
+
 		if elapsed_time >= _stop_at:
 			if elapsed_time >= length:
 				seek_to_percentage(1)
-
+			
 			is_playing = false
 
 

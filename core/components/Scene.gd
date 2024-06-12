@@ -72,8 +72,6 @@ func set_enabled(p_enabled: bool, fade_time: float = -1) -> void:
 	_animator.play()
 
 	on_state_changed.emit(_enabled)
-	print(_enabled)
-	print(_animator.time_scale)
 
 
 ## Returnes the state of this scene
@@ -86,6 +84,7 @@ func set_step_percentage(step: float) -> void:
 	_enabled = true if step else false
 	on_state_changed.emit(_enabled)
 
+	_animator.pause()
 	_animator.seek_to_percentage(step)
 
 
@@ -99,9 +98,20 @@ func flash_hold(fade_in: float = fade_in_speed) -> void:
 	
 	_flash_active = true
 
+	if _animator.finished.is_connected(_animator_finished_flash_callback):
+		_animator.finished.disconnect(_animator_finished_flash_callback)
+
 	_animator.time_scale = _animator.length /  fade_in
 	_animator.play_backwards = false
 	_animator.play()
+
+
+
+func _animator_finished_flash_callback() -> void:
+	_animator.time_scale = _time_scale_befour_flash
+	_animator.play_backwards = _backwards_befour_flash
+
+	_flash_active = false
 
 
 func flash_release(fade_out: float = fade_out_speed) -> void:
@@ -109,12 +119,10 @@ func flash_release(fade_out: float = fade_out_speed) -> void:
 	_animator.play_backwards = true
 	_animator.play(_time_befour_flash)
 
-	await _animator.finished
 
-	_animator.time_scale = _time_scale_befour_flash
-	_animator.play_backwards = _backwards_befour_flash
+	_animator.finished.connect(_animator_finished_flash_callback, CONNECT_ONE_SHOT)
 
-	_flash_active = false
+	
 
 ## Add a method to this scene
 func add_data(fixture: Fixture, method: String, default_data: Variant, data: Variant) -> void:
