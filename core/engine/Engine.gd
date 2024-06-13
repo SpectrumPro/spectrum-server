@@ -124,7 +124,7 @@ var _scene_signal_connections: Dictionary = {}
 
 var home_path := OS.get_environment("USERPROFILE") if OS.has_feature("windows") else OS.get_environment("HOME")
 ## The location for storing all the save show files
-var show_library_location: String = home_path + "/.spectrum"
+var show_library_location: String = home_path + "/.spectrum/Show Library"
 
 ## The main programmer for this engine, mutiple can be created, how ever this one is made automaticaly for clients to use
 var programmer: Programmer = Programmer.new()
@@ -178,7 +178,8 @@ func serialize() -> Dictionary:
 ## Saves this engine to disk
 func save(file_name: String = "") -> void:
 	
-	print(Utils.save_json_to_file(show_library_location, file_name, serialize()))
+	if file_name:
+		print(Utils.save_json_to_file(show_library_location, file_name, serialize()))
 
 
 ## Get serialized data from a file, and load it into this engine
