@@ -178,7 +178,7 @@ func add_fixtures_from_manifest(fixture_manifest: Dictionary, mode:int, start_ch
 
 
 ## Removes a fixture from this universe
-func remove_fixture(fixture: Fixture, no_signal: bool = false) -> bool:
+func remove_fixture(fixture: Fixture, no_signal: bool = false, delete_object: bool = true) -> bool:
 	
 	if fixture in fixtures.values():
 
@@ -190,6 +190,9 @@ func remove_fixture(fixture: Fixture, no_signal: bool = false) -> bool:
 		if not fixture_channels[fixture.channel]:
 			fixture_channels.erase(fixture.channel)
 		
+		if delete_object:
+			fixture.delete()
+
 		if not no_signal:
 			on_fixtures_removed.emit([fixture], fixtures.keys())
 
@@ -257,6 +260,7 @@ func _on_serialize_request() -> Dictionary:
 ## Called when this universe is to be deleted, see [method EngineComponent.delete]
 func _on_delete_request():
 	remove_outputs(outputs.values())
+	remove_fixtures(fixtures.values())
 
 
 ## Loads this universe from a serialised universe

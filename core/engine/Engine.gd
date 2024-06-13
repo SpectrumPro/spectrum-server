@@ -165,7 +165,6 @@ func _process(delta: float) -> void:
 		# Subtract the interval from the accumulated time
 		_accumulated_time -= call_interval
 
-
 ## Serializes all elements of this engine, used for file saving, and network synchronization
 func serialize() -> Dictionary:
 	return {
@@ -176,10 +175,11 @@ func serialize() -> Dictionary:
 
 
 ## Saves this engine to disk
-func save(file_name: String = "") -> void:
+func save(file_name: String = "", autosave: bool = false) -> void:
 	
 	if file_name:
-		print(Utils.save_json_to_file(show_library_location, file_name, serialize()))
+		var file_path: String = (show_library_location + "/autosave") if autosave else show_library_location
+		print(Utils.save_json_to_file(file_path, file_name, serialize()))
 
 
 ## Get serialized data from a file, and load it into this engine
@@ -222,6 +222,15 @@ func load(serialized_data: Dictionary) -> void:
 
 		add_cue_list("New Cue List", new_cue_list)
 		new_cue_list.load(serialized_data.cue_lists[cue_list_uuid])
+
+
+## Resets the engine back to the default state
+func reset() -> void:
+	save(Time.get_datetime_string_from_system(), true)
+	
+	remove_universes(universes.values())
+	remove_scenes(scenes.values())
+	remove_cue_lists(cue_lists.values())
 
 
 func get_all_shows_from_library() -> Array[String]:
