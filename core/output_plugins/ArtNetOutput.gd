@@ -3,7 +3,7 @@
 
 class_name ArtNetOutput extends DataOutputPlugin
 
-var ip_address: String = "127.0.0.1" ## IP address of node to connect to
+var ip_address: String = "172.16.198.151" ## IP address of node to connect to
 var port: int = 6454 ## Art-Net port number
 var universe_number: int = 0 ## Art-Net universe number
 

@@ -232,9 +232,8 @@ func set_data(data: Dictionary):
 
 ## Compile the dmx data, and send to the outputs
 func _compile_and_send():
-	var compiled_dmx_data: Dictionary = dmx_data
 	for output: DataOutputPlugin in outputs.values():
-		output.dmx_data = compiled_dmx_data
+		output.dmx_data = dmx_data
 		
 
 ## Serializes this universe
