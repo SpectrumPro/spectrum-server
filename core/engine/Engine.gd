@@ -71,6 +71,10 @@ var fixtures_definitions: Dictionary = {}
 var output_plugins: Dictionary = {}
 
 
+## Serialization mode, if set to network, components will save extra infomation that doesent need to be saved to disk
+enum {SERIALIZE_MODE_DISK, SERIALIZE_MODE_NETWORK}
+
+
 # TIMING VALUES:
 # Used to set the process frequency of this engine, and all the objects that are apart of it
 
@@ -166,11 +170,11 @@ func _process(delta: float) -> void:
 		_accumulated_time -= call_interval
 
 ## Serializes all elements of this engine, used for file saving, and network synchronization
-func serialize() -> Dictionary:
+func serialize(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
 	return {
-		"universes": serialize_universes(),
-		"scenes": serialize_scenes(),
-		"cue_lists": serialize_cue_lists()
+		"universes": serialize_universes(mode),
+		"scenes": serialize_scenes(mode),
+		"cue_lists": serialize_cue_lists(mode)
 	}
 
 
@@ -179,7 +183,7 @@ func save(file_name: String = "", autosave: bool = false) -> void:
 	
 	if file_name:
 		var file_path: String = (show_library_location + "/autosave") if autosave else show_library_location
-		print(Utils.save_json_to_file(file_path, file_name, serialize()))
+		print(Utils.save_json_to_file(file_path, file_name, serialize(SERIALIZE_MODE_DISK)))
 
 
 ## Get serialized data from a file, and load it into this engine
@@ -227,7 +231,7 @@ func load(serialized_data: Dictionary) -> void:
 ## Resets the engine back to the default state
 func reset() -> void:
 	save(Time.get_datetime_string_from_system(), true)
-	
+
 	remove_universes(universes.values())
 	remove_scenes(scenes.values())
 	remove_cue_lists(cue_lists.values())
@@ -363,12 +367,12 @@ func remove_universes(universes_to_remove: Array, no_signal: bool = false, delet
 
 
 ## Serializes all universes and returnes them in a dictionary 
-func serialize_universes() -> Dictionary:
+func serialize_universes(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
 	
 	var serialized_universes: Dictionary = {}
 	
 	for universe: Universe in universes.values():
-		serialized_universes[universe.uuid] = universe.serialize()
+		serialized_universes[universe.uuid] = universe.serialize(mode)
 		
 	return serialized_universes
 
@@ -418,7 +422,7 @@ func get_loaded_fixtures_definitions() -> Dictionary:
 
 
 ## Returns serialised version of all the fixtures in this universe
-func serialize_fixtures() -> Dictionary:
+func serialize_fixtures(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
 	var serialized_fixtures: Dictionary = {}
 
 	for fixture: Fixture in fixtures.values():
@@ -506,12 +510,12 @@ func remove_scenes(scenes_to_remove: Array, no_signal: bool = false, delete_obje
 
 
 ## Serializes all scenes and returnes them in a dictionary 
-func serialize_scenes() -> Dictionary:
+func serialize_scenes(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
 	
 	var serialized_scenes: Dictionary = {}
 	
 	for scene: Scene in scenes.values():
-		serialized_scenes[scene.uuid] = scene.serialize()
+		serialized_scenes[scene.uuid] = scene.serialize(mode)
 	
 	return serialized_scenes
 
@@ -570,12 +574,12 @@ func remove_cue_lists(cue_lists_to_remove: Array, no_signal: bool = false, delet
 
 
 ## Serializes all cue_lists and returnes them in a dictionary 
-func serialize_cue_lists() -> Dictionary:
+func serialize_cue_lists(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
 	
 	var serialized_cue_lists: Dictionary = {}
 	
 	for cue_list: CueList in cue_lists.values():
-		serialized_cue_lists[cue_list.uuid] = cue_list.serialize()
+		serialized_cue_lists[cue_list.uuid] = cue_list.serialize(mode)
 	
 	return serialized_cue_lists
 

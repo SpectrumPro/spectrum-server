@@ -160,7 +160,7 @@ func set_hold_time(at_index: int, hold_time: float) -> void:
       cues[at_index].hold_time = hold_time
 
 
-func _on_serialize_request() -> Dictionary:
+func _on_serialize_request(mode: int) -> Dictionary:
     var serialized_cues: Dictionary = {}
     var serialized_timings: Dictionary = {}
 

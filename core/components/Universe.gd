@@ -237,7 +237,7 @@ func _compile_and_send():
 		
 
 ## Serializes this universe
-func _on_serialize_request() -> Dictionary:
+func _on_serialize_request(mode: int) -> Dictionary:
 	
 	var serialized_outputs: Dictionary = {}
 	var serialized_fixtures: Dictionary = {}

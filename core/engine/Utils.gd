@@ -33,7 +33,7 @@ static func objects_to_uuids(data, just_uuid: bool = false):
 			else:
 				return {
 						"_object_ref": str(data.get("uuid")),
-						"_serialized_object": data.serialize(),
+						"_serialized_object": data.serialize(CoreEngine.SERIALIZE_MODE_NETWORK),
 						"_file_path": data.get_script().get_path()
 					}
 		TYPE_DICTIONARY:

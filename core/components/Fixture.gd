@@ -138,7 +138,7 @@ func _remove_current_input_data(id: String, key: String) -> void:
 	# 	current_input_data.erase(id) 
 
 
-func _on_serialize_request() -> Dictionary:
+func _on_serialize_request(mode: int) -> Dictionary:
 	## Returnes serialized infomation about this fixture
 
 	return {

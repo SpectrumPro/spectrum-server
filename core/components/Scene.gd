@@ -88,6 +88,11 @@ func set_step_percentage(step: float) -> void:
 	_animator.seek_to_percentage(step)
 
 
+## Returnes the percentage step
+func get_step_percentage() -> float:
+	return _animator.elapsed_time / _animator.length
+
+
 ## Enables the scene in flash mode, this will force it to be held at 100%, and when released with flash_release, it will return to where it was befour the flash
 func flash_hold(fade_in: float = fade_in_speed) -> void:
 	if not _flash_active:
@@ -153,7 +158,7 @@ func set_fade_out_speed(p_fade_out_speed: float) -> void:
 
 
 ## Serializes this scene and returnes it in a dictionary
-func _on_serialize_request() -> Dictionary:
+func _on_serialize_request(mode: int) -> Dictionary:
 	
 	var serialized_save_data: Dictionary = {}
 
@@ -168,11 +173,18 @@ func _on_serialize_request() -> Dictionary:
 				"method": track.method
 			})
 
-	return {
+	var serialized_data: Dictionary = {
 		"fade_in_speed": fade_in_speed,
 		"fade_out_speed": fade_out_speed,
 		"save_data": serialized_save_data
 	}
+
+	if mode == CoreEngine.SERIALIZE_MODE_NETWORK:
+		print("Seralizing for network")
+		serialized_data["enabled"] = is_enabled()
+		serialized_data["percentage_step"] = get_step_percentage()
+
+	return serialized_data
 
 ## Called when this scene is to be loaded from serialized data
 func _on_load_request(serialized_data: Dictionary) -> void:

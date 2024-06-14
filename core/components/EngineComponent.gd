@@ -62,11 +62,11 @@ func set_name(new_name) -> void:
 	on_name_changed.emit(name)
 
 
-## Returns serialized version of this component
-func serialize() -> Dictionary:
+## Returns serialized version of this component, change the mode to define if this object should be serialized for saving to disk, or for networking to clients
+func serialize(mode: int = CoreEngine.SERIALIZE_MODE_NETWORK) -> Dictionary:
 	
 	var serialized_data: Dictionary = {}
-	serialized_data = _on_serialize_request()
+	serialized_data = _on_serialize_request(mode)
 	
 	serialized_data.uuid = uuid
 	serialized_data.name = name
@@ -76,7 +76,7 @@ func serialize() -> Dictionary:
 
 
 ## Overide this function to serialize your object
-func _on_serialize_request() -> Dictionary:
+func _on_serialize_request(mode: int) -> Dictionary:
 	return {}
 
 
