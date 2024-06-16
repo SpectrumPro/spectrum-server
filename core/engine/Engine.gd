@@ -161,6 +161,9 @@ func _ready() -> void:
 		var tests = Tester.new()
 		tests.run()
 
+		if not "--test-keep-alive" in OS.get_cmdline_args():
+			get_tree().quit()
+
 
 func _process(delta: float) -> void:
 	# Accumulate the time
