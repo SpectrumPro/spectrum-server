@@ -6,7 +6,8 @@ class_name Tester extends RefCounted
 
 
 var tests: Array = [
-    SceneCreationTester
+    SceneCreationTester,
+    ClassListTester
 ]
 
 
