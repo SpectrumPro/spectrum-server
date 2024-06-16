@@ -19,8 +19,6 @@ func _init(p_uuid: String = UUID_Util.v4()) -> void:
 
     super._init(p_uuid)
     self.name = plugin_name
-    if has_method("init"):
-        self.get("init").call()
 
 
 ## Starts this plugin
