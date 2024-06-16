@@ -6,8 +6,7 @@ class_name Tester extends RefCounted
 
 
 var tests: Array = [
-    TestExampleFail,
-    TestExamplePass
+    SceneCreationTester
 ]
 
 
@@ -20,6 +19,7 @@ func run() -> Dictionary:
 
     # Loop through each test in the list, and run it.
     for test: Object in tests:
+        print()
         var result = test.run()
 
         if result:
@@ -32,12 +32,14 @@ func run() -> Dictionary:
     var pass_percentage: float = 0
 
     if tests_ran > 0:
-     pass_percentage = (float(tests_passed) / float(tests_ran)) * 100
+        pass_percentage = roundf((float(tests_passed) / float(tests_ran)) * 100)
 
+    print()
     print_rich("[b]Tests Ran:[/b] [color=blue]" + str(tests_ran) + "[/color]")
     print_rich("[b]Tests Passed:[/b] [color=green]" + str(tests_passed) + "[/color]")
     print_rich("[b]Tests Failed:[/b] [color=red]" + str(tests_failed) + "[/color]")
     print_rich("[b]Tests Scored:[/b] [color=orange]" + str(pass_percentage) + "%[/color]")
+    print()
     
     var test_results = {
         "tests_ran": tests_ran,

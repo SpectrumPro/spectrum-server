@@ -161,7 +161,6 @@ func _on_serialize_request(mode: int) -> Dictionary:
 	}
 
 	if mode == CoreEngine.SERIALIZE_MODE_NETWORK:
-		print("Seralizing for network")
 		serialized_data["enabled"] = is_enabled()
 		serialized_data["percentage_step"] = get_step_percentage()
 
