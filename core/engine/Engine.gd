@@ -156,6 +156,11 @@ func _ready() -> void:
 
 	Server.add_networked_object("programmer", programmer)
 
+	if "--test" in OS.get_cmdline_args():
+		print("\nRunning Tests")
+		var tests = Tester.new()
+		tests.run()
+
 
 func _process(delta: float) -> void:
 	# Accumulate the time

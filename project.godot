@@ -32,7 +32,7 @@ driver/enable_input=true
 
 Core="*res://core/engine/Engine.gd"
 MainSocketServer="*res://websocket/WebSocketServer.gd"
-Server="*res://Server.gd"
+Server="*res://core/engine/Server.gd"
 
 [debug]
 
