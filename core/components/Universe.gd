@@ -36,6 +36,12 @@ var outputs: Dictionary = {}
 var dmx_data: Dictionary = {} 
 
 
+## Called when this EngineComponent is ready
+func _component_ready() -> void:
+	name = "Universe"
+	self_class_name = "Universe"
+
+
 ## Adds a new output to this universe, if [param output] is defined, it will be added, if no output is defined, a blank [DataOutputPlugin] will be created with the name passed
 func add_output(name: String = "New Output", output: DataOutputPlugin = null, no_signal: bool = false) -> DataOutputPlugin:
 	

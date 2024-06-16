@@ -39,6 +39,12 @@ var current_input_data: Dictionary = {}
 var _compiled_dmx_data: Dictionary
 
 
+## Called when this EngineComponent is ready
+func _component_ready() -> void:
+	name = "Fixture"
+	self_class_name = "Fixture"
+
+
 ## Set the manifest of this fixture
 func set_manifest(p_manifest: Dictionary, p_manifest_path: String = "") -> void:
 	length = len(p_manifest.modes.values()[mode - 1].channels)

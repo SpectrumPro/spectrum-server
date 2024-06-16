@@ -50,6 +50,12 @@ var _active_scenes: Array = []
 var _is_playing: bool = false
 
 
+## Called when this EngineComponent is ready
+func _component_ready() -> void:
+    name = "CueList"
+    self_class_name = "CueList"
+
+
 ## Plays this CueList, starting at index, or from the current index if one is not provided
 func play(start_index: int = -1) -> void:
     if not _is_playing and len(cues):

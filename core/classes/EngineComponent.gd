@@ -2,22 +2,37 @@
 # All rights reserved.
 
 class_name EngineComponent extends RefCounted
-## Base class for an engine components, contains functions for storing metadata, and uuid's
+## Base class for engine components, contains functions for storing metadata, and uuid's
 
-signal on_user_meta_changed(key: String, value: Variant) ## Emitted when an item is added, edited, or deleted from user_meta, if no value is present it meanes that the key has been deleted
-signal on_name_changed(new_name: String) ## Emitted when the name of this object has changed
-signal on_delete_requested() ## Emited when this object is about to be deleted
 
-var name: String = "": set = set_name ## The name of this object
-var user_meta: Dictionary ## Infomation that can be stored by other scripts / clients, this data will get saved to disk and send to all clients
-var uuid: String = "" ## Uuid of the current component, do not modify at runtime unless you know what you are doing, things will break
+## Emitted when an item is added, edited, or deleted from user_meta, if no value is present it meanes that the key has been deleted
+signal on_user_meta_changed(key: String, value: Variant)
+
+## Emitted when the name of this object has changed
+signal on_name_changed(new_name: String)
+
+## Emited when this object is about to be deleted
+signal on_delete_requested()
+
+
+## The name of this object
+var name: String = "Unnamed EngineComponent": set = set_name
+
+## Infomation that can be stored by other scripts / clients, this data will get saved to disk and send to all clients
+var user_meta: Dictionary 
+
+## Uuid of the current component, do not modify at runtime unless you know what you are doing, things will break
+var uuid: String = ""
+
+## The class_name of this component this should always be set by the object that extends EngineComponent
+var self_class_name: String = "EngineComponent"
 
 
 func _init(p_uuid: String = UUID_Util.v4()) -> void:
 	uuid = p_uuid
-	print("I am: ", uuid)
-
 	_component_ready()
+
+	print_verbose("I am: ", name, " | ", uuid)
 	
 
 ## Override this function to provide a _ready function for your script
@@ -70,6 +85,7 @@ func serialize(mode: int = CoreEngine.SERIALIZE_MODE_NETWORK) -> Dictionary:
 	
 	serialized_data.uuid = uuid
 	serialized_data.name = name
+	serialized_data.class_name = self_class_name
 	serialized_data.user_meta = get_all_user_meta()
 	
 	return serialized_data
@@ -97,7 +113,8 @@ func _on_delete_request() -> void:
 
 ## Loades this object from a serialized version
 func load(serialized_data: Dictionary) -> void:
-	name = serialized_data.get("name", "Unnamed EngineComponent")
+	name = serialized_data.get("name", name)
+	self_class_name = serialized_data.get("class_name", self_class_name)
 	user_meta = serialized_data.get("user_meta", {})
 	
 	_on_load_request(serialized_data)
@@ -111,4 +128,4 @@ func _on_load_request(serialized_data: Dictionary) -> void:
 ## Debug function to tell if this component is freed from memory
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
-		print("\"", self.name, "\" Is being freed, uuid: ", self.uuid)
+		print_verbose("\"", self.name, "\" Is being freed, uuid: ", self.uuid)

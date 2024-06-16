@@ -31,6 +31,10 @@ var _flash_active: bool = false
 
 ## Called when this EngineComponent is ready
 func _component_ready() -> void:
+
+	name = "Scene"
+	self_class_name = "Scene"
+
 	_animator.steped.connect(func (step: float): 
 		var value
 

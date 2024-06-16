@@ -6,7 +6,7 @@ class_name DataOutputPlugin extends EngineComponent
 
 signal connection_state_changed(state: bool, note: String) ## Emited when this output connects or disconnects, added note for reason
 
-var plugin_name: String = "Empty Output": set=set_plugin_name ## Name of this plugin
+var plugin_name: String = "Empty Output": set = set_plugin_name ## Name of this plugin
 var plugin_description: String = "A base class for all data output plugins" ## Plugin description
 var plugin_authors: Array = ["Liam Sherwin"] ## List of all the authors that created this plugin
 var plugin_link: String = "https://github.com/SpectrumPro/spectrum-server" ## Link to this plugins website, or documentation
@@ -44,6 +44,7 @@ func output() -> void:
     print(dmx_data)
 
 
+## Sets the plugin name, also changes the EngineComponent name 
 func set_plugin_name(new_name):
     plugin_name = new_name
 
