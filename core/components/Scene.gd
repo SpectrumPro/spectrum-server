@@ -1,7 +1,7 @@
 # Copyright (c) 2024 Liam Sherwin
 # All rights reserved.
 
-class_name Scene extends EngineComponent
+class_name Scene extends Function
 ## Engine class for creating and recalling saved data
 
 
@@ -13,13 +13,6 @@ signal on_fade_speed_changed(fade_in: float, fade_out: float)
 
 ## Emitted when the current percentage step of this scene changes, ie the current position during the fade from 0 to 1.0
 signal on_percentage_step_changed(percentage: float)
-
-
-## Fade in speed in seconds
-var fade_in_speed: float = 2 : set = set_fade_in_speed
-
-## Fade out speed in seconds
-var fade_out_speed: float = 2 : set = set_fade_out_speed
 
 
 ## The current state of this scene
@@ -143,18 +136,6 @@ func add_data(fixture: Fixture, method: String, default_data: Variant, data: Var
 			"data": data,
 			"method": method
 		})
-
-
-## Sets the fade in speed
-func set_fade_in_speed(p_fade_in_speed: float) -> void:
-	fade_in_speed = p_fade_in_speed
-	on_fade_speed_changed.emit(fade_in_speed, fade_out_speed)
-
-
-## Sets the fade out speed
-func set_fade_out_speed(p_fade_out_speed: float) -> void:
-	fade_out_speed = p_fade_out_speed
-	on_fade_speed_changed.emit(fade_in_speed, fade_out_speed)
 
 
 ## Serializes this scene and returnes it in a dictionary
