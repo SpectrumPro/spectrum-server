@@ -171,8 +171,7 @@ func _process(delta: float) -> void:
 func serialize(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
 	return {
 		"universes": serialize_universes(mode),
-		# "scenes": serialize_scenes(mode),
-		# "cue_lists": serialize_cue_lists(mode)
+		"functions": serialize_functions(mode),
 	}
 
 

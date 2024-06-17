@@ -61,6 +61,6 @@ func save_to_scene(name: String = "New Scene") -> Scene:
 
 	new_scene.name = name
 	
-	Core.add_scene(new_scene)
+	Core.add_function(new_scene)
 	
 	return new_scene
