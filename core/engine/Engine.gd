@@ -6,7 +6,7 @@ class_name CoreEngine extends Node
 
 
 # SIGNALS:
-# Emitted when things happen in this engine, or in the Universes, Fixtures, Scenes ect... that are apart of it 
+# Emitted when things happen in this engine, or in the Universes, Fixtures, Functions ect... that are apart of it 
 
 ## Emitted when any of the universes in this engine have there name changed
 signal on_universe_name_changed(universe: Universe, new_name: String) 
@@ -28,21 +28,14 @@ signal on_fixtures_added(fixtures: Array[Fixture], fixture_uuids: Array[String])
 signal on_fixtures_removed(fixtures: Array[Fixture], fixture_uuids: Array[String])
 
 
-## Emited when a scene / scenes are added to this engine, contains a list of all scene uuids for server-client synchronization
-signal on_scenes_added(scenes: Array[Scene], scene_uuids: Array[String])
+## Emited when a function / functions are added to this engine, contains a list of all function uuids for server-client synchronization
+signal on_functions_added(functions: Array[Function], function_uuids: Array[String])
 
-## Emited when a scene / scenes are removed from this engine, contains a list of all scene uuids for server-client synchronization
-signal on_scenes_removed(scenes: Array[Scene], scene_uuids: Array[String])
+## Emited when a function / functions are removed from this engine, contains a list of all function uuids for server-client synchronization
+signal on_functions_removed(functions: Array[Function], function_uuids: Array[String])
 
-## Emitted when a scene has its name changed, contains a list of all scene uuids for server-client synchronization
-signal on_scene_name_changed(scene: Scene, new_name: String, scene_uuids: Array[String]) 
-
-
-## Emited when a CueList / CueLists are added to this engine, contains a list of all CueList uuids for server-client synchronization
-signal on_cue_lists_added(scenes: Array[Scene], scene_uuids: Array[String])
-
-## Emited when a CueList / CueLists are removed from this engine, contains a list of all CueList uuids for server-client synchronization
-signal on_cue_lists_removed(scenes: Array[Scene], scene_uuids: Array[String])
+## Emitted when a function has its name changed, contains a list of all function uuids for server-client synchronization
+signal on_function_name_changed(function: Function, new_name: String, function_uuids: Array[String]) 
 
 
 signal _output_timer() ## Emited [member CoreEngine.call_interval] number of times per second.
@@ -57,12 +50,8 @@ var universes: Dictionary = {}
 ## Dictionary containing all fixtures in this engine, do not modify this at runtime unless you know what you are doing, instead call [method CoreEngine.add_fixture]
 var fixtures: Dictionary = {} 
 
-## Dictionary containing all scenes in this engine, do not modify this at runtime unless you know what you are doing, instead call [method CoreEngine.add_scene]
-var scenes: Dictionary = {}
-
-## Dictionary containing all cue lists in this engine, do not modify this at runtime unless you know what you are doing, instead call [method CoreEngine.add_cue_list]
-var cue_lists: Dictionary = {}
-
+## Dictionary containing all functions in this engine, do not modify this at runtime unless you know what you are doing, instead call [method CoreEngine.add_functions]
+var functions: Dictionary = {}
 
 ## Dictionary containing fixture definiton file, stored in [member CoreEngine.fixture_path]
 var fixtures_definitions: Dictionary = {} 
@@ -111,13 +100,13 @@ func _universe_on_fixtures_removed(p_fixtures: Array, fixture_uuids: Array):
 var _universe_signal_connections: Dictionary = {}
 
 
-## Folowing functions are for connecting Scene signals to Engine signals, they are defined as vairables so they can be dissconnected when scenes are to be deleted
-func _scene_on_name_changed(new_name: String, scene: Scene) -> void:
-	on_scene_name_changed.emit(scene, new_name)
+## Folowing functions are for connecting Function signals to Engine signals, they are defined as vairables so they can be dissconnected when Functions are to be deleted
+func _function_on_name_changed(new_name: String, function: Function) -> void:
+	on_function_name_changed.emit(function, new_name)
 
 
 ## See _universe_signal_connections for details
-var _scene_signal_connections: Dictionary = {}
+var _function_signal_connections: Dictionary = {}
 
 
 # FILE PATHS:
@@ -149,6 +138,14 @@ func _ready() -> void:
 
 	Server.add_networked_object("programmer", programmer)
 
+	if "--load" in OS.get_cmdline_args():
+		var name_index: int = OS.get_cmdline_args().find("--load") + 1
+		var save_name: String = OS.get_cmdline_args()[name_index]
+
+		print("Loading save file: ", save_name)
+
+		load_from_file(save_name)
+
 	if "--test" in OS.get_cmdline_args():
 		print("\nRunning Tests")
 		var tests = Tester.new()
@@ -174,8 +171,8 @@ func _process(delta: float) -> void:
 func serialize(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
 	return {
 		"universes": serialize_universes(mode),
-		"scenes": serialize_scenes(mode),
-		"cue_lists": serialize_cue_lists(mode)
+		# "scenes": serialize_scenes(mode),
+		# "cue_lists": serialize_cue_lists(mode)
 	}
 
 
@@ -214,19 +211,13 @@ func load(serialized_data: Dictionary) -> void:
 		new_universe.load(serialized_data.universes[universe_uuid])
 
 	
-	# Loops through each scene in the save file (if any), and adds them into the engine
-	for scene_uuid: String in serialized_data.get("scenes", {}):
-		var new_scene: Scene = Scene.new(scene_uuid)
+	# Loops through each function in the save file (if any), and adds them into the engine
+	for function_uuid: String in serialized_data.get("functions", {}):
+		if serialized_data.functions[function_uuid].get("class_name", "") in ClassList.function_class_table:
+			var new_function: Function = ClassList.function_class_table[serialized_data.functions[function_uuid]["class_name"]].new(function_uuid)
 
-		add_scene(new_scene)
-		new_scene.load(serialized_data.scenes[scene_uuid])
-
-	# Loops through each of the cue lists in the save file (if any), and adds them into the engine
-	for cue_list_uuid: String in serialized_data.get("cue_lists", {}):
-		var new_cue_list: CueList = CueList.new(cue_list_uuid)
-
-		add_cue_list("New Cue List", new_cue_list)
-		new_cue_list.load(serialized_data.cue_lists[cue_list_uuid])
+			add_function(new_function)
+			new_function.load(serialized_data.functions[function_uuid])
 
 
 ## Resets the engine back to the default state
@@ -234,8 +225,8 @@ func reset() -> void:
 	save(Time.get_datetime_string_from_system(), true)
 
 	remove_universes(universes.values())
-	remove_scenes(scenes.values())
-	remove_cue_lists(cue_lists.values())
+	# remove_scenes(scenes.values())
+	# remove_cue_lists(cue_lists.values())
 
 
 func get_all_shows_from_library() -> Array[String]:
@@ -418,156 +409,92 @@ func serialize_fixtures(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
 
 
 
-func add_scene(scene: Scene = Scene.new(), no_signal: bool = false) -> Scene:
-	## Adds a scene to this engine, creats a new one if none is passed
-	if not scene.uuid in scenes:
+## Adds a function to this engine
+func add_function(function: Function, no_signal: bool = false) -> Function:
+	if not function.uuid in functions:
 
-		scenes[scene.uuid] = scene
+		functions[function.uuid] = function
 		
-		Server.add_networked_object(scene.uuid, scene, scene.on_delete_requested)
+		Server.add_networked_object(function.uuid, function, function.on_delete_requested)
 
-		_connect_scene_signals(scene)
+		_connect_function_signals(function)
 
 		if not no_signal:
-			on_scenes_added.emit([scene], scenes.keys())
+			on_functions_added.emit([function], functions.keys())
 
 	else:
-		print("Scene: ", scene.uuid, " is already in this engine")
+		print("Function: ", function.uuid, " is already in this engine")
 
-	return scene
+	return function
 
 
-func _connect_scene_signals(scene: Scene) -> void:
-	_scene_signal_connections[scene] = {
-		"_scene_on_name_changed": _scene_on_name_changed.bind(scene),
-		"_remove_scenes": remove_scenes.bind([scene])
+func _connect_function_signals(function: Function) -> void:
+	_function_signal_connections[function] = {
+		"_function_on_name_changed": _function_on_name_changed.bind(function),
+		"_remove_functions": remove_functions.bind([function])
 		}
 	
-	scene.on_name_changed.connect(_scene_signal_connections[scene]._scene_on_name_changed)
-	scene.on_delete_requested.connect(_scene_signal_connections[scene]._remove_scenes)
+	function.on_name_changed.connect(_function_signal_connections[function]._function_on_name_changed)
+	function.on_delete_requested.connect(_function_signal_connections[function]._remove_functions)
 
 
 
-func _disconnect_scene_signals(scene: Scene) -> void:
+func _disconnect_function_signals(function: Function) -> void:
 	
-	scene.on_name_changed.disconnect(_scene_signal_connections[scene]._scene_on_name_changed)
-	scene.on_delete_requested.disconnect(_scene_signal_connections[scene]._remove_scenes)
+	function.on_name_changed.disconnect(_function_signal_connections[function]._function_on_name_changed)
+	function.on_delete_requested.disconnect(_function_signal_connections[function]._remove_functions)
 	
-	_scene_signal_connections[scene] = {}
-	_scene_signal_connections.erase(scene)
+	_function_signal_connections[function] = {}
+	_function_signal_connections.erase(function)
 
 
-## Removes a scene from this engine
-func remove_scene(scene: Scene, no_signal: bool = false, delete_object: bool = true) -> bool:
+## Removes a function from this engine
+func remove_function(function: Function, no_signal: bool = false, delete_object: bool = true) -> bool:
 	
-	# Check if this scene is part of this engine
-	if scene in scenes.values():
+	# Check if this function is part of this engine
+	if function in functions.values():
 		
-		scenes.erase(scene.uuid)	
+		functions.erase(function.uuid)	
 
-		_disconnect_scene_signals(scene)
+		_disconnect_function_signals(function)
 
 		if not no_signal:
-			on_scenes_removed.emit([scene])
+			on_functions_removed.emit([function])
 
 		if delete_object:
-			scene.delete()	
+			function.delete()	
 
 		return true
 	
 	# If not return false
 	else:
-		print("Scene: ", scene.uuid, " is not part of this engine")
+		print("Function: ", function.uuid, " is not part of this engine")
 		return false
 
 
-## Removes mutiple scenes from this engine
-func remove_scenes(scenes_to_remove: Array, no_signal: bool = false, delete_object: bool = true) -> void:
+## Removes mutiple function from this engine
+func remove_functions(functions_to_remove: Array, no_signal: bool = false, delete_object: bool = true) -> void:
 	
-	var just_removed_scenes: Array = []
+	var just_removed_functions: Array = []
 	
-	for scene: Scene in scenes_to_remove:
-		if remove_scene(scene, true, delete_object):
-			just_removed_scenes.append(scene)
-	
-	if not no_signal:
-		on_scenes_removed.emit(just_removed_scenes)
-	
-
-
-## Serializes all scenes and returnes them in a dictionary 
-func serialize_scenes(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
-	
-	var serialized_scenes: Dictionary = {}
-	
-	for scene: Scene in scenes.values():
-		serialized_scenes[scene.uuid] = scene.serialize(mode)
-	
-	return serialized_scenes
-
-
-func add_cue_list(name: String = "New Cue List", cue_list: CueList = CueList.new(), no_signal: bool = false) -> CueList:
-	## Adds a cue_list to this engine, creats a new one if none is passed
-	if not cue_list.uuid in cue_lists:
-
-		cue_lists[cue_list.uuid] = cue_list
-		
-		Server.add_networked_object(cue_list.uuid, cue_list, cue_list.on_delete_requested)
-
-		if not no_signal:
-			on_cue_lists_added.emit([cue_list], cue_lists.keys())
-
-	else:
-		print("CueList: ", cue_list.uuid, " is already in this engine")
-
-	return cue_list
-
-
-## Removes a cue_list from this engine
-func remove_cue_list(cue_list: CueList, no_signal: bool = false, delete_object: bool = true) -> bool:
-	
-	# Check if this cue_list is part of this engine
-	if cue_list in cue_lists.values():
-		
-		cue_lists.erase(cue_list.uuid)	
-
-		if not no_signal:
-			on_cue_lists_removed.emit([cue_list])
-
-		if delete_object:
-			cue_list.delete()	
-
-		return true
-	
-	# If not return false
-	else:
-		print("CueList: ", cue_list.uuid, " is not part of this engine")
-		return false
-
-
-## Removes mutiple cue_lists from this engine
-func remove_cue_lists(cue_lists_to_remove: Array, no_signal: bool = false, delete_object: bool = true) -> void:
-	
-	var just_removed_cue_lists: Array = []
-	
-	for cue_list: CueList in cue_lists_to_remove:
-		if remove_cue_list(cue_list, true, delete_object):
-			just_removed_cue_lists.append(cue_list)
+	for function: Function in functions_to_remove:
+		if remove_function(function, true, delete_object):
+			just_removed_functions.append(function)
 	
 	if not no_signal:
-		on_cue_lists_removed.emit(just_removed_cue_lists)
+		on_functions_removed.emit(just_removed_functions)
 	
 
 
-## Serializes all cue_lists and returnes them in a dictionary 
-func serialize_cue_lists(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
+## Serializes all functions and returnes them in a dictionary 
+func serialize_functions(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
 	
-	var serialized_cue_lists: Dictionary = {}
+	var serialized_functions: Dictionary = {}
 	
-	for cue_list: CueList in cue_lists.values():
-		serialized_cue_lists[cue_list.uuid] = cue_list.serialize(mode)
+	for function: Function in functions.values():
+		serialized_functions[function.uuid] = function.serialize(mode)
 	
-	return serialized_cue_lists
+	return serialized_functions
 
 
 ## Creates a new Animator and adds it as a child node so it can process
