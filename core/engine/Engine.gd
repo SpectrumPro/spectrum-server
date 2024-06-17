@@ -67,9 +67,6 @@ var cue_lists: Dictionary = {}
 ## Dictionary containing fixture definiton file, stored in [member CoreEngine.fixture_path]
 var fixtures_definitions: Dictionary = {} 
 
-## Dictionary containing all of the output plugins, sotred in [member CoreEngine.output_plugin_path]
-var output_plugins: Dictionary = {}
-
 
 ## Serialization mode, if set to network, components will save extra infomation that doesent need to be saved to disk
 enum {SERIALIZE_MODE_DISK, SERIALIZE_MODE_NETWORK}
@@ -136,9 +133,6 @@ var programmer: Programmer = Programmer.new()
 ## File path for fixture definitons
 const fixture_path: String = "res://core/fixtures/" 
 
-## File path for output plugin definitons
-const output_plugin_path: String = "res://core/output_plugins/" 
-
 
 func _ready() -> void:	
 	# Set low processor mode to true, to avoid using too much system resources 
@@ -147,8 +141,7 @@ func _ready() -> void:
 	if not DirAccess.dir_exists_absolute(show_library_location):
 		print("The folder \"show_library_location\" does not exist, creating one now, errcode: ", DirAccess.make_dir_absolute(show_library_location))
 
-	# Load io plugins and fixtures
-	output_plugins = get_io_plugins(output_plugin_path)
+	# Load fixture definitions
 	fixtures_definitions = get_fixture_definitions(fixture_path)
 
 	# Add self to networked objects to allow for client to server comunication
@@ -383,21 +376,6 @@ func serialize_universes(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
 		serialized_universes[universe.uuid] = universe.serialize(mode)
 		
 	return serialized_universes
-
-
-## Returns all output plugins into a dictionary containing the uninitialized object, from the folder defined in [param folder]
-func get_io_plugins(folder: String) -> Dictionary:
-	
-	var uninitialized_output_plugins: Dictionary = {}
-	
-	var output_plugin_folder : DirAccess = DirAccess.open(folder)
-	
-	for plugin in output_plugin_folder.get_files():
-		var uninitialized_plugin = ResourceLoader.load(folder + plugin)
-
-		uninitialized_output_plugins[plugin] = uninitialized_plugin
-	
-	return uninitialized_output_plugins
 
 
 ## Returns fixture definition files from the folder defined in [param folder]

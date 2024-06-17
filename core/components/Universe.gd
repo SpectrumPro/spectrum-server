@@ -285,34 +285,11 @@ func _on_load_request(serialized_data: Dictionary) -> void:
 	on_fixtures_added.emit(just_added_fixtures, fixtures.keys())
 	
 	for output_uuid: String in serialized_data.get("outputs", {}).keys():
-		if serialized_data.outputs[output_uuid].get("file_name", "") in Core.output_plugins.keys():
-			var new_output: DataOutputPlugin = Core.output_plugins[serialized_data.outputs[output_uuid].file_name].new(output_uuid)
+		if serialized_data.outputs[output_uuid].get("class_name", "") in ClassList.output_class_table.keys():
+			var new_output: DataOutputPlugin = ClassList.output_class_table[serialized_data.outputs[output_uuid]["class_name"]].new(output_uuid)
 			new_output.load(serialized_data.outputs[output_uuid])
 			
 			add_output("New Output", new_output, true)
 			just_added_output.append(new_output)
 
 	on_outputs_added.emit(just_added_output, outputs.keys())
-
-	# for fixture_uuid: String in serialized_data.get("fixtures", {}):
-	# 	var serialised_fixture: Dictionary = serialized_data.fixtures[fixture_uuid]
-	# 	var channel: int = serialised_fixture.get("channel", 1)
-		
-	# 	var new_fixture = Fixture.new()
-	# 	new_fixture.load(serialised_fixture)
-
-	# 	add_fixture(new_fixture, channel, true)			
-	# 	just_added_fixtures.append(new_fixture)
-		
-	
-	
-	
-	# for output_uuid: String in serialized_data.get("outputs"):
-	# 	var serialised_output: Dictionary = serialized_data.outputs[output_uuid]
-		
-	# 	var new_output: DataOutputPlugin = Core.output_plugins[serialised_output.file].plugin.new(serialised_output)
-	# 	new_output.load(serialised_output)
-		
-	# 	add_output(new_output.name, new_output, true)
-	# 	just_added_output.append(new_output)
-	

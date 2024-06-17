@@ -76,7 +76,7 @@ func output() -> void:
 	
 
 ## Called when this output is requested to serialize its config
-func _on_data_output_plugin_serialize_request(mode: int) -> Dictionary:
+func _on_serialize_request(mode: int) -> Dictionary:
 	
 	return {
 		"ip_address": ip_address,
