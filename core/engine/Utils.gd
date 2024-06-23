@@ -34,7 +34,7 @@ static func objects_to_uuids(data, just_uuid: bool = false):
 				return {
 						"_object_ref": str(data.get("uuid")),
 						"_serialized_object": data.serialize(CoreEngine.SERIALIZE_MODE_NETWORK),
-						"_class_name": data.get("class_name")
+						"_class_name": data.get("self_class_name")
 					}
 		TYPE_DICTIONARY:
 			var new_dict = {}

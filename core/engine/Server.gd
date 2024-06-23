@@ -115,6 +115,11 @@ func remove_networked_object(object_name: String) -> void:
 	_networked_objects.erase(object_name)
 
 
+## Returnes a copy of the networked objects
+func get_networked_objects() -> Dictionary:
+	return _networked_objects.duplicate(true)
+
+
 func send(data: Dictionary) -> void:
 	MainSocketServer.send(0, var_to_str(Utils.objects_to_uuids(data)))
 

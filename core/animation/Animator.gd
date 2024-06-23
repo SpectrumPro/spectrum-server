@@ -85,9 +85,6 @@ func delete() -> void:
 func _process(delta: float) -> void:
 	_seek_to(elapsed_time)
 
-	print(elapsed_time)
-	print(_stop_at)
-
 	if play_backwards:
 		elapsed_time -= delta * time_scale
 

@@ -76,6 +76,16 @@ func is_enabled() -> bool:
 	return _enabled
 
 
+## Resumes playback of this scene after calling pause()
+func play() -> void:
+	_animator.play()
+
+
+## Pauses this scene
+func pause() -> void:
+	_animator.pause()
+
+
 ## Set the step percentage of this scene, value ranges from 0.0 to 1.0, and is used as a percentage to control the underlaying animation
 func set_step_percentage(step: float) -> void:
 	_enabled = true if step else false
@@ -94,7 +104,6 @@ func get_step_percentage() -> float:
 func flash_hold(fade_in: float = fade_in_speed) -> void:
 	if not _flash_active:
 		_time_befour_flash = _animator.elapsed_time
-		print(_time_befour_flash)
 		_time_scale_befour_flash = _animator.time_scale
 		_backwards_befour_flash = _animator.play_backwards
 	
@@ -170,6 +179,7 @@ func _on_serialize_request(mode: int) -> Dictionary:
 
 	return serialized_data
 
+
 ## Called when this scene is to be loaded from serialized data
 func _on_load_request(serialized_data: Dictionary) -> void:
 		
@@ -180,8 +190,6 @@ func _on_load_request(serialized_data: Dictionary) -> void:
 		if fixture_uuid in Core.fixtures:
 			var data: Array = serialized_data.save_data[fixture_uuid]
 			for track in data:
-				print(track)
-				print(var_to_str(Color.BLACK))
 				add_data(Core.fixtures[fixture_uuid], track.get("method", ""), str_to_var(track.get("default", 0)), str_to_var(track.get("data", 0)))
 
 

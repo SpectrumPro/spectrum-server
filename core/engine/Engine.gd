@@ -123,6 +123,10 @@ var programmer: Programmer = Programmer.new()
 const fixture_path: String = "res://core/fixtures/" 
 
 
+## The debug object
+var debug: Debug = Debug.new()
+
+
 func _ready() -> void:	
 	# Set low processor mode to true, to avoid using too much system resources 
 	OS.set_low_processor_usage_mode(false)
@@ -138,6 +142,8 @@ func _ready() -> void:
 
 	Server.add_networked_object("programmer", programmer)
 
+	Server.add_networked_object("debug", debug)
+
 	if "--load" in OS.get_cmdline_args():
 		var name_index: int = OS.get_cmdline_args().find("--load") + 1
 		var save_name: String = OS.get_cmdline_args()[name_index]
@@ -146,10 +152,20 @@ func _ready() -> void:
 
 		load_from_file(save_name)
 
+
 	if "--test" in OS.get_cmdline_args():
 		print("\nRunning Tests")
-		var tests = Tester.new()
-		tests.run()
+		var tester = Tester.new()
+		tester.run(Tester.test_type.UNIT_TESTS)
+
+		if not "--test-keep-alive" in OS.get_cmdline_args():
+			get_tree().quit()
+	
+
+	if "--test-global" in OS.get_cmdline_args():
+		print("\nRunning Tests")
+		var tester = Tester.new()
+		tester.run(Tester.test_type.GLOBAL_TESTS)
 
 		if not "--test-keep-alive" in OS.get_cmdline_args():
 			get_tree().quit()
@@ -216,7 +232,13 @@ func load(serialized_data: Dictionary) -> void:
 			var new_function: Function = ClassList.function_class_table[serialized_data.functions[function_uuid]["class_name"]].new(function_uuid)
 
 			add_function(new_function)
-			new_function.load(serialized_data.functions[function_uuid])
+			new_function.load.call_deferred(serialized_data.functions[function_uuid])
+
+
+## Resets the engine, then loads from a save file:
+func reset_and_load(file_name: String) -> void:
+	reset()
+	load_from_file(file_name)
 
 
 ## Resets the engine back to the default state
@@ -224,7 +246,7 @@ func reset() -> void:
 	save(Time.get_datetime_string_from_system(), true)
 
 	remove_universes(universes.values())
-	# remove_scenes(scenes.values())
+	remove_functions(functions.values())
 	# remove_cue_lists(cue_lists.values())
 
 
@@ -475,7 +497,7 @@ func remove_function(function: Function, no_signal: bool = false, delete_object:
 func remove_functions(functions_to_remove: Array, no_signal: bool = false, delete_object: bool = true) -> void:
 	
 	var just_removed_functions: Array = []
-	
+	print(functions_to_remove)
 	for function: Function in functions_to_remove:
 		if remove_function(function, true, delete_object):
 			just_removed_functions.append(function)

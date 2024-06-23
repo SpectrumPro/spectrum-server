@@ -5,21 +5,30 @@ class_name Tester extends RefCounted
 ## Runs each test and returns a summary to the user
 
 
-var tests: Array = [
+var unit_tests: Array = [
     FunctionCreationTester,
-    ClassListTester
+    ClassListTester,
 ]
 
 
+var global_tests: Array = [
+    CueListGlobalTester
+]
+
+
+
+enum test_type {UNIT_TESTS, GLOBAL_TESTS}
+
+
 ## Run all the tests in the array, then return and print the results
-func run() -> Dictionary:
+func run(type: test_type) -> Dictionary:
 
     var tests_ran: int = 0 # Number of tests ran
     var tests_passed: int = 0 # Number of tests passed
     var tests_failed: int = 0 # Number of tests failed
 
     # Loop through each test in the list, and run it.
-    for test: Object in tests:
+    for test: Object in unit_tests if type == test_type.UNIT_TESTS else global_tests:
         print()
         var result = test.run()
 
