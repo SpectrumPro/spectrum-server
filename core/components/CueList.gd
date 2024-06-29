@@ -9,10 +9,13 @@ class_name CueList extends Function
 signal on_cue_changed(index: int)
 
 ## Emitted when this CueList starts playing
-signal on_played(index: int)
+signal on_played()
 
 ## Emitted when this CueList is paused
-signal on_paused(index: int)
+signal on_paused()
+
+## Emitted when this CueList is stopped
+signal on_stopped()
 
 ## Emitted when a cue is moved in this list
 signal on_cue_moved(scene: Scene, to: int)
@@ -51,6 +54,8 @@ func _component_ready() -> void:
 func play(start_index: int = -1) -> void:
 	if not _is_playing and len(cues):
 		_is_playing = true
+		
+		on_played.emit()
 
 		index = start_index if not start_index == -1 else index
 
@@ -65,7 +70,9 @@ func play(start_index: int = -1) -> void:
 ## Pauses the CueList at the current state
 func pause() -> void:
 	_is_playing = false
-	
+	on_paused.emit()
+
+
 	for scene: Scene in _active_scenes:
 		scene.pause()
 
@@ -77,6 +84,11 @@ func stop(fade_out_speed: float = -1) -> void:
 		return false
 	)
 	_is_playing = false
+
+	index = 0
+	on_cue_changed.emit(0)
+
+	on_stopped.emit()
 
 
 ## Advances to the next cue in the list, can be used with out needing to run play(), will use fade speeds of the cue if none are provided
