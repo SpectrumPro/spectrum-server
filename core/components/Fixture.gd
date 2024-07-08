@@ -16,6 +16,15 @@ signal on_channel_changed(new_channel: int) ## Emitted when the channel of the f
 
 signal _fixture_data_changed(data: Dictionary) ## Emitted when any of the channels of this fixture are changed, emitted as channel:value for all channels this fixtures uses
 
+
+var network_config: Dictionary = {
+	"high_frequency_signals": [
+		on_color_changed,
+		on_white_intensity_changed
+	]
+}
+
+
 var channel: int ## Universe channel of this fixture
 var length: int ## Channel length, from start channel, to end channel
 var mode: int ## Current mode
@@ -97,7 +106,6 @@ func set_color(color: Color, id: String = "override") -> void:
 
 ## Internal function that really sets the color of this fixture, and emits the signal
 func _set_color(p_color: Color) -> void:
-
 	if p_color.is_equal_approx(color):
 		return 
 
@@ -123,6 +131,9 @@ func set_white_intensity(value: int, id: String = "override") -> void:
 
 ## Internal function that really changed the white value, and emits the signal
 func _set_white_intensity(value: int) -> void:
+	if value == white:
+		return
+		
 	if "ColorIntensityWhite" in channels:
 		_compiled_dmx_data[int(channels.find("ColorIntensityWhite") + channel)] = value
 

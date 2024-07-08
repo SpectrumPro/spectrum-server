@@ -144,6 +144,8 @@ func _ready() -> void:
 
 	Server.add_networked_object("debug", debug)
 
+	Server.start_server()
+
 	if "--load" in OS.get_cmdline_args():
 		var name_index: int = OS.get_cmdline_args().find("--load") + 1
 		var save_name: String = OS.get_cmdline_args()[name_index]

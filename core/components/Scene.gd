@@ -15,6 +15,13 @@ signal on_fade_speed_changed(fade_in: float, fade_out: float)
 signal on_percentage_step_changed(percentage: float)
 
 
+var network_config: Dictionary = {
+	"high_frequency_signals": [
+		on_percentage_step_changed
+	]
+}
+
+
 ## The current state of this scene
 var _enabled: bool = false
 

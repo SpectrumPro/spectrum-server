@@ -123,10 +123,7 @@ func add_cue(scene: Scene, at_index: int = -1 , fade_in_speed: float = -1, fade_
 	if at_index == -1:
 		at_index = len(cues.keys()) + 1
 
-	print(at_index)
-	print(range(1, len(cues.keys()) + 2))
 	if at_index < 0 or at_index not in range(1, len(cues.keys()) + 2):  
-		print("Returning False")
 		return false
 
 	else:
