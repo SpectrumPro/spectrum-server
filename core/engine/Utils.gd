@@ -11,13 +11,11 @@ static func save_json_to_file(file_path: String, file_name: String, json: Dictio
 
 	var file_access: FileAccess = FileAccess.open(file_path+"/"+file_name, FileAccess.WRITE)
 	
-	print(file_path+"/"+file_name)
+	print_verbose("Saving a file to: ", file_path+"/"+file_name)
 
 	if FileAccess.get_open_error():
 		return FileAccess.get_open_error()
 		
-	
-	print(JSON.stringify(json, "\t"))
 	file_access.store_string(JSON.stringify(json, "\t"))
 	file_access.close()
 	
@@ -39,12 +37,12 @@ static func objects_to_uuids(data, just_uuid: bool = false):
 		TYPE_DICTIONARY:
 			var new_dict = {}
 			for key in data.keys():
-				new_dict[key] = objects_to_uuids(data[key])
+				new_dict[key] = objects_to_uuids(data[key], just_uuid)
 			return new_dict
 		TYPE_ARRAY:
 			var new_array = []
 			for item in data:
-				new_array.append(objects_to_uuids(item))
+				new_array.append(objects_to_uuids(item, just_uuid))
 			return new_array
 	
 	return data

@@ -16,6 +16,7 @@ signal finished
 var length: float = 1 : 
 	set(value):
 		length = value
+		_stop_at = 0.0 if play_backwards else length
 		elapsed_time = clamp(elapsed_time, 0, length)
 
 
@@ -40,6 +41,10 @@ var play_backwards: bool = false :
 		_stop_at = 0.0 if state else length
 
 
+## If true, this animator will queue_free() once finished, and will not reset any tracks to 0
+var kill_on_finish: bool = false
+
+
 ## Elapsed time since this animation started
 var elapsed_time: float = 0
 
@@ -47,7 +52,7 @@ var elapsed_time: float = 0
 ## Contains all the infomation for this animation
 var _animation_data: Dictionary = {}
 
-var _stop_at: float = -1
+var _stop_at: float = length
 
 func _ready() -> void:
 	set_process(false)
@@ -90,7 +95,7 @@ func _process(delta: float) -> void:
 
 		if elapsed_time <= _stop_at:
 			if elapsed_time <= 0:
-				seek_to_percentage(0)
+				finish()
 
 			is_playing = false 
 			
@@ -99,10 +104,17 @@ func _process(delta: float) -> void:
 
 
 		if elapsed_time >= _stop_at:
-			if elapsed_time >= length:
-				seek_to_percentage(1)
-			
-			is_playing = false
+			finish()
+
+
+## Will immediately finish this animation
+func finish():
+	seek_to_percentage(0 if play_backwards else 1)
+
+	finished.emit()
+
+	if kill_on_finish:
+		queue_free()
 
 
 ## Seeks to percentage amount through the animator
@@ -114,31 +126,54 @@ func seek_to_percentage(percentage: float) -> void:
 ## Internal function to seek to a point in the animation
 func _seek_to(time: float) -> void:
 	_animation_data.values().map(func (animation_track: Dictionary):
-		(animation_track.method as Callable).call(Tween.interpolate_value(animation_track.from, animation_track.to, time, length, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT))
+		var new_data: Variant = Tween.interpolate_value(animation_track.from, animation_track.to - animation_track.from, time, length, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+
+		if animation_track.current != new_data:
+			animation_track.current = new_data
+			(animation_track.method as Callable).call(new_data)
 	)
+
 	steped.emit(time)
 
 
 ## Adds a method animation, method animation will call a method for each step in the animation, with the interpolated Variant as the argument
-func animate_method(method: Callable, from: Variant, to: Variant) -> int:
-	var id: int = len(_animation_data.keys()) + 1
-	
+func animate_method(method: Callable, from: Variant, to: Variant, id: Variant = len(_animation_data.keys()) + 1) -> Variant:	
 	_animation_data[id] = {
 		"method": method,
 		"from": from,
-		"to": to
+		"to": to,
+		"current": from
 	}
 	
 	return id
 
 
-## Removes an animated method, will reset the value to default
-func remove_animated_method(id: int) -> void:
+## Removes an animated method, will reset all values to default if reset == true
+func remove_track_from_id(id: Variant, reset: bool = true) -> void:
 	if _animation_data.has(id):
-		(_animation_data[id].method as Callable).call(_animation_data[id].from)
+		if reset: 
+			(_animation_data[id].method as Callable).call(_animation_data[id].from)
+
 		_animation_data.erase(id)
+
+## Gets an animated track from the given id
+func get_track_from_id(id: Variant) -> Dictionary:
+	return _animation_data.get(id, {}).duplicate()
+
+
+## Deletes all the animated data
+func remove_all_data() -> void:
+	_animation_data = {}
+	elapsed_time = 0
 
 
 ## Returnes a copy of the animated data
-func get_animated_data() -> Dictionary:
-	return _animation_data.duplicate(true)
+func get_animated_data(duplicate_data: bool = true) -> Dictionary:
+	return _animation_data.duplicate(true) if duplicate_data else _animation_data
+
+
+## Sets the animated data
+func set_animated_data(animation_data: Dictionary) -> void:
+	_animation_data = animation_data.duplicate()
+
+

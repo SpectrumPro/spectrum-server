@@ -2,48 +2,40 @@
 # All rights reserved.
 
 class_name CueListGlobalTester extends RefCounted
-## Tests the CueList by adding all the scenes in the current save file to it
+## Tests the CueList by adding a set of Cues to it
 
 
 static func run() -> bool:
     var state: bool = true
 
     var cue_list: CueList = CueList.new()
+    cue_list.name = "Global Test CueList"
     Core.add_function(cue_list)
 
+    var colors: Array = ["BLACK", "RED", "YELLOW", "GREEN", "BLUE", "PURPLE"]
 
-    if not Core.fixtures:
-        state == false
+    if Core.fixtures:
+
+        var previous_fixtures: Array[Fixture] = []
+
+        for fixture: Fixture in Core.fixtures.values():
+            var index: int = Core.fixtures.values().find(fixture) + 1
+            var color_string: String = colors[remap(index - 1, 0, len(Core.fixtures) - 1, 0, len(colors) - 1)]
+
+            var new_cue: Cue = Cue.new()
+            new_cue.name = "Step: " + color_string
+
+            previous_fixtures.append(fixture)
+            for previous_fixture: Fixture in previous_fixtures:
+                new_cue.store_data(fixture, "set_color", Color(color_string), Color.BLACK)
+            
+            cue_list.add_cue(new_cue, index)
+            
+
+    else:
         print_rich("[color=red]Core.fixtures is empty, unable to run the test[/color]")
-
-
-    var red_scene: Scene = Scene.new()
-    red_scene.name = "Red"
-    for fixture: Fixture in Core.fixtures.values():
-        red_scene.add_data(fixture, "set_color", Color.BLACK, Color.RED)
-
-
-    var green_scene: Scene = Scene.new()
-    green_scene.name = "Green"
-    for fixture: Fixture in Core.fixtures.values():
-        green_scene.add_data(fixture, "set_color", Color.BLACK, Color.GREEN)
+        state = false
     
-
-    var blue_scene: Scene = Scene.new()
-    blue_scene.name = "Blue"
-    for fixture: Fixture in Core.fixtures.values():
-        blue_scene.add_data(fixture, "set_color", Color.BLACK, Color.BLUE)
-
-    Core.add_function(red_scene)
-    Core.add_function(green_scene)
-    Core.add_function(blue_scene)
-
-    cue_list.add_cue(red_scene)
-    cue_list.add_cue(green_scene)
-    cue_list.add_cue(blue_scene)
-
-    cue_list.play()
-
     if state:
         print_rich("[color=green]CueList Test Passed![/color]")
     else:

@@ -5,8 +5,8 @@ class_name CueList extends Function
 ## Stores a list of Scenes, that are enabled and disabled in order one after another
 
 
-## Emitted when the current cue index is changed
-signal on_cue_changed(index: int)
+## Emitted when the current cue _index is changed
+signal on_index_changed(index: float)
 
 ## Emitted when this CueList starts playing
 signal on_played()
@@ -17,200 +17,220 @@ signal on_paused()
 ## Emitted when this CueList is stopped
 signal on_stopped()
 
-## Emitted when a cue is moved in this list
-signal on_cue_moved(scene: Scene, to: int)
-
 ## Emitted when a cue is added to this CueList
 signal on_cues_added(cues: Array)
 
 ## Emitted when a cue is removed form this CueList
 signal on_cues_removed(cues: Array)
 
-## Emitted when a cue's fade in time, out, or hold time is changed
-signal cue_timings_changed(index: int, fade_in_time: float, fade_out_time: float, hold_time: float)
+
+## The current active, and previous active cue
+var current_cue: Cue = null
+var last_cue: Cue = null
 
 
-## Stores all the Scenes that make up this cue list, stored as: {"index": {"scenes": [Scene, ...], "hold_time": float}}
-var cues: Dictionary = {}
+## The most recent animator
+var _animator: Animator = null
 
-## The index of the current cue, do not change this at runtime, instead use seek_to()
-var index: int = 0
+## Stores all fixtures that are currently be animatred
+## str(fixture.uuid + method_name):{
+##			"current_value": Variant,
+##			"animator": Animator
+##	  }
+var _current_animated_fixtures: Dictionary = {}
 
-## Used to store the on_delete_requested signal connection for each scene in this CueList, stored here to they can be dissconnected to remove refernces once a scene is deleted
-var _scene_signal_connections: Dictionary = {}
+## Stores all the current animators, stoed at {cue_number: Animator}
+var _current_animators: Dictionary = {}
 
-## Stores the scenes that are currently fading in or out, this is used when pausing and playing the CueList
-var _active_scenes: Array = []
-var _is_playing: bool = false
+## Stores all the cues, theese are stored unordored
+var _cues: Dictionary = {}
+
+## Stores an ordored list of all the cue indexes
+var _index_list: Array = []
+
+## The current _index in the _index_list array
+var _index: int = -1
 
 
-## Called when this EngineComponent is ready
 func _component_ready() -> void:
 	name = "CueList"
 	self_class_name = "CueList"
 
 
-## Plays this CueList, starting at index, or from the current index if one is not provided
-func play(start_index: int = -1) -> void:
-	if not _is_playing and len(cues):
-		_is_playing = true
-		
-		on_played.emit()
 
-		index = start_index if not start_index == -1 else index
+## Adds a pre existing cue to this CueList
+## Returnes false if the cue already exists in this list, or if the _index is already in use
+func add_cue(cue: Cue, number: float = 0) -> bool:
 
-		for scene: Scene in _active_scenes:
-			scene.play()
-		
-		while _is_playing:
-			go_next()
-			await Core.get_tree().create_timer(cues[index].hold_time).timeout
+	number = cue.number if number == 0 else number
 
+	if number <= 0:
+		number = (_index_list[-1] + 1) if _index_list else 1
 
-## Pauses the CueList at the current state
-func pause() -> void:
-	_is_playing = false
-	on_paused.emit()
-
-
-	for scene: Scene in _active_scenes:
-		scene.pause()
-
-
-## Stopes the CueList, will fade out all running scnes, using fade_out_speed, otherwise will use the fade_out_speed of the current index
-func stop(fade_out_speed: float = -1) -> void:
-	_active_scenes = _active_scenes.filter(func (scene: Scene):
-		scene.set_enabled(false, fade_out_speed if not fade_out_speed == -1 else cues[index].fade_out_speed)
-		return false
-	)
-	_is_playing = false
-
-	index = 0
-	on_cue_changed.emit(0)
-
-	on_stopped.emit()
-
-
-## Advances to the next cue in the list, can be used with out needing to run play(), will use fade speeds of the cue if none are provided
-func go_next(fade_in_speed: float = -1, fade_out_speed: float = -1) -> void:
-	seek_to(wrapi(index + 1, 1, len(cues) + 1), fade_in_speed, fade_out_speed)
-
-
-## Retuens to the previous cue in the list, can be used with out needing to run play(), will use fade speeds of the cue if none are provided
-func go_previous(fade_in_speed: float = -1, fade_out_speed: float = -1) -> void:
-	seek_to(wrapi(index - 1, 1, len(cues) + 1), fade_in_speed, fade_out_speed)
-
-
-## Skips to the cue provided in index, can be used with out needing to run play(), will use fade speeds of the cue if none are provided
-func seek_to(p_index: int, fade_in_speed: float = -1, fade_out_speed: float = -1) -> void:
-	index = p_index
-
-	_active_scenes = _active_scenes.filter(func (scene: Scene):
-		scene.set_enabled(false, fade_out_speed if not fade_out_speed == -1 else cues[index].fade_out_speed)
-		return false
-	)
-
-	cues[index].scene.set_enabled(true, fade_in_speed if not fade_in_speed == -1 else cues[index].fade_in_speed)
-	_active_scenes.append(cues[index].scene)
-
-	on_cue_changed.emit(index)
-		
-
-
-## Adds a cue to this CueList, will override cues if they already exist. If no index is provided the cue will be appened at the end of the list. Will use the fade times of the scene if none are givven
-## Returns true if the cue was added, otherwise false
-func add_cue(scene: Scene, at_index: int = -1 , fade_in_speed: float = -1, fade_out_speed: float = -1, hold_time: float = 1.0, no_signal: bool = false) -> bool:
-	if at_index == -1:
-		at_index = len(cues.keys()) + 1
-
-	if at_index < 0 or at_index not in range(1, len(cues.keys()) + 2):  
+	if cue in _cues.values() or number in _index_list:
 		return false
 
+	cue.number = number
+
+	_cues[number] = cue
+	_index_list.append(number)
+	_index_list.sort()
+
+	return true
+
+
+## Advances to the next cue in the listd
+func go_next() -> void:
+	seek_to(_index_list[wrapi(_index + 1, 0, len(_cues))])
+
+
+## Retuens to the previous cue in the list
+func go_previous() -> void:
+	seek_to(_index_list[wrapi(_index - 1, 0, len(_cues))])
+
+
+## Skips to the cue index
+func seek_to(cue_number: float) -> void:
+
+	if not cue_number in _index_list:
+		return
+
+	_index = _index_list.find(cue_number)
+	last_cue = current_cue
+	current_cue = _cues[cue_number]
+
+	var old_animated_data: Dictionary = _animator.get_animated_data() if is_instance_valid(_animator) else {}
+
+	_animator = Core.create_animator()
+	_animator.kill_on_finish = true
+
+	var last_cue_index: int = _index_list.find(last_cue.number) if last_cue else 0
+	var current_cue_index: int = _index_list.find(current_cue.number)
+
+	var cue_range: Array = []
+	var going_backwards: bool = false
+
+	if last_cue_index + 1 == current_cue_index:
+		cue_range = [current_cue_index]
+	
 	else:
-		cues[at_index] = {
-			"scene": scene,
-			"hold_time": hold_time,
-			"fade_in_speed": fade_in_speed,
-			"fade_out_speed": fade_out_speed
-		}
+		if last_cue_index > current_cue_index:
+			cue_range = range(last_cue_index, current_cue_index, -1 )
+			going_backwards = true
 
-		return true
+		else:
+			cue_range = range(last_cue_index, current_cue_index + 1)
+	
+	var new_animated_data: Dictionary = {}
 
-
-func _connect_scene_signals(scene: Scene) -> void:
-	pass
-
-
-func _disconnect_scene_signals(scene: Scene) -> void:
-	pass
-
-
-## Moves the cue at index, to to_index
-func move_cue(scene: Scene, to_index: int) -> void:
-	pass
+	for index: int in cue_range:
+		var cue: Cue = _cues[_index_list[index]]
+		
+		for fixture: Fixture in cue.stored_data.keys():
+			for method_name: String in cue.stored_data[fixture]:
+				
+				var stored_value: Dictionary = cue.stored_data[fixture][method_name]
+				var from_value: Variant = stored_value.default
+				
+				var animation_id: String = fixture.uuid + method_name
 
 
-## Removes a cue at index
-func remove_cue(scene: Scene) -> void:
-	pass
+				if animation_id in _current_animated_fixtures:
+					var current_animating_fixture: Dictionary = _current_animated_fixtures[animation_id]
+
+					if is_instance_valid(current_animating_fixture.animator):
+						from_value = current_animating_fixture.animator.get_track_from_id(animation_id).current
+						current_animating_fixture.animator.remove_track_from_id(animation_id, false)
+					else:
+						from_value = current_animating_fixture.current_value
+
+				if going_backwards:
+					new_animated_data[animation_id] = {
+						"method": fixture.get(method_name).bind(uuid),
+						"from": from_value,
+						"to": stored_value.default,
+						"current": from_value
+					}
+				else:
+					new_animated_data[animation_id] = {
+						"method": fixture.get(method_name).bind(uuid),
+						"from": from_value,
+						"to": stored_value.value,
+						"current": from_value
+					}
+				
+				_current_animated_fixtures[animation_id] = {
+					"current_value": from_value,
+					"animator": _animator
+				}
+	
+	_animator.set_animated_data(new_animated_data)
+
+	_animator.finished.connect(_remove_animator.bind(_animator, cue_number), CONNECT_ONE_SHOT)
+
+	for animator: Animator in _current_animators.values():
+		animator.time_scale = 1 / current_cue.fade_time
+
+	var subtract_time: float = 0
+
+	if cue_number in _current_animators:
+		subtract_time = remap(_current_animators[cue_number].elapsed_time, 0, 1, 0, current_cue.fade_time)
+		
+		_remove_animator(_current_animators[cue_number], cue_number)
+		# _current_animators[cue_number].queue_free()
+
+	_animator.time_scale = 1 / (current_cue.fade_time) 
+
+	_current_animators[cue_number] = _animator
+	_animator.play()
+
+	print(_current_animated_fixtures)
+	on_index_changed.emit(_index_list[_index])
 
 
-## Sets the fade in time for the cue at index
-func set_fade_in_time(scene: Scene, fade_in_time: float) -> void:
-	pass
+
+func _remove_animator(animator: Animator, cue_number: float) -> void:
+	var animated_data: Dictionary = animator.get_animated_data()
+
+	for uuid_and_method: String in animated_data.keys():
+		if is_instance_valid(_current_animated_fixtures[uuid_and_method].animator) and _current_animated_fixtures[uuid_and_method].animator == animator:
+			_current_animated_fixtures[uuid_and_method].current_value = animated_data[uuid_and_method].current
+
+			# Normally, you would set this to null. However, due to the fact that the animator may have already been freed from memory,
+			# Godot will auto-set it to null. But it's not a normal null Variant; it's one that will return true if you check it with an if statement.
+			# This is because this special null Variant remembers that it was once a valid node and will use that information to provide an error message 
+			# to the user, saying that they tried to get a member of a previously freed node.
+			#
+			# This should work fine. However, when you assign a value to a Variant, Godot will check to see if the new value and the old value are the same.
+			# When Godot compares this special null Variant with a normal null Variant, it will return true, thus Godot won't change the value of the Variant.
+			# This means that the special null Variant is still there and will return true if you check with an if statement,
+			# which can cause issues later on, as your code believes that it's a valid object.
+			#
+			# To fix this, I am setting it to an empty Object, which passes all of the engine checks and won't cause any issues when setting the variant,
+			# and still allows me to compare it to other objects without any type errors.
+			#_current_animated_fixtures[uuid_and_method].animator = ""
+	
+	_current_animators[cue_number].queue_free()
+	_current_animators.erase(cue_number)
 
 
-## Sets the fade out time for the cue at index
-func set_fade_out_time(scene: Scene, fade_out_time: float) -> void:
-	pass
-
-
-## Sets the hold time for the cue at index
-func set_hold_time(at_index: int, hold_time: float) -> void:
-	if cues.has(at_index):
-		cues[at_index].hold_time = hold_time
-
-
+## Saves this cue list to a Dictionary
 func _on_serialize_request(mode: int) -> Dictionary:
 	var serialized_cues: Dictionary = {}
 
-	for index in cues:
-		serialized_cues[index] = {
-			"hold_time": cues[index].hold_time,
-			"fade_in_speed": cues[index].fade_in_speed,
-			"fade_out_speed": cues[index].fade_out_speed,
-			"scene": cues[index].scene.uuid
-		}
+	for cue_index: float in _index_list:
+		serialized_cues[cue_index] = _cues[cue_index].serialize()
 
 	return {
-		"cues": serialized_cues,
+
+		"cues": serialized_cues
 	}
 
 
 func _on_load_request(serialized_data: Dictionary) -> void:
+	for cue_index: String in serialized_data.get("cues").keys():
+		var new_cue: Cue = Cue.new()
+		new_cue.load(serialized_data.cues[cue_index])
 
-	var just_added_cues: Array = []
+		add_cue(new_cue, float(cue_index))
 
-	# Loop through all the cues in the serialized data
-	for index in serialized_data.get("cues", {}):
-		var serialized_cue: Dictionary = serialized_data.cues[index]
-
-		var hold_time: float = serialized_cue.get("hold_time", 1.0)
-		var scene_uuid: String = serialized_cue.get("scene", "")
-
-		if scene_uuid in Core.functions.keys() and Core.functions[scene_uuid] is Scene:
-
-			var fade_in_speed: float = serialized_cue.get("fade_in_speed", 1)
-			var fade_out_speed: float = serialized_cue.get("fade_out_speed", 1)
-			
-			add_cue(Core.functions[scene_uuid], int(index), fade_in_speed, fade_out_speed, hold_time,  true)
-		
-		set_hold_time(int(index), hold_time)
-
-
-	if just_added_cues:
-		on_cues_added.emit(just_added_cues)
-
-
-func _on_delete_request() -> void:
-	stop(0)

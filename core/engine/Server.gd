@@ -22,7 +22,7 @@ var _accumulated_time: float = 0.0
 var _networked_objects: Dictionary = {}
 
 ## Stores all the methdods that object delete signals have connections to, to allow them to be disconnected later
-var _networked_objects_delete_callbacks: Dictionary = {}
+var _networked_object_callbacks: Dictionary = {}
 
 ## The queue of data that needs to be send over the UDP socket, there can only be one item in the queue at one, so new data will be merged into what is already there, using Dictionary.merge()
 var _udp_queue: Dictionary = {}
@@ -82,19 +82,15 @@ func add_networked_object(object_name: String, object: Object, delete_signal: Si
 	}
 
 	# Stores all the connected object signals, so they can be disconnected when remove_networked_object() is called
-	_networked_objects_delete_callbacks[object_name] = {
+	_networked_object_callbacks[object_name] = {
 		"signals": {}
 	}
 
 
 	# Check to see if the user has passed a delete signal, if so connect to it 
 	if not delete_signal.is_null():
-		_networked_objects_delete_callbacks[object_name].merge({
-			"callable":remove_networked_object.bind(object_name),
-			"delete_signal":delete_signal
-			})
 		 
-		delete_signal.connect(_networked_objects_delete_callbacks[object_name].callable)
+		delete_signal.connect(remove_networked_object.bind(object_name), CONNECT_ONE_SHOT)
 
 	# The objects script
 	var object_script: Script = object.get_script()
@@ -141,7 +137,7 @@ func add_networked_object(object_name: String, object: Object, delete_signal: Si
 		var object_signal: Signal = object.get(object_signal_dict.name)
 
 		if object_signal in object_network_config.high_frequency_signals:
-			_networked_objects_delete_callbacks[object_name].signals[object_signal] = func (arg1: Variant = null, arg2: Variant = null, arg3: Variant = null, arg4: Variant = null, arg5: Variant = null, arg6: Variant = null, arg7: Variant = null, arg8: Variant = null):
+			_networked_object_callbacks[object_name].signals[object_signal] = func (arg1: Variant = null, arg2: Variant = null, arg3: Variant = null, arg4: Variant = null, arg5: Variant = null, arg6: Variant = null, arg7: Variant = null, arg8: Variant = null):
 					var args: Array = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8] # Create an array of the args
 					
 					args = args.filter(func (arg):
@@ -156,7 +152,7 @@ func add_networked_object(object_name: String, object: Object, delete_signal: Si
 			# Get the signal from the object and connect a function to it that will seralise the data, and send it to the clients
 			# Due the the fact that gdscript does not yet support vararg functions, this work around is needed to allow all args to be passed, how ever this does have the side efect of limiting signals to 8 args
 			# https://github.com/godotengine/godot/pull/82808
-			_networked_objects_delete_callbacks[object_name].signals[object_signal] = func (arg1: Variant = null, arg2: Variant = null, arg3: Variant = null, arg4: Variant = null, arg5: Variant = null, arg6: Variant = null, arg7: Variant = null, arg8: Variant = null):
+			_networked_object_callbacks[object_name].signals[object_signal] = func (arg1: Variant = null, arg2: Variant = null, arg3: Variant = null, arg4: Variant = null, arg5: Variant = null, arg6: Variant = null, arg7: Variant = null, arg8: Variant = null):
 					var args: Array = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8] # Create an array of the args
 
 					send({
@@ -168,7 +164,7 @@ func add_networked_object(object_name: String, object: Object, delete_signal: Si
 					})
 
 		
-		object_signal.connect(_networked_objects_delete_callbacks[object_name].signals[object_signal])
+		object_signal.connect(_networked_object_callbacks[object_name].signals[object_signal])
 
 	return true
 
@@ -177,12 +173,14 @@ func add_networked_object(object_name: String, object: Object, delete_signal: Si
 func remove_networked_object(object_name: String) -> void:
 	print_verbose("Removing Networked Object: ", object_name)
 
-	if _networked_objects_delete_callbacks.has(object_name):
-		var delete_callbacks: Dictionary = _networked_objects_delete_callbacks[object_name]
+	if _networked_object_callbacks.has(object_name):
+		var delete_callbacks: Dictionary = _networked_object_callbacks[object_name]
 
-		(delete_callbacks[object_name].delete_signal as Signal).disconnect(delete_callbacks[object_name].callable)
-		delete_callbacks.erase(object_name)
-		
+		for object_signal: Signal in delete_callbacks.signals.keys():
+			object_signal.disconnect(delete_callbacks.signals[object_signal])
+	
+	_networked_object_callbacks.erase(object_name)
+
 	_networked_objects.erase(object_name)
 
 

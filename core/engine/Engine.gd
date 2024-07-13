@@ -161,8 +161,9 @@ func _ready() -> void:
 		tester.run(Tester.test_type.UNIT_TESTS)
 
 		if not "--test-keep-alive" in OS.get_cmdline_args():
-			get_tree().quit()
-	
+			save.call_deferred("Global Test At: " + str(Time.get_datetime_string_from_system()), true)
+			get_tree().quit.call_deferred()	
+
 
 	if "--test-global" in OS.get_cmdline_args():
 		print("\nRunning Tests")
@@ -170,7 +171,8 @@ func _ready() -> void:
 		tester.run(Tester.test_type.GLOBAL_TESTS)
 
 		if not "--test-keep-alive" in OS.get_cmdline_args():
-			get_tree().quit()
+			save.call_deferred("Global Test At: " + str(Time.get_datetime_string_from_system()), true)
+			get_tree().quit.call_deferred()
 
 
 func _process(delta: float) -> void:
@@ -198,7 +200,7 @@ func save(file_name: String = "", autosave: bool = false) -> void:
 	
 	if file_name:
 		var file_path: String = (show_library_location + "/autosave") if autosave else show_library_location
-		print(Utils.save_json_to_file(file_path, file_name, serialize(SERIALIZE_MODE_DISK)))
+		Utils.save_json_to_file(file_path, file_name, serialize(SERIALIZE_MODE_DISK))
 
 
 ## Get serialized data from a file, and load it into this engine
