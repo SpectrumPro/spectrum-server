@@ -12,24 +12,20 @@ static func run() -> bool:
     cue_list.name = "Global Test CueList"
     Core.add_function(cue_list)
 
-    var colors: Array = ["BLACK", "RED", "YELLOW", "GREEN", "BLUE", "PURPLE"]
+    var colors: Array = ["RED", "ORANGE", "YELLOW", "GREEN", "BLUE", "PURPLE"]
 
     if Core.fixtures:
 
         var previous_fixtures: Array[Fixture] = []
 
-        for fixture: Fixture in Core.fixtures.values():
-            var index: int = Core.fixtures.values().find(fixture) + 1
-            var color_string: String = colors[remap(index - 1, 0, len(Core.fixtures) - 1, 0, len(colors) - 1)]
-
+        for color_string: String in colors:            
             var new_cue: Cue = Cue.new()
-            new_cue.name = "Step: " + color_string
+            new_cue.name = "Color: " + color_string
 
-            previous_fixtures.append(fixture)
-            for previous_fixture: Fixture in previous_fixtures:
+            for fixture: Fixture in Core.fixtures.values():
                 new_cue.store_data(fixture, "set_color", Color(color_string), Color.BLACK)
             
-            cue_list.add_cue(new_cue, index)
+            cue_list.add_cue(new_cue)
             
 
     else:

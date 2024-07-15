@@ -27,9 +27,6 @@ var is_playing: bool = false :
 		set_process(state)
 		# _stop_at = length if state else 0.0
 
-		if not state:
-			finished.emit()
-
 
 ## The time_scale of this animator, 1 will play back at normal speed. Do not set this to negtive, instead use play_backwards
 var time_scale: float = 1
@@ -89,6 +86,7 @@ func delete() -> void:
 ## Process function, delta is used to calculate the interpolated values for the animation
 func _process(delta: float) -> void:
 	_seek_to(elapsed_time)
+	# print(len(_animation_data))
 
 	if play_backwards:
 		elapsed_time -= delta * time_scale

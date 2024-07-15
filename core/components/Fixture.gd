@@ -68,22 +68,22 @@ func set_manifest(p_manifest: Dictionary, p_manifest_path: String = "") -> void:
 
 
 ## Compiles the data to dmx data using the HTP blend mode
-func recompile_data() -> void:
-	## Compiles dmx data from this fixture
-	
+func recompile_data() -> void:	
 	var highest_valued_data: Dictionary = {}
 	
 	for input_data_id in current_input_data:
 		for input_data in current_input_data[input_data_id]:
 			match input_data:
-				"color":
-					highest_valued_data["color"] = Utils.get_htp_color(highest_valued_data.get("color", Color()), current_input_data[input_data_id].color)
-				"white":
-					var current_white: int = highest_valued_data.get("white", 0)
-					highest_valued_data["white"] = current_white if current_white > current_input_data[input_data_id].white else current_input_data[input_data_id].white
+				"set_color":
+					highest_valued_data["set_color"] = Utils.get_htp_color(highest_valued_data.get("set_color", Color()), current_input_data[input_data_id].set_color)
+					if uuid == "2b7910f6-43f3-4fd5-a38e-bf8edcd2fdc3":
+						print(highest_valued_data["set_color"])
+				"set_white_intensity":
+					var current_white: int = highest_valued_data.get("set_white_intensity", 0)
+					highest_valued_data["set_white_intensity"] = current_white if current_white > current_input_data[input_data_id].set_white_intensity else current_input_data[input_data_id].set_white_intensity
 	
-	_set_color(highest_valued_data.get("color", Color.BLACK))
-	_set_white_intensity(highest_valued_data.get("white", 0))
+	_set_color(highest_valued_data.get("set_color", Color.BLACK))
+	_set_white_intensity(highest_valued_data.get("set_white_intensity", 0))
 	_fixture_data_changed.emit(_compiled_dmx_data)
 
 
@@ -97,9 +97,9 @@ func set_color(color: Color, id: String = "override") -> void:
 	## Sets the color of this fixture
 	
 	if color == Color.BLACK:
-		_remove_current_input_data(id, "color")
+		_remove_current_input_data(id, "set_color")
 	else:
-		_add_current_input_data(id, "color", color)
+		_add_current_input_data(id, "set_color", color)
 	
 	recompile_data()
 
@@ -122,9 +122,9 @@ func _set_color(p_color: Color) -> void:
 ## Sets the white intensity of this fixture
 func set_white_intensity(value: int, id: String = "override") -> void:
 	if value:
-		_add_current_input_data(id, "white", clamp(value, 0, 255))
+		_add_current_input_data(id, "set_white_intensity", clamp(value, 0, 255))
 	else:
-		_remove_current_input_data(id, "white")
+		_remove_current_input_data(id, "set_white_intensity")
 	
 	recompile_data()
 
@@ -151,8 +151,20 @@ func _add_current_input_data(id: String, key: String, value: Variant) -> void:
 ## Removes some input data to this fixture
 func _remove_current_input_data(id: String, key: String) -> void:
 	current_input_data.get(id, {}).erase(key)
-	# if not current_input_data.get(id, false):
-	# 	current_input_data.erase(id) 
+	if not current_input_data.get(id, false):
+		current_input_data.erase(id) 
+
+
+func get_value_from_layer_id(id: String, value_name: String) -> Variant:
+	return current_input_data.get(id, {}).get(value_name, get_zero_from_value_name(value_name))
+
+
+func get_zero_from_value_name(value_name: String) -> Variant:
+	match value_name:
+		"set_color":
+			return Color.BLACK
+		_:
+			return 0
 
 
 func _on_serialize_request(mode: int) -> Dictionary:
