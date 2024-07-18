@@ -6,6 +6,7 @@ class_name Programmer extends EngineComponent
 
 var save_data: Dictionary = {} ## Current data in the programmer
 
+var fixture_layer_id: String = "programmer_" + uuid
 
 ## Called when this EngineComponent is ready
 func _component_ready() -> void:
@@ -18,7 +19,7 @@ func set_color(fixtures: Array, color: Color) -> void:
 	
 	for fixture in fixtures:
 		if fixture is Fixture:
-			fixture.set_color(color, "programmer_" + uuid)
+			fixture.set_color(color, fixture_layer_id)
 			
 			if fixture not in save_data:
 				save_data[fixture] = {}
@@ -31,7 +32,7 @@ func set_white_intensity(fixtures: Array, value: int) -> void:
 	for fixture in fixtures:
 		if fixture is Fixture:
 			value = clamp(value, 0, 255)
-			fixture.set_white_intensity(value, "programmer_" + uuid)
+			fixture.set_white_intensity(value, fixture_layer_id)
 			
 			# Check to see if the value is 0, if so remove it from save_data
 			if value:

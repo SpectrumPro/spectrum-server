@@ -47,15 +47,15 @@ var _index_list: Array = []
 ## The current _index in the _index_list array
 var _index: int = -1
 
-## The last direction of movement in the cue list
-var _last_direction: int = 0  # 1 for forward, -1 for backward, 0 for no movement
+
+
 
 func _component_ready() -> void:
 	name = "CueList"
 	self_class_name = "CueList"
 
 	# Core.get_tree().process_frame.connect(func ():
-	# 	print(len(_current_animators))
+	# 	print(Core.get_child_count())
 	# )
 
 
@@ -92,12 +92,24 @@ func go_previous() -> void:
 
 # Skips to the cue index
 func seek_to(cue_number: float) -> void:
+	var reset: bool = false
+
 	if not cue_number in _index_list:
-		return
+		if cue_number == -1:
+			reset = true
+		else:
+			return
+	
+	var fade_time: float = 1
 
-	current_cue = _cues[cue_number]
+	if reset:
+		fade_time = current_cue.fade_time if current_cue else 0.0
+		current_cue = null
+	else:
+		current_cue = _cues[cue_number]
+		fade_time = current_cue.fade_time
 
-	var current_cue_index: int = _index_list.find(current_cue.number)
+	var current_cue_index: int = _index_list.find(current_cue.number) if not reset else -1
 	var last_cue_index: int = _index_list.find(last_cue.number) if last_cue else -1
 
 	_index = _index_list.find(cue_number)
@@ -111,7 +123,7 @@ func seek_to(cue_number: float) -> void:
 	var accumulated_animated_data: Dictionary = {}
 
 	# Ensure to reset all modified fixtures to their default state if going backward
-	var going_backwards: bool = last_cue and (_index_list.find(last_cue.number) > current_cue_index)
+	var going_backwards: bool = (last_cue and (_index_list.find(last_cue.number) > current_cue_index)) if not reset else true
 	if going_backwards:
 		for animation_id in _current_animated_fixtures.keys():
 			var animating_fixture = _current_animated_fixtures[animation_id]
@@ -126,35 +138,24 @@ func seek_to(cue_number: float) -> void:
 				"current": from_value
 			}
 
+			_current_animated_fixtures[animation_id] = {
+				"method_name": animating_fixture.method_name,
+				"fixture": animating_fixture.fixture,
+				"animator": animator
+			}
+
 			# _current_animated_fixtures.erase(animation_id)
-
-	# # Determine the direction of movement
-	# var current_direction: int = 0
-	# if last_cue:
-	# 	current_direction = 1 if current_cue_index > _index_list.find(last_cue.number) else -1
-
-	# # Check if the direction has changed
-	# if current_direction != _last_direction and _last_direction != 0:
-	# if going_backwards:
-	# 	# Run the specified code when the direction changes
-	for old_cue_number: float in _current_animators:
-		_remove_animator(old_cue_number)
-
-	# # Update the last direction
-	# _last_direction = current_direction
+		
+		for old_cue_number: float in _current_animators:
+			_remove_animator(old_cue_number)
 
 	var cue_range: Array = range(0, current_cue_index + 1)
 
 	if not going_backwards:
 		cue_range = [current_cue_index] if (last_cue_index + 1) == current_cue_index else range(last_cue_index + 1, current_cue_index + 1)
 
-	print(cue_range)
-
-	# if going_backwards:
-	# 	cue_range = []
-	
 	# Iterate forward from the start to the target cue
-	for index in range(0, current_cue_index + 1):
+	for index in cue_range if not reset else [0]:
 		var cue: Cue = _cues[_index_list[index]]
 
 		for fixture: Fixture in cue.stored_data.keys():
@@ -163,24 +164,24 @@ func seek_to(cue_number: float) -> void:
 
 				var from_value: Variant = fixture.get_value_from_layer_id(uuid, method_name)
 				var to_value: Variant = stored_value.value
-				
-				# if fixture.uuid == "2b7910f6-43f3-4fd5-a38e-bf8edcd2fdc3":
-				# 	print(from_value)
 
 				var animation_id: String = fixture.uuid + method_name
-				# if animation_id in accumulated_animated_data:
-				# 	# Update the to_value in accumulated data
-				# 	accumulated_animated_data[animation_id]["to"] = to_value
-				# else:
-				accumulated_animated_data[animation_id] = {
-					"method": fixture.get(method_name).bind(uuid),
-					"from": from_value,
-					"to": to_value,
-					"current": from_value
-				}
+				if animation_id in accumulated_animated_data:
+					# Update the to_value in accumulated data
+					accumulated_animated_data[animation_id]["to"] = to_value
+				else:
+					accumulated_animated_data[animation_id] = {
+						"method": fixture.get(method_name).bind(uuid),
+						"from": from_value,
+						"to": to_value,
+						"current": from_value
+					}
 				
-				if animation_id in _current_animated_fixtures and is_instance_valid(_current_animated_fixtures[animation_id].animator):
-					_current_animated_fixtures[animation_id].animator.remove_track_from_id(animation_id)
+				
+				if animation_id in _current_animated_fixtures :
+					var _animator = _current_animated_fixtures[animation_id].animator
+					if is_instance_valid(_animator) and _animator != animator:
+						_current_animated_fixtures[animation_id].animator.remove_track_from_id(animation_id, false)
 
 				_current_animated_fixtures[animation_id] = {
 					"method_name": method_name,
@@ -189,22 +190,30 @@ func seek_to(cue_number: float) -> void:
 				}
 
 	
-	print(accumulated_animated_data)
+
 	# Apply the accumulated state to the animator
 	animator.set_animated_data(accumulated_animated_data)
 
-	animator.finished.connect(_remove_animator.bind(cue_number), CONNECT_ONE_SHOT)
+	animator.finished.connect((func (current_cue_number: float):
+		_current_animators[current_cue_number].pause()
+		_current_animators[current_cue_number].queue_free()
+		_current_animators.erase(current_cue_number)
+	).bind(cue_number), CONNECT_ONE_SHOT)
 
-	for active_animator: Animator in _current_animators.values():
-		active_animator.time_scale = 1 / current_cue.fade_time
+	# for active_animator: Animator in _current_animators.values():
+	# 	active_animator.time_scale = 1 / fade_time
 
 	var subtract_time: float = 0
 
 	if cue_number in _current_animators:
-		subtract_time = remap(_current_animators[cue_number].elapsed_time, 0, 1, 0, current_cue.fade_time)
-		_remove_animator(cue_number)
+		subtract_time = remap(_current_animators[cue_number].elapsed_time, 0, 1, 0, fade_time)
 
-	animator.time_scale = 1 / current_cue.fade_time
+		_current_animators[cue_number].pause()
+		_current_animators[cue_number].queue_free()
+		_current_animators.erase(cue_number)
+
+	animator.time_scale = 1 / (fade_time - subtract_time)
+	# animator.time_scale = 1 / randf_range(0.1, 4)
 
 	_current_animators[cue_number] = animator
 	animator.play()
@@ -216,28 +225,17 @@ func seek_to(cue_number: float) -> void:
 
 
 
-func _remove_animator(cue_number: float) -> void:
-	# for uuid_and_method: String in animated_data.keys():
-	# 	if is_instance_valid(_current_animated_fixtures[uuid_and_method].animator) and _current_animated_fixtures[uuid_and_method].animator == animator:
-	# 		_current_animated_fixtures[uuid_and_method].current_value = animated_data[uuid_and_method].current
-
-	# 		# Normally, you would set this to null. However, due to the fact that the animator may have already been freed from memory,
-	# 		# Godot will auto-set it to null. But it's not a normal null Variant; it's one that will return true if you check it with an if statement.
-	# 		# This is because this special null Variant remembers that it was once a valid node and will use that information to provide an error message 
-	# 		# to the user, saying that they tried to get a member of a previously freed node.
-	# 		#
-	# 		# This should work fine. However, when you assign a value to a Variant, Godot will check to see if the new value and the old value are the same.
-	# 		# When Godot compares this special null Variant with a normal null Variant, it will return true, thus Godot won't change the value of the Variant.
-	# 		# This means that the special null Variant is still there and will return true if you check with an if statement,
-	# 		# which can cause issues later on, as your code believes that it's a valid object.
-	# 		#
-	# 		# To fix this, I am setting it to an empty Object, which passes all of the engine checks and won't cause any issues when setting the variant,
-	# 		# and still allows me to compare it to other objects without any type errors.
-	# 		#_current_animated_fixtures[uuid_and_method].animator = ""
+func _remove_animator(cue_number: float, erace: bool = true) -> void:
 	
 	_current_animators[cue_number].pause()
 	_current_animators[cue_number].queue_free()
-	_current_animators.erase(cue_number)
+	if erace:
+		_current_animators.erase(cue_number)
+
+
+## Stops this cue list, fades all fixturs down to 0, using the fade time provided, otherwise will use the fade time of the current cue
+func stop() -> void:
+	seek_to(-1)
 
 
 ## Saves this cue list to a Dictionary

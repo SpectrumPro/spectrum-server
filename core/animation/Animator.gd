@@ -152,8 +152,6 @@ func remove_track_from_id(id: Variant, reset: bool = true) -> void:
 		if reset: 
 			(_animation_data[id].method as Callable).call(_animation_data[id].from)
 
-		_animation_data.erase(id)
-
 ## Gets an animated track from the given id
 func get_track_from_id(id: Variant) -> Dictionary:
 	return _animation_data.get(id, {}).duplicate()

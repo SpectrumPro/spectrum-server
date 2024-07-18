@@ -76,8 +76,6 @@ func recompile_data() -> void:
 			match input_data:
 				"set_color":
 					highest_valued_data["set_color"] = Utils.get_htp_color(highest_valued_data.get("set_color", Color()), current_input_data[input_data_id].set_color)
-					if uuid == "2b7910f6-43f3-4fd5-a38e-bf8edcd2fdc3":
-						print(highest_valued_data["set_color"])
 				"set_white_intensity":
 					var current_white: int = highest_valued_data.get("set_white_intensity", 0)
 					highest_valued_data["set_white_intensity"] = current_white if current_white > current_input_data[input_data_id].set_white_intensity else current_input_data[input_data_id].set_white_intensity
