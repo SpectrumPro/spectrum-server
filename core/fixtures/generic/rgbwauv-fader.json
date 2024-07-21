@@ -2,14 +2,10 @@
   "schema_version": "1.0",
   "info": {
     "brand": "Generic",
-    "name": "RGBWAUV Fader",
-    "date": "2023-04-20",
-    "author": ["Shuichi", "Flo Edelmann", "Ryan Goodwin", "Liam Sherwin"],
-    "categories": ["Color Changer"],
-    "links": {
-      "Website": "https://open-fixture-library.org/generic/rgbwauv-fader",
-      "OFLLibrary": "https://open-fixture-library.org/generic/rgbwauv-fader"
-    }
+    "name": "Basic RGBWAUv",
+    "date": "20-07-2024",
+    "author": ["Liam Sherwin"],
+    "categories": ["Color Changer"]
   },
   "modes": {
     "6 Channel": {
@@ -25,17 +21,17 @@
     "12 Channel": {
       "channels": [
         "ColorIntensityRed",
-        "ColorIntensityRedFine",
+        "ColorIntensityRed-Fine",
         "ColorIntensityGreen",
-        "ColorIntensityGreenFine",
+        "ColorIntensityGreen-Fine",
         "ColorIntensityBlue",
-        "ColorIntensityBlueFine",
+        "ColorIntensityBlue-Fine",
         "ColorIntensityWhite",
-        "ColorIntensityWhiteFine",
+        "ColorIntensityWhite-Fine",
         "ColorIntensityAmber",
-        "ColorIntensityAmberFine",
+        "ColorIntensityAmber-Fine",
         "ColorIntensityUV",
-        "ColorIntensityUVFine"
+        "ColorIntensityUV-Fine"
       ]
     }
   }

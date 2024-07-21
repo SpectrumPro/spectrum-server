@@ -1,4 +1,4 @@
-Dimmer
+Intensity
 ColorIntensityRed
 ColorIntensityGreen
 ColorIntensityBlue

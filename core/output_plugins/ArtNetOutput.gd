@@ -65,7 +65,7 @@ func output() -> void:
 	# Length (16-bit)
 	packet.append(02)
 	packet.append(00)
-	
+	print(dmx_data)
 	# DMX Channels
 	for channel in range(1, 513):
 		packet.append(clamp(dmx_data.get(channel, 0), 0, 255))

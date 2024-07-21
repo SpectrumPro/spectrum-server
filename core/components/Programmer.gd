@@ -6,7 +6,7 @@ class_name Programmer extends EngineComponent
 
 var save_data: Dictionary = {} ## Current data in the programmer
 
-var fixture_layer_id: String = "programmer_" + uuid
+var fixture_layer_id: String = Fixture.OVERRIDE
 
 ## Called when this EngineComponent is ready
 func _component_ready() -> void:
@@ -14,36 +14,33 @@ func _component_ready() -> void:
 	self_class_name = "Programmer"
 
 
-## Sets the color of all the fixtures in [pram fixtures], to color
-func set_color(fixtures: Array, color: Color) -> void:
-	
-	for fixture in fixtures:
-		if fixture is Fixture:
-			fixture.set_color(color, fixture_layer_id)
-			
-			if fixture not in save_data:
-				save_data[fixture] = {}
-			
-			save_data[fixture].color = color
+func set_color(fixtures: Array, color: Color) -> void: _set_fixture_data(fixtures, color, "set_color", fixture_layer_id)
+func ColorIntensityWhite(fixtures: Array, value: int) -> void: _set_fixture_data(fixtures, value, "ColorIntensityWhite", fixture_layer_id)
+func ColorIntensityAmber(fixtures: Array, value: int) -> void: _set_fixture_data(fixtures, value, "ColorIntensityAmber", fixture_layer_id)
+func ColorIntensityUV(fixtures: Array, value: int) -> void: _set_fixture_data(fixtures, value, "ColorIntensityUV", fixture_layer_id)
+func Dimmer(fixtures: Array, value: int) -> void: _set_fixture_data(fixtures, value, "Dimmer", fixture_layer_id)
 
 
-## Sets the white intensity of all the fixtures pass in [pram fixtures] 
-func set_white_intensity(fixtures: Array, value: int) -> void:
+func reset_color(fixtures: Array) -> void: _set_fixture_data(fixtures, Color.BLACK, "set_color", Fixture.REMOVE_OVERRIDE)
+func reset_ColorIntensityWhite(fixtures: Array) -> void: _set_fixture_data(fixtures, 0, "ColorIntensityWhite", Fixture.REMOVE_OVERRIDE)
+func reset_ColorIntensityAmber(fixtures: Array) -> void: _set_fixture_data(fixtures, 0, "ColorIntensityAmber", Fixture.REMOVE_OVERRIDE)
+func reset_ColorIntensityUV(fixtures: Array) -> void: _set_fixture_data(fixtures, 0, "ColorIntensityUV", Fixture.REMOVE_OVERRIDE)
+func reset_Dimmer(fixtures: Array) -> void: _set_fixture_data(fixtures, 0, "Dimmer", Fixture.REMOVE_OVERRIDE)
+
+
+func _set_fixture_data(fixtures: Array, value: Variant, method: String, layer_id: String):
 	for fixture in fixtures:
 		if fixture is Fixture:
-			value = clamp(value, 0, 255)
-			fixture.set_white_intensity(value, fixture_layer_id)
-			
+			fixture.get(method).call(value, layer_id)
 			# Check to see if the value is 0, if so remove it from save_data
 			if value:
 				if fixture not in save_data:
 					save_data[fixture] = {}
 				
-				save_data[fixture].white = value
+				save_data[fixture][method] = value
 
 			elif fixture in save_data:
-				save_data[fixture].erase("white")
-
+				save_data[fixture].erase(method)
 
 
 ## Saves the current state of this programmer to a scene
