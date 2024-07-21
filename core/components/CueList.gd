@@ -48,7 +48,7 @@ func _component_ready() -> void:
 
 ## Adds a pre-existing cue to this CueList
 ## Returns false if the cue already exists in this list, or if the index is already in use
-func add_cue(cue: Cue, number: float = 0) -> bool:
+func add_cue(cue: Cue, number: float = 0, rename: bool = false) -> bool:
 	if number == 0:
 		number = cue.number
 	
@@ -58,10 +58,15 @@ func add_cue(cue: Cue, number: float = 0) -> bool:
 	if cue in _cues.values() or number in _index_list:
 		return false
 
+	if rename:
+		cue.name = "Un-named Cue: " + str(number)
+
 	cue.number = number
 	_cues[number] = cue
 	_index_list.append(number)
 	_index_list.sort()
+
+	on_cues_added.emit([cue])
 
 	return true
 
@@ -120,7 +125,7 @@ func _reset_animated_fixtures(animator: Animator, accumulated_animated_data: Dic
 	for animation_id in _current_animated_fixtures.keys():
 		var animating_fixture = _current_animated_fixtures[animation_id]
 		var from_value: Variant = animating_fixture.fixture.get_value_from_layer_id(uuid, animating_fixture.method_name)
-		var to_value: Variant = animating_fixture.fixture.get_zero_from_value_name(animating_fixture.method_name)
+		var to_value: Variant = animating_fixture.fixture.get_zero_from_channel_key(animating_fixture.method_name)
 
 		if is_instance_valid(animating_fixture.animator):
 			animating_fixture.animator.remove_track_from_id(animation_id, false)

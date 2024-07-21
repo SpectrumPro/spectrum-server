@@ -36,16 +36,6 @@ var network_config: Dictionary = {
 }
 
 
-var channel_config: Dictionary = {
-	"ColorIntensityRed": 	{},
-	"ColorIntensityGreen": 	{},
-	"ColorIntensityBlue":	{},
-	"ColorIntensityWhite": 	{"signal": on_amber_intensity_changed},
-	"ColorIntensityAmber": 	{"signal": on_white_intensity_changed},
-	"ColorIntensityUV": 	{"signal": on_uv_intensity_changed},
-	"Dimmer":				{"signal": on_dimmer_changed}
-}
-
 
 ## Universe channel of this fixture
 var channel: int
@@ -68,12 +58,25 @@ var channels: Array
 ## What happenes on each channel, at each value range
 var channel_ranges: Dictionary 
 
+var current_values: Dictionary = {
+	"set_color": 			Color.BLACK,
+	"ColorIntensityWhite": 	0,
+	"ColorIntensityAmber": 	0,
+	"ColorIntensityUV": 	0,
+	"Dimmer": 				0
+}
 
-var color: 	Color = Color.BLACK
-var white: 	int = 0
-var amber: 	int = 0
-var uv: 	int = 0
-var dimmer:	int = 0
+
+var channel_config: Dictionary = {
+	"ColorIntensityRed": 	{},
+	"ColorIntensityGreen": 	{},
+	"ColorIntensityBlue":	{},
+	"ColorIntensityWhite": 	{"signal": on_amber_intensity_changed},
+	"ColorIntensityAmber": 	{"signal": on_white_intensity_changed},
+	"ColorIntensityUV": 	{"signal": on_uv_intensity_changed},
+	"Dimmer":				{"signal": on_dimmer_changed}
+}
+
 
 
 ## The override value, pass this as the layer id to override any other values
@@ -135,25 +138,25 @@ func set_color(p_color: Color, id: String) -> void:
 	else:
 		_current_input_data["set_color"].erase(id)
 
-	if new_color != color:
+	if new_color != current_values.set_color:
 		_fixture_data_changed.emit(_compiled_dmx_data)
 
-		color = new_color
-		on_color_changed.emit(color)
+		current_values.set_color = new_color
+		on_color_changed.emit(new_color)
 	
 
 
 ## White channel intensity
-func ColorIntensityWhite(value: int, id: String) -> void: white = set_current_input_data(id, "ColorIntensityWhite", clamp(value, 0, MAX_DMX_VALUE))
+func ColorIntensityWhite(value: int, id: String) -> void: current_values.ColorIntensityWhite = set_current_input_data(id, "ColorIntensityWhite", clamp(value, 0, MAX_DMX_VALUE))
 
 ## Amber channel intensity
-func ColorIntensityAmber(value: int, id: String) -> void: amber = set_current_input_data(id, "ColorIntensityAmber", clamp(value, 0, MAX_DMX_VALUE))
+func ColorIntensityAmber(value: int, id: String) -> void: current_values.ColorIntensityAmber = set_current_input_data(id, "ColorIntensityAmber", clamp(value, 0, MAX_DMX_VALUE))
 
 ## Amber channel intensity
-func ColorIntensityUV(value: int, id: String) -> void: uv = set_current_input_data(id, "ColorIntensityUV", clamp(value, 0, MAX_DMX_VALUE))
+func ColorIntensityUV(value: int, id: String) -> void: current_values.ColorIntensityUV = set_current_input_data(id, "ColorIntensityUV", clamp(value, 0, MAX_DMX_VALUE))
 
 ## Dimmer channel intensity
-func Dimmer(value: int, id: String) -> void: dimmer = set_current_input_data(id, "Dimmer", clamp(value, 0, MAX_DMX_VALUE))
+func Dimmer(value: int, id: String) -> void: current_values.Dimmer = set_current_input_data(id, "Dimmer", clamp(value, 0, MAX_DMX_VALUE))
 
 ## End Channels
 
@@ -197,10 +200,10 @@ func set_current_input_data(layer_id: String, channel_key: String, value: Varian
 
 
 func get_value_from_layer_id(id: String, value_name: String) -> Variant:
-	return _current_input_data.get(value_name, {}).get(id, get_zero_from_value_name(value_name))
+	return _current_input_data.get(value_name, {}).get(id, get_zero_from_channel_key(value_name))
 
 
-func get_zero_from_value_name(value_name: String) -> Variant:
+func get_zero_from_channel_key(value_name: String) -> Variant:
 	match value_name:
 		"set_color":
 			return Color.BLACK

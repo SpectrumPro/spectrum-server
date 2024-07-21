@@ -8,6 +8,8 @@ var save_data: Dictionary = {} ## Current data in the programmer
 
 var fixture_layer_id: String = Fixture.OVERRIDE
 
+enum SAVE_MODE {MODIFIED, ALL, ALL_NONE_ZERO}
+
 ## Called when this EngineComponent is ready
 func _component_ready() -> void:
 	name = "Programmer"
@@ -28,19 +30,19 @@ func reset_ColorIntensityUV(fixtures: Array) -> void: _set_fixture_data(fixtures
 func reset_Dimmer(fixtures: Array) -> void: _set_fixture_data(fixtures, 0, "Dimmer", Fixture.REMOVE_OVERRIDE)
 
 
-func _set_fixture_data(fixtures: Array, value: Variant, method: String, layer_id: String):
+func _set_fixture_data(fixtures: Array, value: Variant, channel_key: String, layer_id: String):
 	for fixture in fixtures:
 		if fixture is Fixture:
-			fixture.get(method).call(value, layer_id)
+			fixture.get(channel_key).call(value, layer_id)
 			# Check to see if the value is 0, if so remove it from save_data
 			if value:
 				if fixture not in save_data:
 					save_data[fixture] = {}
 				
-				save_data[fixture][method] = value
+				save_data[fixture][channel_key] = value
 
 			elif fixture in save_data:
-				save_data[fixture].erase(method)
+				save_data[fixture].erase(channel_key)
 
 
 ## Saves the current state of this programmer to a scene
@@ -49,12 +51,8 @@ func save_to_scene(name: String = "New Scene") -> Scene:
 	var new_scene: Scene = Scene.new()
 	
 	for fixture: Fixture in save_data:
-		for channel: String in save_data[fixture].keys():
-			match channel:
-				"color":
-					new_scene.add_data(fixture, "set_color", Color.BLACK, save_data[fixture].color)
-				"white":
-					new_scene.add_data(fixture, "set_white_intensity", 0, save_data[fixture].white)
+		for channel_key: String in save_data[fixture].keys():
+			new_scene.add_data(fixture, channel_key, fixture.get_zero_from_channel_key(channel_key), save_data[fixture][channel_key])
 
 
 	new_scene.name = name
@@ -62,3 +60,36 @@ func save_to_scene(name: String = "New Scene") -> Scene:
 	Core.add_function(new_scene)
 	
 	return new_scene
+
+
+func save_to_new_cue(fixtures: Array, cue_list: CueList, mode: SAVE_MODE) -> void:
+	if not fixtures:
+		return
+	
+	var new_cue: Cue = Cue.new()
+
+	match mode:
+		SAVE_MODE.MODIFIED:
+			print("SAVE_MODE.MODIFIED")
+			for fixture: Fixture in save_data:
+				for channel_key: String in save_data[fixture]:
+					new_cue.store_data(fixture, channel_key, save_data[fixture][channel_key], fixture.get_zero_from_channel_key(channel_key))
+
+		SAVE_MODE.ALL:	
+			print("SAVE_MODE.ALL")
+			for fixture in fixtures:
+				if fixture is Fixture:
+					for channel_key: String in fixture.current_values:
+						new_cue.store_data(fixture, channel_key, fixture.current_values[channel_key], fixture.get_zero_from_channel_key(channel_key))
+
+		SAVE_MODE.ALL_NONE_ZERO:
+			print("SAVE_MODE.ALL_NONE_ZERO")
+			for fixture in fixtures:
+				if fixture is Fixture:
+					for channel_key: String in fixture.current_values:
+						if fixture.current_values[channel_key]:
+							new_cue.store_data(fixture, channel_key, fixture.current_values[channel_key], fixture.get_zero_from_channel_key(channel_key))
+
+	
+	print(new_cue.serialize())
+	cue_list.add_cue(new_cue, 0, true)
