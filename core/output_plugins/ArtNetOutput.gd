@@ -18,9 +18,6 @@ func _component_ready():
 
 	self_class_name = "ArtNetOutput"
 
-	start()
-
-
 ## Called when this output is started
 func start():
 	stop() # Stop the current connection, if one exists
@@ -82,6 +79,15 @@ func _on_serialize_request(mode: int) -> Dictionary:
 		"port": port,
 		"universe_number": universe_number
 	}
+
+
+func _on_load_request(serialized_data: Dictionary) -> void:
+	ip_address = str(serialized_data.get("ip_address", ip_address))
+	port = int(serialized_data.get("port", port))
+	universe_number = int(serialized_data.get("universe_number", universe_number))
+
+	start()
+
 
 
 ## Called when this object is requested to be deleted

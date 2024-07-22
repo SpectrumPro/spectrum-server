@@ -35,6 +35,8 @@ var outputs: Dictionary = {}
 ## Dictionary containing the current dmx data of this universe, this is constantly updated, so modifying this manualy will cause unexpected outcomes
 var dmx_data: Dictionary = {} 
 
+## Stores dmx overrides, sotred at {channel:value}. theese values will always override other data passed to this universe
+var dmx_overrides: Dictionary = {}
 
 ## Called when this EngineComponent is ready
 func _component_ready() -> void:
@@ -236,10 +238,29 @@ func set_data(data: Dictionary):
 	_compile_and_send()
 
 
+func set_dmx_override(channel: int, value: int) -> void:
+	dmx_overrides[channel] = value
+	_compile_and_send()
+
+
+func remove_dmx_override(channel: int) -> void:
+	dmx_overrides.erase(channel)
+	_compile_and_send()
+
+
+
+func remove_all_dmx_overrides() -> void:
+	dmx_overrides = {}
+	_compile_and_send()
+
+
 ## Compile the dmx data, and send to the outputs
 func _compile_and_send():
+	var compiled_dmx_data: Dictionary = dmx_data.duplicate()
+	compiled_dmx_data.merge(dmx_overrides, true)
+
 	for output: DataOutputPlugin in outputs.values():
-		output.dmx_data = dmx_data
+		output.dmx_data = compiled_dmx_data
 		
 
 ## Serializes this universe
