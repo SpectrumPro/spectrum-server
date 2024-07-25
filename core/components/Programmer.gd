@@ -4,11 +4,14 @@
 class_name Programmer extends EngineComponent
 ## Engine class for programming lights, colors, positions, etc.
 
-var save_data: Dictionary = {} ## Current data in the programmer
+
+## Current data in the programmer
+var save_data: Dictionary = {}
 
 var fixture_layer_id: String = Fixture.OVERRIDE
 
 enum SAVE_MODE {MODIFIED, ALL, ALL_NONE_ZERO}
+
 
 ## Called when this EngineComponent is ready
 func _component_ready() -> void:
@@ -90,6 +93,24 @@ func save_to_new_cue(fixtures: Array, cue_list: CueList, mode: SAVE_MODE) -> voi
 						if fixture.current_values[channel_key]:
 							new_cue.store_data(fixture, channel_key, fixture.current_values[channel_key], fixture.get_zero_from_channel_key(channel_key))
 
-	
-	print(new_cue.serialize())
 	cue_list.add_cue(new_cue, 0, true)
+
+
+## Saves the current state of fixtures to a new cue list
+func save_to_new_cue_list() -> void:
+
+	var new_cue_list: CueList = CueList.new()
+
+	var blackout_cue: Cue = Cue.new()
+	blackout_cue.name = "Blackout"
+
+	var new_cue: Cue = Cue.new()
+
+	for fixture: Fixture in save_data:
+		for channel_key: String in save_data[fixture]:
+			new_cue.store_data(fixture, channel_key, save_data[fixture][channel_key], fixture.get_zero_from_channel_key(channel_key))
+
+	new_cue_list.add_cue(blackout_cue, 0.5)
+	new_cue_list.add_cue(new_cue)
+
+	Core.add_function(new_cue_list)

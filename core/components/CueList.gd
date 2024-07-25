@@ -53,7 +53,7 @@ func add_cue(cue: Cue, number: float = 0, rename: bool = false) -> bool:
 		number = cue.number
 	
 	if number <= 0:
-		number = (_index_list[-1] + 1) if _index_list else 1
+		number = round(_index_list[-1] + 1) if _index_list else 1
 	
 	if cue in _cues.values() or number in _index_list:
 		return false

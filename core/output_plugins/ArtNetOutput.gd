@@ -18,6 +18,9 @@ func _component_ready():
 
 	self_class_name = "ArtNetOutput"
 
+	start()
+
+
 ## Called when this output is started
 func start():
 	stop() # Stop the current connection, if one exists
