@@ -72,8 +72,9 @@ func delete_user_meta(key: String, no_signal: bool = false) -> bool:
 
 
 ## Sets the name of this component
-func set_name(new_name) -> void:
+func set_name(new_name: String) -> void:
 	name = new_name
+	print_verbose(uuid, ": Changing name to: ", new_name)
 	on_name_changed.emit(name)
 
 
@@ -103,7 +104,7 @@ func delete() -> void:
 	
 	on_delete_requested.emit()
 	
-	print(uuid, " Has had a delete request send. Currently has:", str(get_reference_count()), " refernces")
+	print_verbose(uuid, " Has had a delete request send. Currently has:", str(get_reference_count()), " refernces")
 
 
 ## Overide this function to handle delete requests
@@ -128,4 +129,4 @@ func _on_load_request(serialized_data: Dictionary) -> void:
 ## Debug function to tell if this component is freed from memory
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
-		print_verbose("\"", self.name, "\" Is being freed, uuid: ", self.uuid)
+		print("\"", self.name, "\" Is being freed, uuid: ", self.uuid)

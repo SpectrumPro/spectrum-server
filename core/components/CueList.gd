@@ -19,6 +19,9 @@ signal on_cues_added(cues: Array)
 ## Emitted when a cue is removed from this CueList
 signal on_cues_removed(cues: Array)
 
+## Emitted when cue numbers are changed, stored as {Cue:new_number, ...}
+signal on_cue_numbers_changed(new_numbers: Dictionary)
+
 ## The current active, and previous active cue
 var current_cue: Cue = null
 var last_cue: Cue = null
@@ -41,6 +44,11 @@ var _index_list: Array = []
 
 ## The current index in the _index_list array
 var _index: int = -1
+
+
+## Used to determin if a force reload from the start should happen, used when a cue is removed, added, or moved
+var _force_reload: bool = false
+
 
 func _component_ready() -> void:
 	name = "CueList"
@@ -65,18 +73,38 @@ func add_cue(cue: Cue, number: float = 0, rename: bool = false) -> bool:
 	_cues[number] = cue
 	_index_list.append(number)
 	_index_list.sort()
+	
+	cue.on_delete_requested.connect(remove_cue.bind(cue), CONNECT_ONE_SHOT)
+	Server.add_networked_object(cue.uuid, cue, cue.on_delete_requested)
+
+	_force_reload = true
 
 	on_cues_added.emit([cue])
 
 	return true
 
+
+## Removes a cue from this CueList
+func remove_cue(cue: Cue) -> void:
+	if cue.number in _cues:
+		_index_list.erase(cue.number)
+		_cues.erase(cue.number)
+
+		_index = _index - 1
+		_force_reload = true
+
+		on_cues_removed.emit([cue])
+
+
 ## Advances to the next cue in the list
 func go_next() -> void:
 	seek_to(_index_list[wrapi(_index + 1, 0, len(_cues))])
 
+
 ## Returns to the previous cue in the list
 func go_previous() -> void:
 	seek_to(_index_list[wrapi(_index - 1, 0, len(_cues)) if _index != -1 else -1])
+
 
 ## Skips to the cue index
 func seek_to(cue_number: float) -> void:
@@ -100,12 +128,12 @@ func seek_to(cue_number: float) -> void:
 	var accumulated_animated_data: Dictionary = {}
 	var going_backwards: bool = (last_cue and (_index_list.find(last_cue.number) > current_cue_index)) if not reset else true
 
-	if going_backwards:
+	if going_backwards or _force_reload:
 		_reset_animated_fixtures(animator, accumulated_animated_data)
 		_remove_all_animators()
 
 	var cue_range: Array = range(0, current_cue_index + 1)
-	if not going_backwards:
+	if not going_backwards and not _force_reload:
 		var last_cue_index: int = _index_list.find(last_cue.number) if last_cue else -1
 		cue_range = [current_cue_index] if (last_cue_index + 1) == current_cue_index else range(last_cue_index + 1, current_cue_index + 1)
 
@@ -116,6 +144,8 @@ func seek_to(cue_number: float) -> void:
 
 	animator.set_animated_data(accumulated_animated_data)
 	_handle_animator_finished(animator, cue_number, fade_time)
+
+	_force_reload = false
 
 	last_cue = current_cue
 	on_cue_changed.emit(_index_list[_index] if not reset else -1.0)
@@ -143,9 +173,11 @@ func _reset_animated_fixtures(animator: Animator, accumulated_animated_data: Dic
 			"animator": animator
 		}
 
+
 func _remove_all_animators() -> void:
 	for old_cue_number: float in _current_animators:
 		_remove_animator(old_cue_number)
+
 
 func _accumulate_state(cue: Cue, accumulated_animated_data: Dictionary, animator: Animator) -> void:
 	for fixture: Fixture in cue.stored_data.keys():
@@ -176,6 +208,7 @@ func _accumulate_state(cue: Cue, accumulated_animated_data: Dictionary, animator
 				"animator": animator
 			}
 
+
 func _handle_animator_finished(animator: Animator, cue_number: float, fade_time: float) -> void:
 	animator.finished.connect((func (current_cue_number: float):
 		_current_animators[current_cue_number].pause()
@@ -194,15 +227,62 @@ func _handle_animator_finished(animator: Animator, cue_number: float, fade_time:
 	_current_animators[cue_number] = animator
 	animator.play()
 
+
 func _remove_animator(cue_number: float, erase: bool = true) -> void:
 	_current_animators[cue_number].pause()
 	_current_animators[cue_number].queue_free()
 	if erase:
 		_current_animators.erase(cue_number)
 
+
 ## Stops this cue list, fades all fixtures down to 0, using the fade time provided, otherwise will use the fade time of the current cue
 func stop() -> void:
 	seek_to(-1)
+
+
+## Moves the cue at cue_number up. By swapping the number with the next cue in the list
+func move_cue_up(cue_number: float) -> void:
+	if cue_number in _index_list:
+		var main_cue: Cue = _cues[cue_number]
+		var next_cue: Cue = _cues[_index_list[_index_list.find(main_cue.number) - 1]]
+		
+		var main_cue_old_number: float = main_cue.number
+		main_cue.number = next_cue.number
+		next_cue.number = main_cue_old_number
+
+		_cues[main_cue.number] = main_cue
+		_cues[next_cue.number] = next_cue
+
+		_force_reload = true
+		_index = _index_list.find(main_cue.number)
+
+		on_cue_numbers_changed.emit({
+			main_cue.number: main_cue,
+			next_cue.number: next_cue
+		})
+
+## Moves the cue at cue_number down. By swapping the number with the previous cue in the list
+func move_cue_down(cue_number: float) -> void:
+	if cue_number in _index_list:
+		var main_cue: Cue = _cues[cue_number]
+		var previous_cue: Cue = _cues[_index_list[wrapi(_index_list.find(main_cue.number) + 1, 0, len(_index_list))]]
+		
+		var main_cue_old_number: float = main_cue.number
+		main_cue.number = previous_cue.number
+		previous_cue.number = main_cue_old_number
+
+		_cues[main_cue.number] = main_cue
+		_cues[previous_cue.number] = previous_cue
+
+		_force_reload = true
+		_index = _index_list.find(main_cue.number)
+		
+		on_cue_numbers_changed.emit({
+			main_cue.number: main_cue,
+			previous_cue.number: previous_cue
+		})
+
+
 
 ## Saves this cue list to a Dictionary
 func _on_serialize_request(mode: int) -> Dictionary:
@@ -210,6 +290,7 @@ func _on_serialize_request(mode: int) -> Dictionary:
 	for cue_index: float in _index_list:
 		serialized_cues[cue_index] = _cues[cue_index].serialize()
 	return {"cues": serialized_cues}
+
 
 ## Loads this cue list from a Dictionary
 func _on_load_request(serialized_data: Dictionary) -> void:

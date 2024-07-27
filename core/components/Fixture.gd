@@ -211,15 +211,20 @@ func get_zero_from_channel_key(value_name: String) -> Variant:
 			return 0
 
 
+## Returnes serialized infomation about this fixture
 func _on_serialize_request(mode: int) -> Dictionary:
-	## Returnes serialized infomation about this fixture
 
-	return {
+	var serialized_data: Dictionary = {
 		"channel": channel,
 		"mode": mode,
 		# "position": [position.x, position.y],
 		"manifest_path": manifest_path
 	}
+
+	if mode == CoreEngine.SERIALIZE_MODE_NETWORK:
+		serialized_data.merge({"current_values": current_values})
+
+	return serialized_data
 
 
 func emit_zero_values() -> void:

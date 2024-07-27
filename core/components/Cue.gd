@@ -5,12 +5,16 @@ class_name Cue extends EngineComponent
 ## Data container for CueLists, a Cue doesn't do anything by itself, and needs to be part of a CueList to work
 
 
+## Emitted when the fade time it changed
+signal on_fade_time_changed(new_fade_time: float)
+
+
 ## The number of this cue, do not modify this when it is a part of a cuelist
 var number: float = 0
 
 
 ## Fade in time in seconds
-var fade_time: float = 2.0
+var fade_time: float = 2.0 : set = set_fade_time
 
 ## Pre-Wait time in seconds, how long to wait before this cue will activate, only works with TRIGGER_MODE.WITH_LAST
 var pre_wait: float = 0.0
@@ -51,6 +55,11 @@ func store_data(fixture: Fixture, method_name: String, value: Variant, default: 
         }
 
     return true
+
+
+func set_fade_time(p_fade_time: float) -> void:
+    fade_time = p_fade_time
+    on_fade_time_changed.emit(fade_time)
 
 
 ## Returnes a serialized copy of this cue

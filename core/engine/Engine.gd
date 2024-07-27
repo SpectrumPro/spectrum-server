@@ -146,6 +146,8 @@ func _ready() -> void:
 
 	Server.start_server()
 
+	print()
+
 	if "--load" in OS.get_cmdline_args():
 		var name_index: int = OS.get_cmdline_args().find("--load") + 1
 		var save_name: String = OS.get_cmdline_args()[name_index]
@@ -161,7 +163,7 @@ func _ready() -> void:
 		tester.run(Tester.test_type.UNIT_TESTS)
 
 		if not "--test-keep-alive" in OS.get_cmdline_args():
-			save.call_deferred("Global Test At: " + str(Time.get_datetime_string_from_system()), true)
+			save.call_deferred("Test At: " + str(Time.get_datetime_string_from_system()), true)
 			get_tree().quit.call_deferred()	
 
 
@@ -213,7 +215,7 @@ func load_from_file(file_name: String) -> void:
 	
 	var serialized_data: Dictionary = JSON.parse_string(saved_file.get_as_text())
 
-	print(serialized_data)
+	print_verbose(serialized_data)
 
 	self.load(serialized_data) # Use self.load as load() is a gdscript global function
 
@@ -307,8 +309,6 @@ func add_universes(universes_to_add: Array, no_signal: bool = false) -> Array[Un
 ## Connects all the signals of the new universe to the signals of this engine
 func _connect_universe_signals(universe: Universe):
 	
-	print("Connecting Signals")
-
 	_universe_signal_connections[universe] = {
 		"_universe_on_name_changed": _universe_on_name_changed.bind(universe),
 		"remove_universe": remove_universe.bind(universe, false, false)
@@ -501,7 +501,7 @@ func remove_function(function: Function, no_signal: bool = false, delete_object:
 func remove_functions(functions_to_remove: Array, no_signal: bool = false, delete_object: bool = true) -> void:
 	
 	var just_removed_functions: Array = []
-	print(functions_to_remove)
+
 	for function: Function in functions_to_remove:
 		if remove_function(function, true, delete_object):
 			just_removed_functions.append(function)

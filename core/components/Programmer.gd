@@ -111,6 +111,6 @@ func save_to_new_cue_list() -> void:
 			new_cue.store_data(fixture, channel_key, save_data[fixture][channel_key], fixture.get_zero_from_channel_key(channel_key))
 
 	new_cue_list.add_cue(blackout_cue, 0.5)
-	new_cue_list.add_cue(new_cue)
+	new_cue_list.add_cue(new_cue, 0, true)
 
 	Core.add_function(new_cue_list)
