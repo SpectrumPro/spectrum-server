@@ -36,6 +36,8 @@ var _current_animated_fixtures: Dictionary = {}
 ## Stores all the current animators, stored at {cue_number: Animator}
 var _current_animators: Dictionary = {}
 
+var _previous_autoplay_animator: Animator = null
+
 ## Stores all the cues, these are stored unordered
 var _cues: Dictionary = {}
 
@@ -48,6 +50,8 @@ var _index: int = -1
 
 ## Used to determin if a force reload from the start should happen, used when a cue is removed, added, or moved
 var _force_reload: bool = false
+
+var _autoplay: bool = false
 
 
 func _component_ready() -> void:
@@ -147,8 +151,26 @@ func seek_to(cue_number: float) -> void:
 
 	_force_reload = false
 
+	if is_instance_valid(_previous_autoplay_animator):
+		if _previous_autoplay_animator.finished.is_connected(_autoplay_callback):
+			_previous_autoplay_animator.finished.disconnect(_autoplay_callback)
+
+	if _autoplay:
+		animator.finished.connect(_autoplay_callback, CONNECT_ONE_SHOT)
+		_previous_autoplay_animator = animator
+
 	last_cue = current_cue
 	on_cue_changed.emit(_index_list[_index] if not reset else -1.0)
+
+
+func _autoplay_callback() -> void:
+	if _autoplay:
+		var next_cue: Cue = _cues[_index_list[wrapi(_index + 1, 0, len(_cues))]]
+		await Core.get_tree().create_timer(next_cue.pre_wait).timeout
+		if _autoplay:	
+			go_next()
+	
+	_previous_autoplay_animator = null
 
 
 func _reset_animated_fixtures(animator: Animator, accumulated_animated_data: Dictionary) -> void:
@@ -237,7 +259,19 @@ func _remove_animator(cue_number: float, erase: bool = true) -> void:
 
 ## Stops this cue list, fades all fixtures down to 0, using the fade time provided, otherwise will use the fade time of the current cue
 func stop() -> void:
+	_autoplay = false
 	seek_to(-1)
+
+
+## Start auto play
+func play() -> void:
+	_autoplay = true
+	go_next()
+
+
+## Stop auto play
+func pause() -> void:
+	_autoplay = false
 
 
 ## Moves the cue at cue_number up. By swapping the number with the next cue in the list
