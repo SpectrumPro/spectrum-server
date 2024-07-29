@@ -130,9 +130,11 @@ var debug: Debug = Debug.new()
 func _ready() -> void:	
 	# Set low processor mode to true, to avoid using too much system resources 
 	OS.set_low_processor_usage_mode(false)
+
+	Details.print_startup_detils()
 	
 	if not DirAccess.dir_exists_absolute(show_library_location):
-		print("The folder \"show_library_location\" does not exist, creating one now, errcode: ", DirAccess.make_dir_absolute(show_library_location))
+		print(TF.auto_format(TF.AUTO_MODE.INFO, "The folder \"show_library_location\" does not exist, creating one now, errcode: ", DirAccess.make_dir_absolute(show_library_location)))
 
 	# Load fixture definitions
 	fixtures_definitions = get_fixture_definitions(fixture_path)
@@ -152,7 +154,7 @@ func _ready() -> void:
 		var name_index: int = OS.get_cmdline_args().find("--load") + 1
 		var save_name: String = OS.get_cmdline_args()[name_index]
 
-		print("Loading save file: ", save_name)
+		print(TF.auto_format(0, "Loading save file: ", save_name))
 
 		load_from_file(save_name)
 

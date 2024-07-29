@@ -26,7 +26,7 @@ func _process(delta):
 	if _server.is_connection_available():
 		var new_peer: PacketPeerUDP = _server.take_connection()
 
-		print("Accepted UDP peer from: %s:%s" % [new_peer.get_packet_ip(), new_peer.get_packet_port()])
+		print("Accepted UDP peer from: ", TF.blue(str(new_peer.get_packet_ip()) + ":" + str(new_peer.get_packet_port())))
 
 		_peers.append(new_peer)
 

@@ -36,25 +36,25 @@ func _ready() -> void:
 
 ## Starts the server on the given port, 
 func start_server(p_websocket_port: int = websocket_port, p_udp_port: int = udp_port):
-	print("Starting websocket server")
+	print(TF.auto_format(TF.AUTO_MODE.INFO, "Starting websocket server"))
 
 	var err = MainSocketServer.listen(p_websocket_port)
 	if err != OK:
-		print("Error starting websocket on port: ", p_websocket_port, " | errorcode: ", error_string(err))
+		print(TF.auto_format(TF.AUTO_MODE.ERROR, "Error starting websocket on port: ", p_websocket_port, " | errorcode: ", error_string(err)))
 		return
 	
-	print("Websocket server started on port: ", p_websocket_port)
+	print(TF.auto_format(TF.AUTO_MODE.SUCCESS, "Websocket server started on port: ", p_websocket_port))
 
 	print()
 
-	print("Starting UDP server")
+	print(TF.auto_format(TF.AUTO_MODE.INFO, "Starting UDP server"))
 
 	err = MainUDPSocket.listen(p_udp_port)
 	if err != OK:
-		print("Error starting UDP socket on port: ", p_udp_port, " | errorcode: ", error_string(err))
+		print(TF.auto_format(TF.AUTO_MODE.ERROR, "Error starting UDP socket on port: ", p_udp_port, " | errorcode: ", error_string(err)))
 		return
 	
-	print("UDP Socket started on port: ", p_udp_port)
+	print(TF.auto_format(TF.AUTO_MODE.SUCCESS, "UDP Socket started on port: ", p_udp_port))
 
 
 func _process(delta: float) -> void:
@@ -200,20 +200,12 @@ func send_high_frequency(data: Dictionary) -> void:
 
 
 func _on_web_socket_server_client_connected(peer_id):
-	print("Websocket client connected, ID: ", peer_id)
+	print("Websocket client connected, ID: ", TF.blue(str(peer_id)))
 
 
 func _on_web_socket_server_client_disconnected(peer_id):
-	print("Websocket client disconnected, ID: ", peer_id)
+	print("Websocket client disconnected, ID: ", TF.blue(str(peer_id)))
 
-
-
-func _on_udp_socket_client_connected(peer_id):
-	print("UDP socket client connected, ID: ", peer_id)
-
-
-func _on_udp_socket_client_disconnected(peer_id):
-	print("UDP socket client disconnected, ID: ", peer_id)
 
 
 ## Called when message is receved by the server
