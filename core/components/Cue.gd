@@ -8,9 +8,11 @@ class_name Cue extends EngineComponent
 ## Emitted when the fade time it changed
 signal on_fade_time_changed(new_fade_time: float)
 
-## Emitted when the pre or post wait time it changed
-signal on_wait_time_change(pre_wait, post_wait)
+## Emitted when the pre_wait time is changed
+signal on_pre_wait_time_changed(pre_wait: float)
 
+## Emitted when the post_wait time is changed
+signal on_post_wait_time_changed(post_wait: float)
 
 
 ## The number of this cue, do not modify this when it is a part of a cuelist
@@ -36,7 +38,7 @@ var tracking: bool = true
 
 
 ## Stores the saved fixture data to be animated, stored as {Fixture: [[method_name, value]]}
-var stored_data: Dictionary = {} 
+var stored_data: Dictionary = {}
 
 ## List of Functions that should be triggred during this cue, stored as {Function: [[method_name, [args...]]]}
 var function_triggers: Dictionary = {}
@@ -49,12 +51,12 @@ func _component_ready() -> void:
 func store_data(fixture: Fixture, method_name: String, value: Variant, default: Variant) -> bool:
     if typeof(value) != typeof(default):
         return false
-    
+
     if not fixture in stored_data.keys():
         stored_data[fixture] = {}
-    
+
     stored_data[fixture][method_name] = {
-            "value": value, 
+            "value": value,
             "default": default
         }
 
@@ -70,13 +72,13 @@ func set_fade_time(p_fade_time: float) -> void:
 ## Sets the pre-wait time in seconds
 func set_pre_wait(p_pre_wait: float) -> void:
     pre_wait = p_pre_wait
-    on_wait_time_change.emit(pre_wait, post_wait)
+    on_pre_wait_time_changed.emit(pre_wait)
 
 
 ## Sets the post-wait time in seconds
 func set_post_wait(p_post_wait: float) -> void:
     post_wait = p_post_wait
-    on_wait_time_change.emit(pre_wait, post_wait)
+    on_post_wait_time_changed.emit(post_wait)
 
 
 ## Returnes a serialized copy of this cue
@@ -92,7 +94,7 @@ func _on_serialize_request(mode: int) -> Dictionary:
                 serialized_stored_data[fixture.uuid] = {}
 
             serialized_stored_data[fixture.uuid][method_name] = {
-                "value": var_to_str(stored_item.value), 
+                "value": var_to_str(stored_item.value),
                 "default": var_to_str(stored_item.default)
             }
 
@@ -101,7 +103,7 @@ func _on_serialize_request(mode: int) -> Dictionary:
 
     for function: Function in function_triggers:
         for stored_trigger: Array in function_triggers[function]:
-            
+
             if not function.uuid in serialized_function_triggers:
                 serialized_function_triggers[function.uuid] = []
 
