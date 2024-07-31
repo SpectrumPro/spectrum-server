@@ -102,13 +102,15 @@ func remove_cue(cue: Cue) -> void:
 
 ## Advances to the next cue in the list
 func go_next() -> void:
-	seek_to(_index_list[wrapi(_index + 1, 0, len(_cues))])
-
+	if _cues:
+		seek_to(_index_list[wrapi(_index + 1, 0, len(_cues))])
+	else: stop()
 
 ## Returns to the previous cue in the list
 func go_previous() -> void:
-	seek_to(_index_list[wrapi(_index - 1, 0, len(_cues)) if _index != -1 else -1])
-
+	if _cues:
+		seek_to(_index_list[wrapi(_index - 1, 0, len(_cues)) if _index != -1 else -1])
+	else: stop()
 
 ## Skips to the cue index
 func seek_to(cue_number: float) -> void:
@@ -166,8 +168,10 @@ func seek_to(cue_number: float) -> void:
 func _autoplay_callback() -> void:
 	if _autoplay:
 		var next_cue: Cue = _cues[_index_list[wrapi(_index + 1, 0, len(_cues))]]
+		var old_index: int = _index
+
 		await Core.get_tree().create_timer(next_cue.pre_wait).timeout
-		if _autoplay:	
+		if _autoplay and old_index == _index:	
 			go_next()
 	
 	_previous_autoplay_animator = null

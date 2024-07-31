@@ -75,13 +75,13 @@ static var auto_config: Dictionary = {
         TYPE_STRING: FG_GREEN,
     },
     AUTO_MODE.INFO: {
-        TYPE_STRING: FG_MAGENTA,
+        TYPE_STRING: FG_BRIGHT_MAGENTA,
     },
     AUTO_MODE.WARNING: {
         TYPE_STRING: FG_YELLOW,
     },
     AUTO_MODE.ERROR: {
-        TYPE_STRING: FG_RED,
+        TYPE_STRING: FG_RED + BOLD,
     }
 }
 

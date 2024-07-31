@@ -20,6 +20,12 @@ signal on_mode_changed(mode: int)
 ## Emitted when the channel of the fixture is changed
 signal on_channel_changed(new_channel: int)
 
+## Emitted when an override value is changed
+signal on_override_value_changed(value: Variant, channel_key: String)
+
+## Emitted when an override value is removed
+signal on_override_value_removed(channel_key: String)
+
 ## Emitted when any of the channels of this fixture are changed, emitted as channel:value for all channels this fixtures uses
 signal _fixture_data_changed(data: Dictionary)
 
@@ -32,6 +38,7 @@ var network_config: Dictionary = {
 		on_amber_intensity_changed,
 		on_uv_intensity_changed,
 		on_dimmer_changed,
+		on_override_value_changed,
 	]
 }
 
@@ -176,6 +183,12 @@ func set_current_input_data(layer_id: String, channel_key: String, value: Varian
 	
 	var new_value = _current_input_data[channel_key].values().max()
 
+	if layer_id == OVERRIDE and not OVERRIDE in _current_input_data[channel_key].keys():
+		on_override_value_changed.emit(value, channel_key)
+		
+	elif layer_id == REMOVE_OVERRIDE and OVERRIDE in _current_input_data[channel_key].keys():
+		on_override_value_removed.emit(channel_key)
+	
 	if OVERRIDE in _current_input_data[channel_key].keys():
 		if layer_id == REMOVE_OVERRIDE:
 			_current_input_data[channel_key].erase(OVERRIDE)
@@ -199,12 +212,12 @@ func set_current_input_data(layer_id: String, channel_key: String, value: Varian
 	return new_value
 
 
-func get_value_from_layer_id(id: String, value_name: String) -> Variant:
-	return _current_input_data.get(value_name, {}).get(id, get_zero_from_channel_key(value_name))
+func get_value_from_layer_id(layer_id: String, channel_key: String) -> Variant:
+	return _current_input_data.get(channel_key, {}).get(layer_id, get_zero_from_channel_key(channel_key))
 
 
-func get_zero_from_channel_key(value_name: String) -> Variant:
-	match value_name:
+func get_zero_from_channel_key(channel_key: String) -> Variant:
+	match channel_key:
 		"set_color":
 			return Color.BLACK
 		_:
