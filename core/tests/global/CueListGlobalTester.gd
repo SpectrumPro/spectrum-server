@@ -23,7 +23,7 @@ static func run() -> bool:
             new_cue.name = "Color: " + color_string
 
             for fixture: Fixture in Core.fixtures.values():
-                new_cue.store_data(fixture, "set_color", Color(color_string), Color.BLACK)
+                new_cue.store_data(fixture, "set_color", Color(color_string))
             
             cue_list.add_cue(new_cue)
             

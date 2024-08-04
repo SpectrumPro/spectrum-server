@@ -216,7 +216,7 @@ func get_value_from_layer_id(layer_id: String, channel_key: String) -> Variant:
 	return _current_input_data.get(channel_key, {}).get(layer_id, get_zero_from_channel_key(channel_key))
 
 
-func get_zero_from_channel_key(channel_key: String) -> Variant:
+static func get_zero_from_channel_key(channel_key: String) -> Variant:
 	match channel_key:
 		"set_color":
 			return Color.BLACK

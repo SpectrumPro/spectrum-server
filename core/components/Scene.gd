@@ -2,24 +2,33 @@
 # All rights reserved.
 
 class_name Scene extends Function
-## Engine class for creating and recalling saved data
+## Function for creating and recalling saved data
 
 
 ## Emitted when this scene is _enabled or dissabled
 signal on_state_changed(is_enabled: bool)
 
-## Emitted when the fade in or out speed is changed
-signal on_fade_speed_changed(fade_in: float, fade_out: float)
+## Emitted when the fade speed has changed
+signal on_fade_time_changed(fade_in_speed: float, fade_out_speed: float)
 
 ## Emitted when the current percentage step of this scene changes, ie the current position during the fade from 0 to 1.0
 signal on_percentage_step_changed(percentage: float)
-
+ 
 
 var network_config: Dictionary = {
 	"high_frequency_signals": [
 		on_percentage_step_changed
 	]
 }
+
+
+## Fade in time in seconds, defaults to 2 seconds
+var fade_in_speed: float = 2 : set = set_fade_in_speed
+
+
+## Fade out time in seconds, defaults to 2 seconds
+var fade_out_speed: float = 2 : set = set_fade_out_speed
+
 
 
 ## The current state of this scene
@@ -41,6 +50,8 @@ func _component_ready() -> void:
 
 	name = "Scene"
 	self_class_name = "Scene"
+
+	_allow_store_zero_data = false
 
 	_animator.steped.connect(func (step: float): 
 		var value
@@ -143,41 +154,36 @@ func flash_release(fade_out: float = fade_out_speed) -> void:
 	
 
 ## Add a method to this scene
-func add_data(fixture: Fixture, method: String, default_data: Variant, data: Variant) -> void:
+func store_data(fixture: Fixture, channel_key: String, value: Variant, p_store_data: Dictionary = _save_data) -> bool:
+	var store_state: bool = store_data_static(fixture, channel_key, value, p_store_data)
 
-	if fixture.get(method) is Callable:
-		_animator.animate_method(fixture.get(method).bind("scene_" + uuid), default_data, data)
+	if store_state:
+		_animator.animate_method(fixture.get(channel_key).bind("scene_" + uuid), fixture.get_zero_from_channel_key(channel_key), value)
 
-		if not fixture.uuid in _save_data:
-			_save_data[fixture.uuid] = []
-		
-		_save_data[fixture.uuid].append({
-			"default": default_data,
-			"data": data,
-			"method": method
-		})
+
+	return store_state
+
+
+
+## Sets the fade in speed in seconds
+func set_fade_in_speed(speed: float) -> void:
+	fade_in_speed = speed
+	on_fade_time_changed.emit(fade_in_speed, fade_out_speed)
+
+
+## Sets the fade out speed in seconds
+func set_fade_out_speed(speed: float) -> void:
+	fade_out_speed = speed
+	on_fade_time_changed.emit(fade_in_speed, fade_out_speed)
 
 
 ## Serializes this scene and returnes it in a dictionary
 func _on_serialize_request(mode: int) -> Dictionary:
-	
-	var serialized_save_data: Dictionary = {}
-
-	for fixture_uuid: String in _save_data:
-		serialized_save_data[fixture_uuid] = []
-
-		var data: Array = _save_data[fixture_uuid]
-		for track in data:
-			serialized_save_data[fixture_uuid].append({
-				"default": var_to_str(track.default),
-				"data": var_to_str(track.data),
-				"method": track.method
-			})
 
 	var serialized_data: Dictionary = {
 		"fade_in_speed": fade_in_speed,
 		"fade_out_speed": fade_out_speed,
-		"save_data": serialized_save_data
+		"save_data": serialize_stored_data(_save_data)
 	}
 
 	if mode == CoreEngine.SERIALIZE_MODE_NETWORK:
@@ -193,12 +199,7 @@ func _on_load_request(serialized_data: Dictionary) -> void:
 	fade_in_speed = serialized_data.get("fade_in_speed", fade_in_speed)
 	fade_out_speed = serialized_data.get("fade_out_speed", fade_out_speed)
 	
-	for fixture_uuid: String in serialized_data.get("save_data", {}):
-		if fixture_uuid in Core.fixtures:
-			var data: Array = serialized_data.save_data[fixture_uuid]
-			for track in data:
-				add_data(Core.fixtures[fixture_uuid], track.get("method", ""), str_to_var(track.get("default", 0)), str_to_var(track.get("data", 0)))
-
+	load_stored_data(serialized_data.get("save_data", {}), _save_data, store_data)
 
 ## Called when this scene is to be deleted
 func _on_delete_request() -> void:

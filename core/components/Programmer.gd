@@ -92,15 +92,55 @@ func _set_individual_fixture_data(fixture: Fixture, value: Variant, channel_key:
 		save_data[fixture].erase(channel_key)
 
 
+func store_data_to_function(function: Function, mode: SAVE_MODE, fixtures: Array = []) -> void:
+	match mode:
+		SAVE_MODE.MODIFIED:
+			for fixture: Fixture in save_data:
+				for channel_key: String in save_data[fixture]:
+					function.store_data(fixture, channel_key, save_data[fixture][channel_key])
+
+		SAVE_MODE.ALL:
+			for fixture in fixtures:
+				if fixture is Fixture:
+					for channel_key: String in fixture.current_values:
+						function.store_data(fixture, channel_key, fixture.current_values[channel_key])
+
+		SAVE_MODE.ALL_NONE_ZERO:
+			for fixture in fixtures:
+				if fixture is Fixture:
+					for channel_key: String in fixture.current_values:
+						if fixture.current_values[channel_key]:
+							function.store_data(fixture, channel_key, fixture.current_values[channel_key])
+
+
+func erace_data_from_function(function: Function, mode: SAVE_MODE, fixtures: Array = []) -> void:
+	print("Eracing from cue with mode: ", mode)
+	match mode:
+		SAVE_MODE.MODIFIED:
+			for fixture: Fixture in save_data:
+				for channel_key: String in save_data[fixture]:
+					print(function.erace_data(fixture, channel_key))
+
+		SAVE_MODE.ALL:
+			for fixture in fixtures:
+				if fixture is Fixture:
+					for channel_key: String in fixture.current_values:
+						function.erace_data(fixture, channel_key)
+
+		SAVE_MODE.ALL_NONE_ZERO:
+			for fixture in fixtures:
+				if fixture is Fixture:
+					for channel_key: String in fixture.current_values:
+						if fixture.current_values[channel_key]:
+							function.erace_data(fixture, channel_key)
+
+
 ## Saves the current state of this programmer to a scene
 func save_to_scene(name: String = "New Scene") -> Scene:
 	
 	var new_scene: Scene = Scene.new()
 	
-	for fixture: Fixture in save_data:
-		for channel_key: String in save_data[fixture].keys():
-			new_scene.add_data(fixture, channel_key, fixture.get_zero_from_channel_key(channel_key), save_data[fixture][channel_key])
-
+	store_data_to_function(new_scene, SAVE_MODE.MODIFIED) 
 
 	new_scene.name = name
 	
@@ -116,26 +156,25 @@ func save_to_new_cue(fixtures: Array, cue_list: CueList, mode: SAVE_MODE) -> voi
 	
 	var new_cue: Cue = Cue.new()
 
-	match mode:
-		SAVE_MODE.MODIFIED:
-			for fixture: Fixture in save_data:
-				for channel_key: String in save_data[fixture]:
-					new_cue.store_data(fixture, channel_key, save_data[fixture][channel_key], fixture.get_zero_from_channel_key(channel_key))
-
-		SAVE_MODE.ALL:	
-			for fixture in fixtures:
-				if fixture is Fixture:
-					for channel_key: String in fixture.current_values:
-						new_cue.store_data(fixture, channel_key, fixture.current_values[channel_key], fixture.get_zero_from_channel_key(channel_key))
-
-		SAVE_MODE.ALL_NONE_ZERO:
-			for fixture in fixtures:
-				if fixture is Fixture:
-					for channel_key: String in fixture.current_values:
-						if fixture.current_values[channel_key]:
-							new_cue.store_data(fixture, channel_key, fixture.current_values[channel_key], fixture.get_zero_from_channel_key(channel_key))
+	store_data_to_function(new_cue, mode, fixtures)
 
 	cue_list.add_cue(new_cue, 0, true)
+
+
+func merge_into_cue(fixtures: Array, cue_list: CueList, cue_number: float, mode: SAVE_MODE) -> void:
+	var cue: Cue = cue_list.get_cue(cue_number)
+
+	if cue:
+		store_data_to_function(cue, mode, fixtures)
+		cue_list.force_reload = true
+
+
+func erace_from_cue(fixtures: Array, cue_list: CueList, cue_number: float, mode: SAVE_MODE) -> void:
+	var cue: Cue = cue_list.get_cue(cue_number)
+
+	if cue:
+		erace_data_from_function(cue, mode, fixtures)
+		cue_list.force_reload = true
 
 
 ## Saves the current state of fixtures to a new cue list
@@ -150,9 +189,9 @@ func save_to_new_cue_list() -> void:
 
 	for fixture: Fixture in save_data:
 		for channel_key: String in save_data[fixture]:
-			new_cue.store_data(fixture, channel_key, save_data[fixture][channel_key], fixture.get_zero_from_channel_key(channel_key))
+			new_cue.store_data(fixture, channel_key, save_data[fixture][channel_key])
 
 	new_cue_list.add_cue(blackout_cue, 0.5)
-	new_cue_list.add_cue(new_cue, 0, true)
+	new_cue_list.add_cue(new_cue, 1, true)
 
 	Core.add_function(new_cue_list)

@@ -1,7 +1,7 @@
 # Copyright (c) 2024 Liam Sherwin
 # All rights reserved.
 
-class_name Cue extends EngineComponent
+class_name Cue extends Function
 ## Data container for CueLists, a Cue doesn't do anything by itself, and needs to be part of a CueList to work
 
 
@@ -48,19 +48,13 @@ func _component_ready() -> void:
     self_class_name = "Cue"
 
 ## Stores data inside this cue
-func store_data(fixture: Fixture, method_name: String, value: Variant, default: Variant) -> bool:
-    if typeof(value) != typeof(default):
-        return false
+func store_data(fixture: Fixture, channel_key: String, value: Variant) -> bool:
+    return store_data_static(fixture, channel_key, value, stored_data)
 
-    if not fixture in stored_data.keys():
-        stored_data[fixture] = {}
 
-    stored_data[fixture][method_name] = {
-            "value": value,
-            "default": default
-        }
-
-    return true
+func erace_data(fixture: Fixture, channel_key: String) -> bool:
+    print("running from cue class")
+    return erace_data_static(fixture, channel_key, stored_data)
 
 
 ## Sets the fade time in seconds
@@ -83,22 +77,6 @@ func set_post_wait(p_post_wait: float) -> void:
 
 ## Returnes a serialized copy of this cue
 func _on_serialize_request(mode: int) -> Dictionary:
-    var serialized_stored_data: Dictionary = {}
-
-    for fixture: Fixture in stored_data:
-        for method_name: String in stored_data[fixture].keys():
-
-            var stored_item: Dictionary = stored_data[fixture][method_name]
-
-            if not fixture.uuid in serialized_stored_data:
-                serialized_stored_data[fixture.uuid] = {}
-
-            serialized_stored_data[fixture.uuid][method_name] = {
-                "value": var_to_str(stored_item.value),
-                "default": var_to_str(stored_item.default)
-            }
-
-
     var serialized_function_triggers: Dictionary = {}
 
     for function: Function in function_triggers:
@@ -116,7 +94,7 @@ func _on_serialize_request(mode: int) -> Dictionary:
         "post_wait": post_wait,
         "trigger_mode": trigger_mode,
         "tracking": tracking,
-        "stored_data": serialized_stored_data,
+        "stored_data": serialize_stored_data(stored_data),
         "function_triggers": serialized_function_triggers
     }
 
@@ -129,12 +107,5 @@ func _on_load_request(serialized_data: Dictionary) -> void:
     trigger_mode = serialized_data.get("trigger_mode", trigger_mode)
     tracking = serialized_data.get("tracking", tracking)
 
-    for fixture_uuid: String in serialized_data.get("stored_data", {}).keys():
-        if fixture_uuid in Core.fixtures:
-            var fixture: Fixture = Core.fixtures[fixture_uuid]
-
-            for method_name: String in serialized_data.stored_data[fixture_uuid]:
-                var stored_item: Dictionary = serialized_data.stored_data[fixture_uuid][method_name]
-
-                if fixture.has_method(method_name):
-                    store_data(fixture, method_name, str_to_var(stored_item.get("value", "0")),  str_to_var(stored_item.get("default", "null"), ))
+    load_stored_data(serialized_data.get("stored_data", {}), stored_data)
+        

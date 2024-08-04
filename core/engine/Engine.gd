@@ -194,6 +194,7 @@ func _process(delta: float) -> void:
 ## Serializes all elements of this engine, used for file saving, and network synchronization
 func serialize(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
 	return {
+		"schema_version": Details.schema_version,
 		"universes": serialize_universes(mode),
 		"functions": serialize_functions(mode),
 	}
@@ -219,6 +220,13 @@ func load_from_file(file_name: String) -> void:
 
 	print_verbose(serialized_data)
 
+	var schema_version: int = int(serialized_data.get("schema_version", 0))
+	if schema_version:
+		if schema_version != Details.schema_version:
+			print(TF.auto_format(TF.AUTO_MODE.WARNING, TF.bold("WARNING:"), " Save file: \"", file_name, "\" Has schema version: ", schema_version, " How ever version: ", Details.schema_version, " Is expected. Errors may occur loading this file"))
+	else:
+		print(TF.auto_format(TF.AUTO_MODE.WARNING, TF.bold("WARNING:"), " Save file: \"", file_name, "\" Does not have a schema version. Errors may occur loading this file"))
+	
 	self.load(serialized_data) # Use self.load as load() is a gdscript global function
 
 

@@ -48,8 +48,8 @@ var _index_list: Array = []
 var _index: int = -1
 
 
-## Used to determin if a force reload from the start should happen, used when a cue is removed, added, or moved
-var _force_reload: bool = false
+## Used to determin if a force reload from the start should happen, used when a cue is added, removed, moved, or edited
+var force_reload: bool = false
 
 var _autoplay: bool = false
 
@@ -81,7 +81,7 @@ func add_cue(cue: Cue, number: float = 0, rename: bool = false) -> bool:
 	cue.on_delete_requested.connect(remove_cue.bind(cue), CONNECT_ONE_SHOT)
 	Server.add_networked_object(cue.uuid, cue, cue.on_delete_requested)
 
-	_force_reload = true
+	force_reload = true
 
 	on_cues_added.emit([cue])
 
@@ -95,7 +95,7 @@ func remove_cue(cue: Cue) -> void:
 		_cues.erase(cue.number)
 
 		_index = _index - 1
-		_force_reload = true
+		force_reload = true
 
 		on_cues_removed.emit([cue])
 
@@ -106,11 +106,13 @@ func go_next() -> void:
 		seek_to(_index_list[wrapi(_index + 1, 0, len(_cues))])
 	else: stop()
 
+
 ## Returns to the previous cue in the list
 func go_previous() -> void:
 	if _cues:
 		seek_to(_index_list[wrapi(_index - 1, 0, len(_cues)) if _index != -1 else -1])
 	else: stop()
+
 
 ## Skips to the cue index
 func seek_to(cue_number: float) -> void:
@@ -134,12 +136,12 @@ func seek_to(cue_number: float) -> void:
 	var accumulated_animated_data: Dictionary = {}
 	var going_backwards: bool = (last_cue and (_index_list.find(last_cue.number) > current_cue_index)) if not reset else true
 
-	if going_backwards or _force_reload:
+	if going_backwards or force_reload:
 		_reset_animated_fixtures(animator, accumulated_animated_data)
 		_remove_all_animators()
 
 	var cue_range: Array = range(0, current_cue_index + 1)
-	if not going_backwards and not _force_reload:
+	if not going_backwards and not force_reload:
 		var last_cue_index: int = _index_list.find(last_cue.number) if last_cue else -1
 		cue_range = [current_cue_index] if (last_cue_index + 1) == current_cue_index else range(last_cue_index + 1, current_cue_index + 1)
 
@@ -151,7 +153,7 @@ func seek_to(cue_number: float) -> void:
 	animator.set_animated_data(accumulated_animated_data)
 	_handle_animator_finished(animator, cue_number, fade_time)
 
-	_force_reload = false
+	force_reload = false
 
 	if is_instance_valid(_previous_autoplay_animator):
 		if _previous_autoplay_animator.finished.is_connected(_autoplay_callback):
@@ -291,7 +293,7 @@ func move_cue_up(cue_number: float) -> void:
 		_cues[main_cue.number] = main_cue
 		_cues[next_cue.number] = next_cue
 
-		_force_reload = true
+		force_reload = true
 		_index = _index_list.find(main_cue.number)
 
 		on_cue_numbers_changed.emit({
@@ -312,7 +314,7 @@ func move_cue_down(cue_number: float) -> void:
 		_cues[main_cue.number] = main_cue
 		_cues[previous_cue.number] = previous_cue
 
-		_force_reload = true
+		force_reload = true
 		_index = _index_list.find(main_cue.number)
 		
 		on_cue_numbers_changed.emit({
@@ -320,6 +322,10 @@ func move_cue_down(cue_number: float) -> void:
 			previous_cue.number: previous_cue
 		})
 
+
+## Returnes the cue at the given index, or null if none is found
+func get_cue(cue_number: float) -> Cue:
+	return _cues.get(cue_number, null)
 
 
 ## Saves this cue list to a Dictionary
