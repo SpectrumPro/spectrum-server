@@ -323,6 +323,31 @@ func move_cue_down(cue_number: float) -> void:
 		})
 
 
+func set_cue_number(new_number: float, cue: Cue) -> bool:
+	if cue in _cues.values() and get_cue(new_number) == null:
+
+		_index_list.erase(cue.number)
+		_index_list.append(new_number)
+		_index_list.sort()
+
+		_cues.erase(cue.number)
+		_cues[new_number] = cue
+
+		cue.number = new_number
+
+		_index = _index_list.find(cue.number)
+		force_reload = true
+
+		on_cue_numbers_changed.emit({
+			new_number: cue
+		})
+
+		return true
+
+	else:
+		return false
+
+
 ## Returnes the cue at the given index, or null if none is found
 func get_cue(cue_number: float) -> Cue:
 	return _cues.get(cue_number, null)
