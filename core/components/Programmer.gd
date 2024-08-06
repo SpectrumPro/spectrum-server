@@ -20,6 +20,10 @@ var random_allowed_channel_keys: Array = [
 	"Dimmer"
 ]
 
+## Max length in seconds for the fixture locate mode
+var locate_max_length: float = 5
+
+
 ## Save Modes
 enum SAVE_MODE {
 	MODIFIED,		## Only save fixtures that have been changed in the programmer
@@ -32,6 +36,12 @@ enum SAVE_MODE {
 func _component_ready() -> void:
 	name = "Programmer"
 	self_class_name = "Programmer"
+
+
+func set_locate(fixtures: Array, enabled: bool) -> void:
+	for fixture in fixtures:
+		if fixture is Fixture:
+			fixture.set_locate(enabled)
 
 
 func set_random(fixtures: Array, channel_key: String) -> void:

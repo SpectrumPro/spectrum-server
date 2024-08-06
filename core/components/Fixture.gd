@@ -26,9 +26,11 @@ signal on_override_value_changed(value: Variant, channel_key: String)
 ## Emitted when an override value is removed
 signal on_override_value_removed(channel_key: String)
 
+## Emitted when the locate mode it changed
+signal on_locate_mode_toggled(locate_mode: bool)
+
 ## Emitted when any of the channels of this fixture are changed, emitted as channel:value for all channels this fixtures uses
 signal _fixture_data_changed(data: Dictionary)
-
 
 
 var network_config: Dictionary = {
@@ -94,6 +96,22 @@ const REMOVE_OVERRIDE: String = "REMOVE_OVERRIDE"
 const MAX_DMX_VALUE: int = 255
 
 
+## Max length for locate mode
+var locate_max_length: float = 5
+
+## Current state of the locate mode
+var _locate_state: bool = true
+
+## The Interval used for the locate mode
+var _locate_interval: Interval = null
+
+## List of channels that us used by locate mode. Theses channels will be flashed between zero and full. While all other channels will be forced to zero
+var allowed_locate_channel_keys: Array = [
+	"Dimmer",
+	"set_color"
+]
+
+
 ## Contains all the parameters inputted by other function, ie scenes, programmers, animations, ect. 
 ## Each input it added to this dict with a id for each item, allowing for HTP and LTP calculations
 var _current_input_data: Dictionary = {} 
@@ -126,6 +144,39 @@ func set_channel(p_channel: int) -> void:
 	emit_zero_values()
 	channel = p_channel
 	on_channel_changed.emit(channel)
+
+
+func set_locate(enabled: bool, max_length: float = locate_max_length) -> void:
+	if is_instance_valid(_locate_interval):
+		_locate_interval.kill()
+		_locate_interval = null
+
+	if enabled:
+		_locate_interval = Interval.new(_locate_toggle_channels_callback, 0.3, max_length)
+		_locate_toggle_channels_callback()
+
+		_locate_interval.finished.connect(set_locate.bind(false), CONNECT_ONE_SHOT)
+
+	else:
+		for channel_key: String in current_values.keys():
+			get(channel_key).call(get_zero_from_channel_key(channel_key), REMOVE_OVERRIDE)
+
+		_locate_state = true
+
+
+func _locate_toggle_channels_callback() -> void:
+	for channel_key: String in current_values.keys():
+		var method: Callable = get(channel_key)
+		
+		if channel_key in allowed_locate_channel_keys:
+			var value: Variant = get_full_from_channel_key(channel_key) if _locate_state else get_zero_from_channel_key(channel_key)
+
+			method.call(value, OVERRIDE)
+		else:
+			method.call(get_zero_from_channel_key(channel_key), OVERRIDE)
+	
+	_locate_state = not _locate_state
+
 
 ## Channels
 
@@ -223,6 +274,12 @@ static func get_zero_from_channel_key(channel_key: String) -> Variant:
 		_:
 			return 0
 
+static func get_full_from_channel_key(channel_key: String) -> Variant:
+	match channel_key:
+		"set_color":
+			return Color.WHITE
+		_:
+			return MAX_DMX_VALUE
 
 ## Returnes serialized infomation about this fixture
 func _on_serialize_request(mode: int) -> Dictionary:
