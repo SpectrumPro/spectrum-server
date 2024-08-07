@@ -182,25 +182,31 @@ func _locate_toggle_channels_callback() -> void:
 
 
 ## Sets the color of this fixture
-func set_color(p_color: Color, id: String) -> void:	
+func set_color(p_color: Color, layer_id: String) -> void:	
 	var new_color: Color = Color()
-	new_color.r8 = set_current_input_data(id, "ColorIntensityRed", clamp(p_color.r8, 0, MAX_DMX_VALUE), false)
-	new_color.g8 = set_current_input_data(id, "ColorIntensityGreen", clamp(p_color.g8, 0, MAX_DMX_VALUE), false)
-	new_color.b8 = set_current_input_data(id, "ColorIntensityBlue", clamp(p_color.b8, 0, MAX_DMX_VALUE), false)
+	new_color.r8 = set_current_input_data(layer_id, "ColorIntensityRed", clamp(p_color.r8, 0, MAX_DMX_VALUE), false)
+	new_color.g8 = set_current_input_data(layer_id, "ColorIntensityGreen", clamp(p_color.g8, 0, MAX_DMX_VALUE), false)
+	new_color.b8 = set_current_input_data(layer_id, "ColorIntensityBlue", clamp(p_color.b8, 0, MAX_DMX_VALUE), false)
 	
 	if not "set_color" in _current_input_data:
 		_current_input_data["set_color"] = {}
 	
 	if p_color:
-		_current_input_data["set_color"][id] = p_color
+		_current_input_data["set_color"][layer_id] = p_color
 	else:
-		_current_input_data["set_color"].erase(id)
+		_current_input_data["set_color"].erase(layer_id)
 
 	if new_color != current_values.set_color:
 		_fixture_data_changed.emit(_compiled_dmx_data)
 
 		current_values.set_color = new_color
 		on_color_changed.emit(new_color)
+
+		if layer_id == OVERRIDE:
+			on_override_value_changed.emit(new_color, "set_color")
+				
+		elif layer_id == REMOVE_OVERRIDE and OVERRIDE in _current_input_data["set_color"].keys():
+			on_override_value_removed.emit("set_color")
 	
 
 
@@ -233,12 +239,6 @@ func set_current_input_data(layer_id: String, channel_key: String, value: Varian
 		_current_input_data[channel_key].erase(layer_id)
 	
 	var new_value = _current_input_data[channel_key].values().max()
-
-	if layer_id == OVERRIDE and not OVERRIDE in _current_input_data[channel_key].keys():
-		on_override_value_changed.emit(value, channel_key)
-		
-	elif layer_id == REMOVE_OVERRIDE and OVERRIDE in _current_input_data[channel_key].keys():
-		on_override_value_removed.emit(channel_key)
 	
 	if OVERRIDE in _current_input_data[channel_key].keys():
 		if layer_id == REMOVE_OVERRIDE:
@@ -249,7 +249,7 @@ func set_current_input_data(layer_id: String, channel_key: String, value: Varian
 
 	new_value = new_value if new_value else 0
 
-	if old_value != new_value and channel_key in channels:
+	if old_value != new_value or layer_id == REMOVE_OVERRIDE and channel_key in channels:
 		var channel_signal: Signal = channel_config.get(channel_key).get("signal", Signal())
 
 		_compiled_dmx_data[channels.find(channel_key) + channel] = new_value
@@ -259,6 +259,12 @@ func set_current_input_data(layer_id: String, channel_key: String, value: Varian
 
 			if not channel_signal.is_null():
 				channel_signal.emit(new_value)
+			
+			if layer_id == OVERRIDE:
+				on_override_value_changed.emit(value, channel_key)
+				
+			elif layer_id == REMOVE_OVERRIDE and OVERRIDE in _current_input_data[channel_key].keys():
+				on_override_value_removed.emit(channel_key)
 
 	return new_value
 

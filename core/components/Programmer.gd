@@ -44,6 +44,16 @@ func set_locate(fixtures: Array, enabled: bool) -> void:
 			fixture.set_locate(enabled)
 
 
+## Imports all the none zero values from the selected fixtures into the programmer
+func import(fixtures: Array) -> void:
+	for fixture in fixtures:
+		if fixture is Fixture:
+			for channel_key in fixture.current_values.keys():
+				var value: Variant = fixture.current_values[channel_key]
+
+				_set_individual_fixture_data(fixture, value, channel_key, fixture_set_layer_id)
+
+
 func set_random(fixtures: Array, channel_key: String) -> void:
 	if channel_key in random_allowed_channel_keys:
 		for fixture in fixtures:
@@ -124,7 +134,6 @@ func store_data_to_function(function: Function, mode: SAVE_MODE, fixtures: Array
 
 
 func erace_data_from_function(function: Function, mode: SAVE_MODE, fixtures: Array = []) -> void:
-	print("Eracing from cue with mode: ", mode)
 	match mode:
 		SAVE_MODE.MODIFIED:
 			for fixture: Fixture in save_data:
@@ -188,7 +197,7 @@ func erace_from_cue(fixtures: Array, cue_list: CueList, cue_number: float, mode:
 
 
 ## Saves the current state of fixtures to a new cue list
-func save_to_new_cue_list() -> void:
+func save_to_new_cue_list(fixtures: Array) -> void:
 
 	var new_cue_list: CueList = CueList.new()
 
@@ -196,6 +205,8 @@ func save_to_new_cue_list() -> void:
 	blackout_cue.name = "Blackout"
 
 	var new_cue: Cue = Cue.new()
+
+	store_data_to_function(new_cue, SAVE_MODE.MODIFIED, fixtures)
 
 	for fixture: Fixture in save_data:
 		for channel_key: String in save_data[fixture]:
