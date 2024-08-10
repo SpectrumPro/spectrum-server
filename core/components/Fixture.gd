@@ -232,6 +232,7 @@ func set_current_input_data(layer_id: String, channel_key: String, value: Varian
 		_current_input_data[channel_key] = {}
 
 	var old_value = _current_input_data[channel_key].values().max()
+	var old_imput_data_at_channel_key: Dictionary = _current_input_data[channel_key].duplicate()
 
 	if value or layer_id == OVERRIDE:
 		_current_input_data[channel_key][layer_id] = value
@@ -263,7 +264,7 @@ func set_current_input_data(layer_id: String, channel_key: String, value: Varian
 			if layer_id == OVERRIDE:
 				on_override_value_changed.emit(value, channel_key)
 				
-			elif layer_id == REMOVE_OVERRIDE and OVERRIDE in _current_input_data[channel_key].keys():
+			elif layer_id == REMOVE_OVERRIDE and OVERRIDE in old_imput_data_at_channel_key.keys():
 				on_override_value_removed.emit(channel_key)
 
 	return new_value
