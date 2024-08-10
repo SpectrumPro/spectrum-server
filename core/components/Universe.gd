@@ -186,8 +186,8 @@ func add_fixtures_from_manifest(fixture_manifest: Dictionary, mode:int, start_ch
 
 
 ## Removes a fixture from this universe
-func remove_fixture(fixture: Fixture, no_signal: bool = false, delete_object: bool = true) -> bool:
-	
+func remove_fixture(fixture: Fixture, no_signal: bool = false, delete_object: bool = false) -> bool:
+	print("Removing fixtures")
 	if fixture in fixtures.values():
 
 		fixtures.erase(fixture.uuid)
@@ -264,19 +264,19 @@ func _compile_and_send():
 		
 
 ## Serializes this universe
-func _on_serialize_request(mode: int) -> Dictionary:
+func _on_serialize_request(mode: int = Core.SERIALIZE_MODE_NETWORK) -> Dictionary:
 	
 	var serialized_outputs: Dictionary = {}
 	var serialized_fixtures: Dictionary = {}
 
 	for output: DataOutputPlugin in outputs.values():
-		serialized_outputs[output.uuid] = output.serialize()
+		serialized_outputs[output.uuid] = output.serialize(mode)
 	
 	for channel: int in fixture_channels.keys():
 		serialized_fixtures[channel] = []
 
 		for fixture: Fixture in fixture_channels[channel]:
-			serialized_fixtures[channel].append(fixture.serialize())
+			serialized_fixtures[channel].append(fixture.serialize(mode))
 
 	return {
 		"outputs": serialized_outputs,
