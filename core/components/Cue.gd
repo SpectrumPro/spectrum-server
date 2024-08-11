@@ -53,7 +53,6 @@ func store_data(fixture: Fixture, channel_key: String, value: Variant) -> bool:
 
 
 func erace_data(fixture: Fixture, channel_key: String) -> bool:
-    print("running from cue class")
     return erace_data_static(fixture, channel_key, stored_data)
 
 

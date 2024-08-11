@@ -149,6 +149,7 @@ func animate_method(method: Callable, from: Variant, to: Variant, id: Variant = 
 ## Removes an animated method, will reset all values to default if reset == true
 func remove_track_from_id(id: Variant, reset: bool = true) -> void:
 	if _animation_data.has(id):
+		_animation_data.erase(id)
 		if reset: 
 			(_animation_data[id].method as Callable).call(_animation_data[id].from)
 

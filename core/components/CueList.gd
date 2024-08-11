@@ -121,6 +121,7 @@ func seek_to(cue_number: float) -> void:
 	
 	var reset: bool = cue_number == -1
 	var fade_time: float = 1
+
 	if reset:
 		fade_time = current_cue.fade_time if current_cue else 0.0
 		current_cue = null
@@ -130,6 +131,7 @@ func seek_to(cue_number: float) -> void:
 
 	_index = _index_list.find(cue_number)
 	var current_cue_index: int = _index_list.find(current_cue.number) if current_cue else -1
+
 	var animator = Core.create_animator()
 	animator.kill_on_finish = true
 
@@ -228,7 +230,7 @@ func _accumulate_state(cue: Cue, accumulated_animated_data: Dictionary, animator
 			if animation_id in _current_animated_fixtures:
 				var _animator = _current_animated_fixtures[animation_id].animator
 				if is_instance_valid(_animator) and _animator != animator:
-					_current_animated_fixtures[animation_id].animator.remove_track_from_id(animation_id, false)
+					_animator.remove_track_from_id(animation_id, false)
 
 			_current_animated_fixtures[animation_id] = {
 				"method_name": method_name,

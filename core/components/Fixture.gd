@@ -329,7 +329,6 @@ func _on_serialize_request(mode: int) -> Dictionary:
 		"manifest_path": manifest_path
 	}
 
-	print(mode)
 	if mode == CoreEngine.SERIALIZE_MODE_NETWORK:
 		serialized_data.current_values = current_values
 		serialized_data.current_override_values = current_override_values

@@ -5,6 +5,14 @@ class_name Function extends EngineComponent
 ## Base class for all functions, scenes, cuelists ect
 
 
+## Emitted when data is stored in this function
+signal on_data_stored(fixture: Fixture, channel_key: String, value: Variant)
+
+
+## Emitted when data is eraced from this function
+signal on_data_eraced(fixture: Fixture, channel_key: String)
+
+
 var _allow_store_zero_data: bool = true
 
 
@@ -13,7 +21,6 @@ func store_data(fixture: Fixture, channel_key: String, value: Variant) -> bool:
 
 
 func erace_data(fixture: Fixture, channel_key: String) -> bool:
-    print("running from function class")
     return false
 
 
@@ -28,6 +35,8 @@ func store_data_static(fixture: Fixture, channel_key: String, value: Variant, st
                 "default": fixture.get_zero_from_channel_key(channel_key)
             }
 
+        on_data_stored.emit(fixture, channel_key, value)
+
         return true
 
     else:
@@ -35,14 +44,21 @@ func store_data_static(fixture: Fixture, channel_key: String, value: Variant, st
 
 
 func erace_data_static(fixture: Fixture, channel_key: String, stored_data: Dictionary) -> bool:
-    print(stored_data)
     if fixture in stored_data.keys():
-        print(channel_key)
-        return stored_data[fixture].erase(channel_key)
+        var return_state: bool = stored_data[fixture].erase(channel_key)
+
+        if not stored_data[fixture]:
+            stored_data.erase(fixture)
+
+        if return_state:
+            on_data_eraced.emit(fixture, channel_key)
+
+        return return_state
     else:
         return false
 
 
+## Serializes the stored data
 func serialize_stored_data(stored_data: Dictionary) -> Dictionary:
     var serialized_stored_data: Dictionary = {}
 
@@ -61,6 +77,7 @@ func serialize_stored_data(stored_data: Dictionary) -> Dictionary:
     return serialized_stored_data
 
 
+## Loads the stored data, by calling the given method
 func load_stored_data(serialized_stored_data: Dictionary, stored_data: Dictionary, store_method: Callable = store_data_static) -> void:
     for fixture_uuid: String in serialized_stored_data.keys():
         if fixture_uuid in Core.fixtures:
