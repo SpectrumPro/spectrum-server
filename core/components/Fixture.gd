@@ -5,7 +5,7 @@ class_name Fixture extends EngineComponent
 ## Engine class to control parameters of fixtures, when calling load() be sure to also call set_manifest(), as fixtures do not seralise manifests, only manifest paths
 
 
-## Emitted when the color of this fixture is changed 
+## Emitted when the color of this fixture is changed
 signal on_color_changed(color: Color)
 
 ## Emitted when the value of a channel is changed
@@ -50,22 +50,22 @@ var network_config: Dictionary = {
 var channel: int
 
 ## Channel length, from start channel, to end channel
-var length: int 
+var length: int
 
 ## Current mode
 var mode: int
 
 ## Fixture manifest
-var manifest: Dictionary 
+var manifest: Dictionary
 
-## Stores the file path to this fixtures manifest, if one exists 
+## Stores the file path to this fixtures manifest, if one exists
 var manifest_path: String
 
 ## Channels this fixture uses
-var channels: Array 
+var channels: Array
 
 ## What happenes on each channel, at each value range
-var channel_ranges: Dictionary 
+var channel_ranges: Dictionary
 
 var current_values: Dictionary = {
 	"set_color": 			Color.BLACK,
@@ -120,9 +120,9 @@ var allowed_locate_channel_keys: Array = [
 var supports_color: bool = false
 
 
-## Contains all the parameters inputted by other function, ie scenes, programmers, animations, ect. 
+## Contains all the parameters inputted by other function, ie scenes, programmers, animations, ect.
 ## Each input it added to this dict with a id for each item, allowing for HTP and LTP calculations
-var _current_input_data: Dictionary = {} 
+var _current_input_data: Dictionary = {}
 
 ## The compiled dmx data, after htp and ltp calculation are ran
 var _compiled_dmx_data: Dictionary
@@ -146,7 +146,7 @@ func set_manifest(p_manifest: Dictionary, p_manifest_path: String = "") -> void:
 		manifest_path = p_manifest_path
 	else:
 		print_verbose(name, ": set_manifest() was called with out specifiing \"manifest_path\", this fixture may not work when loaded from a save file")
-	
+
 	if "ColorIntensityRed" in channels and "ColorIntensityGreen" in channels and "ColorIntensityBlue" in channels:
 		supports_color = true
 	else:
@@ -180,14 +180,14 @@ func set_locate(enabled: bool, max_length: float = locate_max_length) -> void:
 func _locate_toggle_channels_callback() -> void:
 	for channel_key: String in current_values.keys():
 		var method: Callable = get(channel_key)
-		
+
 		if channel_key in allowed_locate_channel_keys:
 			var value: Variant = get_full_from_channel_key(channel_key) if _locate_state else get_zero_from_channel_key(channel_key)
 
 			method.call(value, OVERRIDE)
 		else:
 			method.call(get_zero_from_channel_key(channel_key), OVERRIDE)
-	
+
 	_locate_state = not _locate_state
 
 
@@ -195,7 +195,7 @@ func _locate_toggle_channels_callback() -> void:
 
 
 ## Sets the color of this fixture
-func set_color(p_color: Color, layer_id: String) -> void:	
+func set_color(p_color: Color, layer_id: String) -> void:
 
 	if not supports_color:
 		return
@@ -204,16 +204,16 @@ func set_color(p_color: Color, layer_id: String) -> void:
 	new_color.r8 = set_current_input_data(layer_id, "ColorIntensityRed", clamp(p_color.r8, 0, MAX_DMX_VALUE), false)
 	new_color.g8 = set_current_input_data(layer_id, "ColorIntensityGreen", clamp(p_color.g8, 0, MAX_DMX_VALUE), false)
 	new_color.b8 = set_current_input_data(layer_id, "ColorIntensityBlue", clamp(p_color.b8, 0, MAX_DMX_VALUE), false)
-	
+
 	if not "set_color" in _current_input_data:
 		_current_input_data["set_color"] = {}
-	
-	if p_color:
+
+	if p_color or layer_id == OVERRIDE:
 		_current_input_data["set_color"][layer_id] = p_color
 	else:
 		_current_input_data["set_color"].erase(layer_id)
 
-	if new_color != current_values.set_color:
+	if new_color != current_values.set_color or layer_id in [OVERRIDE, REMOVE_OVERRIDE]:
 		_fixture_data_changed.emit(_compiled_dmx_data)
 
 		current_values.set_color = new_color
@@ -222,11 +222,11 @@ func set_color(p_color: Color, layer_id: String) -> void:
 		if layer_id == OVERRIDE:
 			on_override_value_changed.emit(new_color, "set_color")
 			current_override_values["set_color"] = new_color
-				
+
 		elif layer_id == REMOVE_OVERRIDE and OVERRIDE in _current_input_data["set_color"].keys():
 			on_override_value_removed.emit("set_color")
 			current_override_values.erase("set_color")
-	
+
 
 
 ## White channel intensity
@@ -245,7 +245,7 @@ func Dimmer(value: int, id: String) -> void: current_values.Dimmer = set_current
 
 
 
-## Adds some input data to this fixture, used for calculating blend modes when compiling. Returns the new highest value on that layer 
+## Adds some input data to this fixture, used for calculating blend modes when compiling. Returns the new highest value on that layer
 func set_current_input_data(layer_id: String, channel_key: String, value: Variant, emit_signals: bool = true) -> int:
 	if channel_key not in _current_input_data:
 		_current_input_data[channel_key] = {}
@@ -257,9 +257,9 @@ func set_current_input_data(layer_id: String, channel_key: String, value: Varian
 		_current_input_data[channel_key][layer_id] = value
 	else:
 		_current_input_data[channel_key].erase(layer_id)
-	
+
 	var new_value = _current_input_data[channel_key].values().max()
-	
+
 	if OVERRIDE in _current_input_data[channel_key].keys():
 		if layer_id == REMOVE_OVERRIDE:
 			_current_input_data[channel_key].erase(OVERRIDE)
@@ -279,11 +279,11 @@ func set_current_input_data(layer_id: String, channel_key: String, value: Varian
 
 			if not channel_signal.is_null():
 				channel_signal.emit(new_value)
-			
+
 			if layer_id == OVERRIDE:
 				on_override_value_changed.emit(value, channel_key)
 				current_override_values[channel_key] = value
-				
+
 			elif layer_id == REMOVE_OVERRIDE and OVERRIDE in old_imput_data_at_channel_key.keys():
 				on_override_value_removed.emit(channel_key)
 				current_override_values.erase(channel_key)
@@ -313,10 +313,10 @@ static func get_full_from_channel_key(channel_key: String) -> Variant:
 
 func emit_zero_values() -> void:
 	var empty_data: Dictionary = {}
-	
+
 	for i in _compiled_dmx_data:
 		empty_data[i] = 0
-	
+
 	_fixture_data_changed.emit(empty_data)
 
 
@@ -345,5 +345,5 @@ func _on_load_request(serialized_data: Dictionary) -> void:
 	channel = serialized_data.get("channel", 1)
 	mode = serialized_data.get("mode", 1)
 	manifest_path = serialized_data.get("manifest_path", "")
-	
+
 	set_manifest(Core.fixtures_definitions[manifest_path.split("/")[0]][manifest_path.split("/")[1]], manifest_path)

@@ -72,7 +72,7 @@ func set_color_random(fixtures: Array, color_key: String) -> void:
 				"h": new_color.h = randf_range(0, 1)
 				"s": new_color.s = randf_range(0, 1)
 				"v": new_color.v = randf_range(0, 1)
-			
+
 			_set_individual_fixture_data(fixture, new_color, "set_color", fixture_set_layer_id)
 
 
@@ -102,10 +102,10 @@ func _set_fixture_data(fixtures: Array, value: Variant, channel_key: String, lay
 func _set_individual_fixture_data(fixture: Fixture, value: Variant, channel_key: String, layer_id: String) -> void:
 	fixture.get(channel_key).call(value, layer_id)
 	# Check to see if the value is 0, if so remove it from save_data
-	if value or layer_id == Fixture.OVERRIDE:
+	if value or layer_id in [Fixture.OVERRIDE, Fixture.REMOVE_OVERRIDE]:
 		if fixture not in save_data:
 			save_data[fixture] = {}
-		
+
 		save_data[fixture][channel_key] = value
 
 	elif fixture in save_data:
@@ -156,15 +156,15 @@ func erace_data_from_function(function: Function, mode: SAVE_MODE, fixtures: Arr
 
 ## Saves the current state of this programmer to a scene
 func save_to_scene(name: String = "New Scene") -> Scene:
-	
+
 	var new_scene: Scene = Scene.new()
-	
-	store_data_to_function(new_scene, SAVE_MODE.MODIFIED) 
+
+	store_data_to_function(new_scene, SAVE_MODE.MODIFIED)
 
 	new_scene.name = name
-	
+
 	Core.add_function(new_scene)
-	
+
 	return new_scene
 
 
@@ -172,7 +172,7 @@ func save_to_scene(name: String = "New Scene") -> Scene:
 func save_to_new_cue(fixtures: Array, cue_list: CueList, mode: SAVE_MODE) -> void:
 	if not fixtures:
 		return
-	
+
 	var new_cue: Cue = Cue.new()
 
 	store_data_to_function(new_cue, mode, fixtures)
