@@ -115,9 +115,10 @@ func _set_individual_fixture_data(fixture: Fixture, value: Variant, channel_key:
 func store_data_to_function(function: Function, mode: SAVE_MODE, fixtures: Array = []) -> void:
 	match mode:
 		SAVE_MODE.MODIFIED:
-			for fixture: Fixture in save_data:
-				for channel_key: String in save_data[fixture]:
-					function.store_data(fixture, channel_key, save_data[fixture][channel_key])
+			for fixture: Fixture in fixtures:
+				if fixture in save_data:
+					for channel_key: String in save_data[fixture]:
+						function.store_data(fixture, channel_key, save_data[fixture][channel_key])
 
 		SAVE_MODE.ALL:
 			for fixture in fixtures:
