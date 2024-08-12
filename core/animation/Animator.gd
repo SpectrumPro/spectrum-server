@@ -86,8 +86,7 @@ func delete() -> void:
 ## Process function, delta is used to calculate the interpolated values for the animation
 func _process(delta: float) -> void:
 	_seek_to(elapsed_time)
-	# print(len(_animation_data))
-
+	
 	if play_backwards:
 		elapsed_time -= delta * time_scale
 

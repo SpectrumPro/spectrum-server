@@ -138,8 +138,9 @@ func erace_data_from_function(function: Function, mode: SAVE_MODE, fixtures: Arr
 	match mode:
 		SAVE_MODE.MODIFIED:
 			for fixture: Fixture in save_data:
-				for channel_key: String in save_data[fixture]:
-					print(function.erace_data(fixture, channel_key))
+				if fixture in save_data:
+					for channel_key: String in save_data[fixture]:
+						function.erace_data(fixture, channel_key)
 
 		SAVE_MODE.ALL:
 			for fixture in fixtures:
