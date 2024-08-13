@@ -116,7 +116,7 @@ func go_previous() -> void:
 
 ## Skips to the cue index
 func seek_to(cue_number: float) -> void:
-	if not cue_number in _index_list and cue_number != -1:
+	if not cue_number in _index_list and cue_number != -1 or _index == _index_list.find(cue_number):
 		return
 	
 	var reset: bool = cue_number == -1
