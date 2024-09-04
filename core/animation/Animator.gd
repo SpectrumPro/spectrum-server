@@ -171,5 +171,3 @@ func get_animated_data(duplicate_data: bool = true) -> Dictionary:
 ## Sets the animated data
 func set_animated_data(animation_data: Dictionary) -> void:
 	_animation_data = animation_data.duplicate()
-
-

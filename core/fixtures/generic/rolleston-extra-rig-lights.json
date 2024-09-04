@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "info": {
+    "brand": "Generic",
+    "name": "Extra Rig Lights",
+    "date": "10-08-2024",
+    "author": ["Liam Sherwin"],
+    "categories": ["Color Changer"]
+  },
+  "modes": {
+    "10 Channel": {
+      "channels": [
+        "Dimmer",
+        "Unsupported",
+        "Unsupported",
+        "Unsupported",
+        "ColorIntensityRed",
+        "ColorIntensityGreen",
+        "ColorIntensityBlue",
+        "ColorIntensityWhite",
+        "ColorIntensityAmber",
+        "ColorIntensityUV"
+      ]
+    }
+  }
+}

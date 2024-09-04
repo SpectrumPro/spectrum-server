@@ -48,7 +48,7 @@ var _flash_active: bool = false
 ## Called when this EngineComponent is ready
 func _component_ready() -> void:
 
-	name = "Scene"
+	name = "New Scene"
 	self_class_name = "Scene"
 
 	_allow_store_zero_data = false

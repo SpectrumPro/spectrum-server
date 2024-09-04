@@ -45,12 +45,11 @@ func _component_ready() -> void:
 
 
 ## Adds a new output to this universe, if [param output] is defined, it will be added, if no output is defined, a blank [DataOutputPlugin] will be created with the name passed
-func add_output(name: String = "New Output", output: DataOutputPlugin = null, no_signal: bool = false) -> DataOutputPlugin:
+func add_output(output: DataOutputPlugin = null, no_signal: bool = false) -> DataOutputPlugin:
 	
 	# if output is not defined, create a new one, and set its name to be the name passed to this function
 	if not output:
 		output = DataOutputPlugin.new()
-		output.name = name
 
 	outputs[output.uuid] = output
 	
@@ -70,9 +69,9 @@ func add_outputs(outputs_to_add: Array, no_signal: bool = false) -> Array[DataOu
 
 	for item in outputs_to_add:
 		if item is DataOutputPlugin:
-			just_added_outputs.append(add_output("", item, true))
+			just_added_outputs.append(add_output(item, true))
 		else:
-			just_added_outputs.append(add_output("New Universe", DataOutputPlugin.new(), true))
+			just_added_outputs.append(add_output(DataOutputPlugin.new(), true))
 
 	on_outputs_added.emit(just_added_outputs, outputs.keys())
 
@@ -186,8 +185,7 @@ func add_fixtures_from_manifest(fixture_manifest: Dictionary, mode:int, start_ch
 
 
 ## Removes a fixture from this universe
-func remove_fixture(fixture: Fixture, no_signal: bool = false, delete_object: bool = false) -> bool:
-	print("Removing fixtures")
+func remove_fixture(fixture: Fixture, no_signal: bool = false, delete_object: bool = true) -> bool:
 	if fixture in fixtures.values():
 
 		fixtures.erase(fixture.uuid)
@@ -212,12 +210,12 @@ func remove_fixture(fixture: Fixture, no_signal: bool = false, delete_object: bo
 
 
 ## Removes mutiple fixtures from this universe
-func remove_fixtures(fixtures_to_remove: Array, no_signal: bool = false) -> void:
+func remove_fixtures(fixtures_to_remove: Array, no_signal: bool = false, delete_object: bool = true) -> void:
 
 	var just_removed_fixtures: Array = []
 	
 	for fixture: Fixture in fixtures_to_remove:
-		if remove_fixture(fixture, true):
+		if remove_fixture(fixture, true, delete_object):
 			just_removed_fixtures.append(fixture)		
 	
 	if not no_signal and just_removed_fixtures:
@@ -310,7 +308,7 @@ func _on_load_request(serialized_data: Dictionary) -> void:
 			var new_output: DataOutputPlugin = ClassList.output_class_table[serialized_data.outputs[output_uuid]["class_name"]].new(output_uuid)
 			new_output.load(serialized_data.outputs[output_uuid])
 			
-			add_output("New Output", new_output, true)
+			add_output(new_output, true)
 			just_added_output.append(new_output)
 
 	on_outputs_added.emit(just_added_output, outputs.keys())

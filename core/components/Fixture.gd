@@ -269,7 +269,7 @@ func set_current_input_data(layer_id: String, channel_key: String, value: Varian
 
 	new_value = new_value if new_value else 0
 
-	if (old_value != new_value or layer_id == REMOVE_OVERRIDE) and channel_key in channels:
+	if (old_value != new_value or layer_id in [OVERRIDE, REMOVE_OVERRIDE]) and channel_key in channels:
 		var channel_signal: Signal = channel_config.get(channel_key, {}).get("signal", Signal())
 
 		_compiled_dmx_data[channels.find(channel_key) + channel] = new_value
@@ -281,8 +281,9 @@ func set_current_input_data(layer_id: String, channel_key: String, value: Varian
 				channel_signal.emit(new_value)
 
 			if layer_id == OVERRIDE:
-				on_override_value_changed.emit(value, channel_key)
-				current_override_values[channel_key] = value
+				on_override_value_changed.emit(new_value, channel_key)
+				current_override_values[channel_key] = new_value
+
 
 			elif layer_id == REMOVE_OVERRIDE and OVERRIDE in old_imput_data_at_channel_key.keys():
 				on_override_value_removed.emit(channel_key)

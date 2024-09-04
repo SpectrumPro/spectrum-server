@@ -5,8 +5,11 @@ class_name EngineComponent extends RefCounted
 ## Base class for engine components, contains functions for storing metadata, and uuid's
 
 
-## Emitted when an item is added, edited, or deleted from user_meta, if no value is present it meanes that the key has been deleted
+## Emitted when an item is added or edited from user_meta
 signal on_user_meta_changed(key: String, value: Variant)
+
+## Emitted when an item is deleted from user_meta
+signal on_user_meta_deleted(key: String)
 
 ## Emitted when the name of this object has changed
 signal on_name_changed(new_name: String)
@@ -65,7 +68,7 @@ func get_all_user_meta() -> Dictionary:
 func delete_user_meta(key: String, no_signal: bool = false) -> bool:
 	
 	if not no_signal:
-		on_user_meta_changed.emit(key, null)
+		on_user_meta_deleted.emit(key)
 
 	
 	return user_meta.erase(key)

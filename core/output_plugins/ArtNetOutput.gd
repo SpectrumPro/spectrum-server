@@ -12,9 +12,11 @@ var _udp_peer = PacketPeerUDP.new() ## PacketPeerUDP responsible for sending art
 ## Called when this EngineComponent is ready
 func _component_ready():
 	# Sets name, description, and authors list of this plugin
-	self.plugin_name = "Art-Net Output"
-	self.plugin_authors = ["Liam Sherwin"]
-	self.plugin_description = "Outputs dmx data over Art-Net"
+	plugin_name = "Art-Net Output"
+	plugin_authors = ["Liam Sherwin"]
+	plugin_description = "Outputs dmx data over Art-Net"
+
+	name = plugin_name
 
 	self_class_name = "ArtNetOutput"
 
@@ -40,31 +42,31 @@ func output() -> void:
 	if not _udp_peer.is_bound():
 		return
 
-	var packet = PackedByteArray()
+	var packet = PackedByteArray([65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, int(universe_number) % 256, int(universe_number) / 256, 02, 00])
 	
-	# Art-Net ID ('Art-Net')
-	packet.append_array([65, 114, 116, 45, 78, 101, 116, 0])
+	# # Art-Net ID ('Art-Net')
+	# packet.append_array([65, 114, 116, 45, 78, 101, 116, 0])
 	
-	# OpCode: ArtDMX (0x5000)
-	packet.append_array([0, 80])
+	# # OpCode: ArtDMX (0x5000)
+	# packet.append_array([0, 80])
 	
-	# Protocol Version: 14 (0x000e)
-	packet.append_array([0, 14])
+	# # Protocol Version: 14 (0x000e)
+	# packet.append_array([0, 14])
 	
-	# ArtDMX packet
-	# Sequence Number
-	packet.append(0)
+	# # ArtDMX packet
+	# # Sequence Number
+	# packet.append(0)
 	
-	# Physical Port
-	packet.append(0)
+	# # Physical Port
+	# packet.append(0)
 	
-	# Universe (16-bit)
-	packet.append(int(universe_number) % 256)  # Lower 8 bits
-	packet.append(int(universe_number) / 256)  # Upper 8 bits
+	# # Universe (16-bit)
+	# packet.append(int(universe_number) % 256)  # Lower 8 bits
+	# packet.append(int(universe_number) / 256)  # Upper 8 bits
 	
-	# Length (16-bit)
-	packet.append(02)
-	packet.append(00)
+	# # Length (16-bit)
+	# packet.append(02)
+	# packet.append(00)
 	# DMX Channels
 	for channel in range(1, 513):
 		packet.append(clamp(dmx_data.get(channel, 0), 0, 255))

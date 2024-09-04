@@ -4,8 +4,8 @@
 class_name CueList extends Function
 ## Stores a list of Scenes, that are enabled and disabled in order one after another
 
-## Emitted when the current cue index is changed
-signal on_cue_changed(index: float)
+## Emitted when the current cue number is changed
+signal on_cue_changed(cue_number: float)
 
 ## Emitted when this CueList starts playing
 signal on_played()
@@ -25,6 +25,7 @@ signal on_cue_numbers_changed(new_numbers: Dictionary)
 ## The current active, and previous active cue
 var current_cue: Cue = null
 var last_cue: Cue = null
+var next_cue: Cue = null
 
 ## Stores all fixtures that are currently being animated
 ## str(fixture.uuid + method_name):{
@@ -122,14 +123,17 @@ func seek_to(cue_number: float) -> void:
 	var reset: bool = cue_number == -1
 	var fade_time: float = 1
 
+	_index = _index_list.find(cue_number)
+
 	if reset:
 		fade_time = current_cue.fade_time if current_cue else 0.0
 		current_cue = null
+		next_cue = _cues[_index_list[0]]
 	else:
 		current_cue = _cues[cue_number]
 		fade_time = current_cue.fade_time
+		next_cue = _cues[_index_list[(_index + 1) % len(_index_list)]]
 
-	_index = _index_list.find(cue_number)
 	var current_cue_index: int = _index_list.find(current_cue.number) if current_cue else -1
 
 	var animator = Core.create_animator()
@@ -160,8 +164,8 @@ func seek_to(cue_number: float) -> void:
 	if is_instance_valid(_previous_autoplay_animator):
 		if _previous_autoplay_animator.finished.is_connected(_autoplay_callback):
 			_previous_autoplay_animator.finished.disconnect(_autoplay_callback)
-
-	if _autoplay:
+	
+	if ( _autoplay and not going_backwards ) or ( next_cue.trigger_mode == Cue.TRIGGER_MODE.AFTER_LAST and len(cue_range) == 1 ):
 		animator.finished.connect(_autoplay_callback, CONNECT_ONE_SHOT)
 		_previous_autoplay_animator = animator
 
@@ -170,12 +174,12 @@ func seek_to(cue_number: float) -> void:
 
 
 func _autoplay_callback() -> void:
-	if _autoplay:
+	if _autoplay or next_cue.trigger_mode == Cue.TRIGGER_MODE.AFTER_LAST:
 		var next_cue: Cue = _cues[_index_list[wrapi(_index + 1, 0, len(_cues))]]
 		var old_index: int = _index
 
 		await Core.get_tree().create_timer(next_cue.pre_wait).timeout
-		if _autoplay and old_index == _index:	
+		if _autoplay or next_cue.trigger_mode == Cue.TRIGGER_MODE.AFTER_LAST and old_index == _index:	
 			go_next()
 	
 	_previous_autoplay_animator = null
@@ -360,7 +364,15 @@ func _on_serialize_request(mode: int) -> Dictionary:
 	var serialized_cues: Dictionary = {}
 	for cue_index: float in _index_list:
 		serialized_cues[cue_index] = _cues[cue_index].serialize()
-	return {"cues": serialized_cues}
+
+	var serialized_data: Dictionary = {"cues": serialized_cues}
+
+	if mode == CoreEngine.SERIALIZE_MODE_NETWORK:
+		serialized_data.merge({
+			"index": _index
+		})
+
+	return serialized_data
 
 
 ## Loads this cue list from a Dictionary

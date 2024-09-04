@@ -14,6 +14,9 @@ signal on_pre_wait_time_changed(pre_wait: float)
 ## Emitted when the post_wait time is changed
 signal on_post_wait_time_changed(post_wait: float)
 
+## Emitted when the trigger mode it changed
+signal on_trigger_mode_changed(trigger_mode: TRIGGER_MODE)
+
 
 ## The number of this cue, do not modify this when it is a part of a cuelist
 var number: float = 0
@@ -22,15 +25,15 @@ var number: float = 0
 ## Fade in time in seconds
 var fade_time: float = 2.0 : set = set_fade_time
 
-## Pre-Wait time in seconds, how long to wait before this cue will activate, only works with TRIGGER_MODE.WITH_LAST
+## Pre-Wait time in seconds, how long to wait before this cue will activate, only works with TRIGGER_MODE.WITH_LAST / AFTER_LAST
 var pre_wait: float = 1 : set = set_pre_wait
 
 ## Post-Wait time in seconds, how long to wait before the next cue will activate, only works with TRIGGER_MODE.WITH_LAST
-var post_wait: float = 1   : set = set_post_wait
+var post_wait: float = 1 : set = set_post_wait
 
 
 ## Enumeration for the trigger modes
-enum TRIGGER_MODE { MANUAL, WITH_LAST }
+enum TRIGGER_MODE { MANUAL, AFTER_LAST, WITH_LAST }
 var trigger_mode: TRIGGER_MODE = TRIGGER_MODE.MANUAL
 
 ## Tracking flag, indicates if this cue tracks changes
@@ -72,6 +75,12 @@ func set_pre_wait(p_pre_wait: float) -> void:
 func set_post_wait(p_post_wait: float) -> void:
     post_wait = p_post_wait
     on_post_wait_time_changed.emit(post_wait)
+
+
+## Sets the trigger mode
+func set_trigger_mode(p_trigger_mode: TRIGGER_MODE) -> void:
+    trigger_mode = p_trigger_mode
+    on_trigger_mode_changed.emit(trigger_mode)
 
 
 ## Returnes a serialized copy of this cue

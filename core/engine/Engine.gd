@@ -150,33 +150,47 @@ func _ready() -> void:
 
 	print()
 
-	if "--load" in OS.get_cmdline_args():
-		var name_index: int = OS.get_cmdline_args().find("--load") + 1
-		var save_name: String = OS.get_cmdline_args()[name_index]
+	var cli_args: PackedStringArray = OS.get_cmdline_args()
+
+	if "--load" in cli_args:
+		var name_index: int = cli_args.find("--load") + 1
+		var save_name: String = cli_args[name_index]
 
 		print(TF.auto_format(0, "Loading save file: ", save_name))
 
 		load_from_file(save_name)
 
 
-	if "--test" in OS.get_cmdline_args():
+	if "--test" in cli_args:
 		print("\nRunning Tests")
 		var tester = Tester.new()
 		tester.run(Tester.test_type.UNIT_TESTS)
 
-		if not "--test-keep-alive" in OS.get_cmdline_args():
+		if not "--test-keep-alive" in cli_args:
 			save.call_deferred("Test At: " + str(Time.get_datetime_string_from_system()), true)
 			get_tree().quit.call_deferred()	
 
 
-	if "--test-global" in OS.get_cmdline_args():
+	if "--test-global" in cli_args:
 		print("\nRunning Tests")
 		var tester = Tester.new()
 		tester.run(Tester.test_type.GLOBAL_TESTS)
 
-		if not "--test-keep-alive" in OS.get_cmdline_args():
+		if not "--test-keep-alive" in cli_args:
 			save.call_deferred("Global Test At: " + str(Time.get_datetime_string_from_system()), true)
 			get_tree().quit.call_deferred()
+
+
+	if "--relay-server" in cli_args:
+		print(TF.auto_format(TF.AUTO_MODE.INFO, "Trying to connect to relay server"))
+
+		var ip_index: int = cli_args.find("--relay-server") + 1
+
+		if ip_index < cli_args.size() and cli_args[ip_index].is_valid_ip_address():
+			print(cli_args[ip_index])
+		else:
+			print(TF.auto_format(TF.AUTO_MODE.ERROR, "Unable to connect to relay server, invalid IP address"))
+
 
 
 func _process(delta: float) -> void:
@@ -263,7 +277,6 @@ func reset() -> void:
 
 	remove_universes(universes.values())
 	remove_functions(functions.values())
-	# remove_cue_lists(cue_lists.values())
 
 
 func get_all_shows_from_library() -> Array[String]:

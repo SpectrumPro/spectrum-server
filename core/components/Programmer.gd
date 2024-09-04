@@ -157,16 +157,11 @@ func erace_data_from_function(function: Function, mode: SAVE_MODE, fixtures: Arr
 
 
 ## Saves the current state of this programmer to a scene
-func save_to_scene(name: String = "New Scene") -> Scene:
-
+func save_to_scene(fixtures: Array, mode: SAVE_MODE = SAVE_MODE.MODIFIED) -> Scene:
 	var new_scene: Scene = Scene.new()
-
-	store_data_to_function(new_scene, SAVE_MODE.MODIFIED)
-
-	new_scene.name = name
+	store_data_to_function(new_scene, mode, fixtures)
 
 	Core.add_function(new_scene)
-
 	return new_scene
 
 
