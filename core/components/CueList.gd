@@ -13,6 +13,9 @@ signal on_played()
 ## Emitted when this CueList is paused
 signal on_paused()
 
+## Emitted when this CueList is stopped
+signal on_stopped
+
 ## Emitted when a cue is added to this CueList
 signal on_cues_added(cues: Array)
 
@@ -22,10 +25,18 @@ signal on_cues_removed(cues: Array)
 ## Emitted when cue numbers are changed, stored as {Cue:new_number, ...}
 signal on_cue_numbers_changed(new_numbers: Dictionary)
 
+## Emitted when the mode is changed
+signal on_mode_changed(mode: MODE)
+
+
 ## The current active, and previous active cue
 var current_cue: Cue = null
 var last_cue: Cue = null
 var next_cue: Cue = null
+
+## The current mode of this cuelist. When in loop mode the cuelist will not reset fixtures to 0-value when looping back to the start
+enum MODE {NORMAL, LOOP}
+var mode: int = MODE.NORMAL
 
 ## Stores all fixtures that are currently being animated
 ## str(fixture.uuid + method_name):{
@@ -53,6 +64,8 @@ var _index: int = -1
 var force_reload: bool = false
 
 var _autoplay: bool = false
+
+var _previous_with_last_timer: SceneTreeTimer
 
 
 func _component_ready() -> void:
@@ -142,7 +155,7 @@ func seek_to(cue_number: float) -> void:
 	var accumulated_animated_data: Dictionary = {}
 	var going_backwards: bool = (last_cue and (_index_list.find(last_cue.number) > current_cue_index)) if not reset else true
 
-	if going_backwards or force_reload:
+	if (going_backwards and mode != MODE.LOOP) or force_reload or reset:
 		_reset_animated_fixtures(animator, accumulated_animated_data)
 		_remove_all_animators()
 
@@ -165,21 +178,32 @@ func seek_to(cue_number: float) -> void:
 		if _previous_autoplay_animator.finished.is_connected(_autoplay_callback):
 			_previous_autoplay_animator.finished.disconnect(_autoplay_callback)
 	
-	if ( _autoplay and not going_backwards ) or ( next_cue.trigger_mode == Cue.TRIGGER_MODE.AFTER_LAST and len(cue_range) == 1 ):
-		animator.finished.connect(_autoplay_callback, CONNECT_ONE_SHOT)
+	if _autoplay or ( next_cue.trigger_mode == Cue.TRIGGER_MODE.AFTER_LAST and len(cue_range) == 1 ):
+		animator.finished.connect(_autoplay_callback.bind(_index, next_cue), CONNECT_ONE_SHOT)
 		_previous_autoplay_animator = animator
+
+	if is_instance_valid(_previous_with_last_timer) and _previous_with_last_timer.timeout.is_connected(_with_last_callback):
+		_previous_with_last_timer.timeout.disconnect(_with_last_callback)
+
+	if next_cue.trigger_mode == Cue.TRIGGER_MODE.WITH_LAST:
+		_previous_with_last_timer = Core.get_tree().create_timer(next_cue.pre_wait)
+		_previous_with_last_timer.timeout.connect(_with_last_callback)
 
 	last_cue = current_cue
 	on_cue_changed.emit(_index_list[_index] if not reset else -1.0)
 
 
-func _autoplay_callback() -> void:
-	if _autoplay or next_cue.trigger_mode == Cue.TRIGGER_MODE.AFTER_LAST:
-		var next_cue: Cue = _cues[_index_list[wrapi(_index + 1, 0, len(_cues))]]
-		var old_index: int = _index
+func _with_last_callback() -> void:
+	go_next()
 
-		await Core.get_tree().create_timer(next_cue.pre_wait).timeout
-		if _autoplay or next_cue.trigger_mode == Cue.TRIGGER_MODE.AFTER_LAST and old_index == _index:	
+
+func _autoplay_callback(p_old_inedx: int, p_next_cue: Cue) -> void:
+	if _autoplay or next_cue.trigger_mode == Cue.TRIGGER_MODE.AFTER_LAST:
+		# var next_cue: Cue = _cues[_index_list[wrapi(_index + 1, 0, len(_cues))]]
+		# var old_index: int = _index
+
+		await Core.get_tree().create_timer(p_next_cue.pre_wait).timeout
+		if ((_autoplay or p_next_cue.trigger_mode == Cue.TRIGGER_MODE.AFTER_LAST) and p_old_inedx == _index) or p_next_cue.trigger_mode == Cue.TRIGGER_MODE.WITH_LAST:	
 			go_next()
 	
 	_previous_autoplay_animator = null
@@ -273,17 +297,20 @@ func _remove_animator(cue_number: float, erase: bool = true) -> void:
 func stop() -> void:
 	_autoplay = false
 	seek_to(-1)
+	on_stopped.emit()
 
 
 ## Start auto play
 func play() -> void:
 	_autoplay = true
 	go_next()
+	on_played.emit()
 
 
 ## Stop auto play
 func pause() -> void:
 	_autoplay = false
+	on_paused.emit()
 
 
 ## Moves the cue at cue_number up. By swapping the number with the next cue in the list
@@ -354,9 +381,26 @@ func set_cue_number(new_number: float, cue: Cue) -> bool:
 		return false
 
 
+##Duplicates a cue
+func duplicate_cue(cue_number: float) -> void:
+	if not cue_number in _cues.keys():
+		return
+
+	var new_cue: Cue = Cue.new()
+	new_cue.load(_cues[cue_number].serialize())
+
+	add_cue(new_cue, -1)
+
+
 ## Returnes the cue at the given index, or null if none is found
 func get_cue(cue_number: float) -> Cue:
 	return _cues.get(cue_number, null)
+
+
+## Changes the current mode
+func set_mode(p_mode: MODE) -> void:
+	mode = p_mode
+	on_mode_changed.emit(mode)
 
 
 ## Saves this cue list to a Dictionary
@@ -365,7 +409,10 @@ func _on_serialize_request(mode: int) -> Dictionary:
 	for cue_index: float in _index_list:
 		serialized_cues[cue_index] = _cues[cue_index].serialize()
 
-	var serialized_data: Dictionary = {"cues": serialized_cues}
+	var serialized_data: Dictionary = {
+		"cues": serialized_cues,
+		"mode": mode,
+	}
 
 	if mode == CoreEngine.SERIALIZE_MODE_NETWORK:
 		serialized_data.merge({
@@ -377,6 +424,8 @@ func _on_serialize_request(mode: int) -> Dictionary:
 
 ## Loads this cue list from a Dictionary
 func _on_load_request(serialized_data: Dictionary) -> void:
+	mode = int(serialized_data.get("mode", MODE.NORMAL))
+
 	for cue_index: String in serialized_data.get("cues").keys():
 		var new_cue: Cue = Cue.new()
 		new_cue.load(serialized_data.cues[cue_index])

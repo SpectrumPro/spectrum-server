@@ -54,24 +54,24 @@ func import(fixtures: Array) -> void:
 				_set_individual_fixture_data(fixture, value, channel_key, fixture_set_layer_id)
 
 
-func set_random(fixtures: Array, channel_key: String) -> void:
+func set_random(fixtures: Array, min: int, max: int, channel_key: String) -> void:
 	if channel_key in random_allowed_channel_keys:
 		for fixture in fixtures:
 			if fixture is Fixture:
-				_set_individual_fixture_data(fixture, randi_range(0, Fixture.MAX_DMX_VALUE), channel_key, fixture_set_layer_id)
+				_set_individual_fixture_data(fixture, randi_range(min, max), channel_key, fixture_set_layer_id)
 
 
-func set_color_random(fixtures: Array, color_key: String) -> void:
+func set_color_random(fixtures: Array, min: int, max: int, color_key: String) -> void:
 	for fixture in fixtures:
 		if fixture is Fixture:
 			var new_color: Color = fixture.get_value_from_layer_id(fixture_set_layer_id, "set_color")
 			match color_key:
-				"r": new_color.r = randf_range(0, 1)
-				"g": new_color.g = randf_range(0, 1)
-				"b": new_color.b = randf_range(0, 1)
-				"h": new_color.h = randf_range(0, 1)
-				"s": new_color.s = randf_range(0, 1)
-				"v": new_color.v = randf_range(0, 1)
+				"r": new_color.r8 = randi_range(min, max)
+				"g": new_color.g8 = randi_range(min, max)
+				"b": new_color.b8 = randi_range(min, max)
+				"h": new_color.h = remap(randi_range(min, max), 0, 360, 0.0, 1.0)
+				"s": new_color.s = remap(randi_range(min, max), 0, 255, 0.0, 1.0)
+				"v": new_color.v = remap(randi_range(min, max), 0, 255, 0.0, 1.0)
 
 			_set_individual_fixture_data(fixture, new_color, "set_color", fixture_set_layer_id)
 
