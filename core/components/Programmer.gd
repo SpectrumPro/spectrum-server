@@ -102,7 +102,7 @@ func _set_fixture_data(fixtures: Array, value: Variant, channel_key: String, lay
 func _set_individual_fixture_data(fixture: Fixture, value: Variant, channel_key: String, layer_id: String) -> void:
 	fixture.get(channel_key).call(value, layer_id)
 	# Check to see if the value is 0, if so remove it from save_data
-	if value or layer_id in [Fixture.OVERRIDE, Fixture.REMOVE_OVERRIDE]:
+	if value or layer_id == Fixture.OVERRIDE:
 		if fixture not in save_data:
 			save_data[fixture] = {}
 
@@ -137,7 +137,7 @@ func store_data_to_function(function: Function, mode: SAVE_MODE, fixtures: Array
 func erace_data_from_function(function: Function, mode: SAVE_MODE, fixtures: Array = []) -> void:
 	match mode:
 		SAVE_MODE.MODIFIED:
-			for fixture: Fixture in save_data:
+			for fixture: Fixture in fixtures:
 				if fixture in save_data:
 					for channel_key: String in save_data[fixture]:
 						function.erace_data(fixture, channel_key)
