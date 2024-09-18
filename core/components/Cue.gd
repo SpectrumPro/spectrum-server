@@ -17,6 +17,12 @@ signal on_post_wait_time_changed(post_wait: float)
 ## Emitted when the trigger mode it changed
 signal on_trigger_mode_changed(trigger_mode: TRIGGER_MODE)
 
+## Emitted when the timecode enabled state is changed
+signal on_timecode_enabled_state_changed(timecode_enabled: bool)
+
+## Emitted when the timecode triggers change
+signal on_timecode_trigger_changed(timecode_trigger: int)
+
 
 ## The number of this cue, do not modify this when it is a part of a cuelist
 var number: float = 0
@@ -39,6 +45,11 @@ var trigger_mode: TRIGGER_MODE = TRIGGER_MODE.MANUAL
 ## Tracking flag, indicates if this cue tracks changes
 var tracking: bool = true
 
+## Stores all the timecode frame counters that will trigger this cue
+var timecode_trigger: int = 0 
+
+## Enables timecode triggers on this cue
+var timecode_enabled: bool = false
 
 ## Stores the saved fixture data to be animated, stored as {Fixture: [[method_name, value]]}
 var stored_data: Dictionary = {}
@@ -83,6 +94,25 @@ func set_trigger_mode(p_trigger_mode: TRIGGER_MODE) -> void:
     on_trigger_mode_changed.emit(trigger_mode)
 
 
+## Sets timecode enabled
+func set_timecode_enabled(p_timecode_enabled: bool) -> void:
+    if timecode_enabled == p_timecode_enabled:
+        return
+    
+    timecode_enabled = p_timecode_enabled
+    on_timecode_enabled_state_changed.emit(timecode_enabled)
+
+
+## Adds a timecode trigger
+func set_timecode_trigger(frame: int) -> void:
+    if frame == timecode_trigger:
+        return
+    
+    timecode_trigger = frame
+    
+    on_timecode_trigger_changed.emit(timecode_trigger)
+
+
 ## Returnes a serialized copy of this cue
 func _on_serialize_request(mode: int) -> Dictionary:
     var serialized_function_triggers: Dictionary = {}
@@ -103,7 +133,9 @@ func _on_serialize_request(mode: int) -> Dictionary:
         "trigger_mode": trigger_mode,
         "tracking": tracking,
         "stored_data": serialize_stored_data(stored_data),
-        "function_triggers": serialized_function_triggers
+        "function_triggers": serialized_function_triggers,
+        "timecode_enabled": timecode_enabled,
+        "timecode_trigger": timecode_trigger,
     }
 
 
@@ -114,6 +146,9 @@ func _on_load_request(serialized_data: Dictionary) -> void:
     post_wait = serialized_data.get("post_wait", post_wait)
     trigger_mode = serialized_data.get("trigger_mode", trigger_mode)
     tracking = serialized_data.get("tracking", tracking)
+
+    timecode_enabled = serialized_data.get("timecode_enabled", timecode_enabled)
+    timecode_trigger = serialized_data.get("timecode_trigger", timecode_trigger)
 
     load_stored_data(serialized_data.get("stored_data", {}), stored_data)
         

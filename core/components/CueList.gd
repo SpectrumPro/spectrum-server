@@ -60,6 +60,16 @@ var _index_list: Array = []
 var _index: int = -1
 
 
+## Contains all the keyframes for timecode, stored as {frame: [cue_number, cue_number...]}
+var _keyframes: Dictionary = {}
+
+## Contains a sorted version of the keyframes
+var _sorted_keyframes: Array = []
+
+## The last leyframe that was triggred
+var last_triggered_keyframe: int = -1
+
+
 ## Used to determin if a force reload from the start should happen, used when a cue is added, removed, moved, or edited
 var force_reload: bool = false
 
@@ -71,6 +81,8 @@ var _previous_with_last_timer: SceneTreeTimer
 func _component_ready() -> void:
 	name = "CueList"
 	self_class_name = "CueList"
+
+	TC.frames_changed.connect(_find_keyframes)
 
 ## Adds a pre-existing cue to this CueList
 ## Returns false if the cue already exists in this list, or if the index is already in use
@@ -93,6 +105,16 @@ func add_cue(cue: Cue, number: float = 0, rename: bool = false) -> bool:
 	_index_list.sort()
 	
 	cue.on_delete_requested.connect(remove_cue.bind(cue), CONNECT_ONE_SHOT)
+
+	cue.local_data[uuid+"on_timecode_trigger_changed"] = _on_cue_timecode_trigger_changed.bind(cue)
+	cue.local_data[uuid+"on_timecode_enabled_state_changed"] = _on_cue_timecode_enabled_stage_changed.bind(cue)
+
+	if cue.timecode_enabled:
+		_add_cue_keyframe(cue)
+
+	cue.on_timecode_trigger_changed.connect(cue.local_data[uuid+"on_timecode_trigger_changed"])
+	cue.on_timecode_enabled_state_changed.connect(cue.local_data[uuid+"on_timecode_enabled_state_changed"])
+
 	Server.add_networked_object(cue.uuid, cue, cue.on_delete_requested)
 
 	force_reload = true
@@ -111,7 +133,95 @@ func remove_cue(cue: Cue) -> void:
 		_index = _index - 1
 		force_reload = true
 
+		cue.on_timecode_trigger_changed.disconnect(cue.local_data[uuid+"on_timecode_trigger_changed"])
+		cue.on_timecode_enabled_stage_changed.disconnect(cue.local_data[uuid+"on_timecode_enabled_state_changed"])
+		cue.local_data.erase(uuid+"on_timecode_trigger_changed")
+		cue.local_data.erase(uuid+"on_timecode_enabled_state_changed")
+		cue.local_data.erase(uuid+"old_timecode_trigger")
+
 		on_cues_removed.emit([cue])
+
+
+func _on_cue_timecode_trigger_changed(timecode_trigger: int, cue: Cue) -> void:
+	if cue.timecode_enabled:
+		var old_trigger: int = cue.local_data.get(uuid+"old_timecode_trigger", -1)
+
+		print("Old trigger: ", old_trigger)
+
+		if old_trigger != -1 and old_trigger in _keyframes.keys():
+			_keyframes[old_trigger].erase(cue.number)
+
+			if not _keyframes[old_trigger]:
+				_keyframes.erase(old_trigger)
+		
+		_add_cue_keyframe(cue)
+
+	
+	print(_keyframes)
+
+
+
+func _add_cue_keyframe(cue: Cue) -> void:
+	if not cue.timecode_trigger in _keyframes.keys():
+		_keyframes[cue.timecode_trigger] = []
+		
+	_keyframes[cue.timecode_trigger].append(cue.number)
+
+	_sorted_keyframes = _keyframes.keys()
+	_sorted_keyframes.sort()
+
+	cue.local_data[uuid+"old_timecode_trigger"] = cue.timecode_trigger
+
+
+
+
+func _on_cue_timecode_enabled_stage_changed(timecode_enabled: bool, cue: Cue) -> void:
+	if timecode_enabled:
+		_add_cue_keyframe(cue)
+
+	else:
+		if cue.timecode_trigger in _keyframes.keys():
+			_keyframes[cue.timecode_trigger].erase(cue.number)
+
+		if not _keyframes[cue.timecode_trigger]:
+			_keyframes.erase(cue.timecode_trigger)
+		
+		_sorted_keyframes = _keyframes.keys()
+		_sorted_keyframes.sort()
+	
+	print(_keyframes)
+
+
+
+func _find_keyframes(frame: int) -> void:
+	# Use binary search to find the closest frame <= frame 
+	
+	var left = 0
+	var right = len(_sorted_keyframes) - 1
+	
+	# Binary search for closest keyframe <= frame
+	while left <= right:
+		var mid = int((left + right) / 2)
+		if _sorted_keyframes[mid] == frame and _sorted_keyframes[mid] != last_triggered_keyframe :
+			last_triggered_keyframe = _sorted_keyframes[mid]
+			print("Calling keyframe: ", _sorted_keyframes[right])
+			_trigger_keyframe(_sorted_keyframes[mid])
+			return
+		elif _sorted_keyframes[mid] < frame:
+			left = mid + 1
+		else:
+			right = mid - 1
+	
+	## Trigger the closest valid keyframe if right >= 0 and it is a new keyframe
+	if right >= 0 and _sorted_keyframes[right] <= frame and _sorted_keyframes[right] > last_triggered_keyframe and _sorted_keyframes[right] != last_triggered_keyframe:
+		last_triggered_keyframe = _sorted_keyframes[right]
+		print("Calling keyframe: ", _sorted_keyframes[right])
+		_trigger_keyframe(_sorted_keyframes[right])
+
+
+func _trigger_keyframe(keyframe: int) -> void:
+	for cue_number: float in _keyframes[keyframe]:
+		seek_to(cue_number)
 
 
 ## Advances to the next cue in the list
@@ -404,7 +514,7 @@ func set_mode(p_mode: MODE) -> void:
 
 
 ## Saves this cue list to a Dictionary
-func _on_serialize_request(mode: int) -> Dictionary:
+func _on_serialize_request(p_mode: int) -> Dictionary:
 	var serialized_cues: Dictionary = {}
 	for cue_index: float in _index_list:
 		serialized_cues[cue_index] = _cues[cue_index].serialize()
@@ -414,7 +524,7 @@ func _on_serialize_request(mode: int) -> Dictionary:
 		"mode": mode,
 	}
 
-	if mode == CoreEngine.SERIALIZE_MODE_NETWORK:
+	if p_mode == CoreEngine.SERIALIZE_MODE_NETWORK:
 		serialized_data.merge({
 			"index": _index
 		})

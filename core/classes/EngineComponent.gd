@@ -24,6 +24,9 @@ var name: String = "Unnamed EngineComponent": set = set_name
 ## Infomation that can be stored by other scripts / clients, this data will get saved to disk and send to all clients
 var user_meta: Dictionary 
 
+## Infomation that can be stored by other scripts, this is not saved to disk, and will not be send to clients
+var local_data: Dictionary
+
 ## Uuid of the current component, do not modify at runtime unless you know what you are doing, things will break
 var uuid: String = ""
 

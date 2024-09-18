@@ -34,6 +34,7 @@ Core="*res://core/engine/Engine.gd"
 MainSocketServer="*res://networking/WebSocketServer.gd"
 MainUDPSocket="*res://networking/UDPSocket.gd"
 Server="*res://core/engine/Server.gd"
+TC="*res://core/engine/Timecode.gd"
 
 [debug]
 

@@ -115,6 +115,7 @@ var _function_signal_connections: Dictionary = {}
 var home_path := OS.get_environment("USERPROFILE") if OS.has_feature("windows") else OS.get_environment("HOME")
 ## The location for storing all the save show files
 var show_library_location: String = home_path + "/.spectrum/Show Library"
+var user_script_folder: String = home_path + "/.spectrum/Scripts"
 
 ## The main programmer for this engine, mutiple can be created, how ever this one is made automaticaly for clients to use
 var programmer: Programmer = Programmer.new()
@@ -127,14 +128,19 @@ const fixture_path: String = "res://core/fixtures/"
 var debug: Debug = Debug.new()
 
 
+var _user_input_thread: Thread = Thread.new()
+
+
 func _ready() -> void:	
 	# Set low processor mode to true, to avoid using too much system resources 
 	OS.set_low_processor_usage_mode(false)
 
+	reload_scripts()
+
 	Details.print_startup_detils()
 	
 	if not DirAccess.dir_exists_absolute(show_library_location):
-		print(TF.auto_format(TF.AUTO_MODE.INFO, "The folder \"show_library_location\" does not exist, creating one now, errcode: ", DirAccess.make_dir_absolute(show_library_location)))
+		print(TF.auto_format(TF.AUTO_MODE.INFO, "The folder \"show_library_location\" does not exist, creating one now, errcode: ", DirAccess.make_dir_recursive_absolute(show_library_location)))
 
 	# Load fixture definitions
 	fixtures_definitions = get_fixture_definitions(fixture_path)
@@ -190,7 +196,8 @@ func _ready() -> void:
 			print(cli_args[ip_index])
 		else:
 			print(TF.auto_format(TF.AUTO_MODE.ERROR, "Unable to connect to relay server, invalid IP address"))
-
+	
+	# _user_input_thread.start(_user_input_process)
 
 
 func _process(delta: float) -> void:
@@ -204,6 +211,33 @@ func _process(delta: float) -> void:
 		
 		# Subtract the interval from the accumulated time
 		_accumulated_time -= call_interval
+
+
+# func _user_input_process() -> void:
+# 	while true:
+# 		var input: String = OS.read_string_from_stdin()
+
+# 		var object_name: String = input.split(".")[0]
+# 		var member: String = input.substr(len(object_name) + 1, -1).replace("\n", "")
+# 		var args_string_array: Array = input.split("(")
+# 		var args: Array = []
+# 		if len(args_string_array) == 2:
+# 			var converted_array: Variant = str_to_var("[" + args_string_array[1].substr(0, len(args_string_array[1]) - 2) + "]")
+# 			if converted_array is Array:
+# 				args = converted_array
+# 			else:
+# 				print(TF.auto_format(TF.AUTO_MODE.ERROR, "Syntax Error: Invalid Args: ", args_string_array[1].substr(0, len(args_string_array[1]) - 2)))
+# 				continue
+
+# 		var valid_objects: Dictionary = Server.get_networked_objects()
+# 		print(valid_objects)
+# 		if object_name in valid_objects:
+# 			var object: Object = valid_objects.object
+
+# 			print(object)
+
+
+
 
 ## Serializes all elements of this engine, used for file saving, and network synchronization
 func serialize(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
@@ -278,6 +312,29 @@ func reset() -> void:
 	remove_universes(universes.values())
 	remove_functions(functions.values())
 
+
+## (Re)loads all the user scripts
+func reload_scripts() -> void:
+	if not DirAccess.dir_exists_absolute(user_script_folder):
+		print(TF.auto_format(TF.AUTO_MODE.INFO, "The folder ", TF.white(user_script_folder), " does not exist, creating one now, errcode: ", DirAccess.make_dir_recursive_absolute(user_script_folder)))
+	
+	var script_files: PackedStringArray = DirAccess.get_files_at(user_script_folder)
+
+	for old_child in get_children():
+		remove_child(old_child)
+		old_child.queue_free()
+
+	for file_name: String in script_files:
+		if file_name.ends_with(".gd"):
+			var node: Node = Node.new()
+			var script: GDScript = load(user_script_folder + "/" + file_name)
+
+			print(file_name)
+
+			node.name = file_name.replace(".gd", "")
+			node.set_script(script)
+			add_child(node)
+			
 
 func get_all_shows_from_library() -> Array[String]:
 
