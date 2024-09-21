@@ -1,5 +1,5 @@
-# Copyright (c) 2024 Liam Sherwin
-# All rights reserved.
+# Copyright (c) 2024 Liam Sherwin, All rights reserved.
+# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
 
 class_name Cue extends Function
 ## Data container for CueLists, a Cue doesn't do anything by itself, and needs to be part of a CueList to work

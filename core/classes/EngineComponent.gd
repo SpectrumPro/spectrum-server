@@ -1,5 +1,5 @@
-# Copyright (c) 2024 Liam Sherwin
-# All rights reserved.
+# Copyright (c) 2024 Liam Sherwin, All rights reserved.
+# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
 
 class_name EngineComponent extends RefCounted
 ## Base class for engine components, contains functions for storing metadata, and uuid's
