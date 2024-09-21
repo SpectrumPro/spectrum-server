@@ -212,11 +212,13 @@ func _find_keyframes(frame: int) -> void:
 		else:
 			right = mid - 1
 	
-	## Trigger the closest valid keyframe if right >= 0 and it is a new keyframe
-	if right >= 0 and _sorted_keyframes[right] <= frame and _sorted_keyframes[right] > last_triggered_keyframe and _sorted_keyframes[right] != last_triggered_keyframe:
-		last_triggered_keyframe = _sorted_keyframes[right]
-		print("Calling keyframe: ", _sorted_keyframes[right])
-		_trigger_keyframe(_sorted_keyframes[right])
+	# If we didn't find an exact match, trigger the closest valid keyframe
+	if right >= 0:
+		if _sorted_keyframes[right] <= frame and _sorted_keyframes[right] != last_triggered_keyframe:
+			last_triggered_keyframe = _sorted_keyframes[right]
+			print("Calling keyframe: ", _sorted_keyframes[right])
+			_trigger_keyframe(_sorted_keyframes[right])
+		return
 
 
 func _trigger_keyframe(keyframe: int) -> void:

@@ -113,6 +113,11 @@ func set_timecode_trigger(frame: int) -> void:
     on_timecode_trigger_changed.emit(timecode_trigger)
 
 
+## Sets the timecode trigger to the current frame as of calling this method
+func set_timecode_now() -> void:
+    set_timecode_trigger(TC.frame_count)
+
+
 ## Returnes a serialized copy of this cue
 func _on_serialize_request(mode: int) -> Dictionary:
     var serialized_function_triggers: Dictionary = {}
