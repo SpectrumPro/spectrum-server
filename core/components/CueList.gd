@@ -2,7 +2,7 @@
 # This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
 
 class_name CueList extends Function
-## Stores a list of Scenes, that are enabled and disabled in order one after another
+## Stores a list of Cues, that can be moved to at any point.
 
 ## Emitted when the current cue number is changed
 signal on_cue_changed(cue_number: float)
@@ -134,7 +134,7 @@ func remove_cue(cue: Cue) -> void:
 		force_reload = true
 
 		cue.on_timecode_trigger_changed.disconnect(cue.local_data[uuid+"on_timecode_trigger_changed"])
-		cue.on_timecode_enabled_stage_changed.disconnect(cue.local_data[uuid+"on_timecode_enabled_state_changed"])
+		cue.on_timecode_enabled_state_changed.disconnect(cue.local_data[uuid+"on_timecode_enabled_state_changed"])
 		cue.local_data.erase(uuid+"on_timecode_trigger_changed")
 		cue.local_data.erase(uuid+"on_timecode_enabled_state_changed")
 		cue.local_data.erase(uuid+"old_timecode_trigger")

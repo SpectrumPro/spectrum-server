@@ -33,18 +33,6 @@ signal on_locate_mode_toggled(locate_mode: bool)
 signal _fixture_data_changed(data: Dictionary)
 
 
-var network_config: Dictionary = {
-	"high_frequency_signals": [
-		on_color_changed,
-		on_white_intensity_changed,
-		on_amber_intensity_changed,
-		on_uv_intensity_changed,
-		on_dimmer_changed,
-		on_override_value_changed,
-	]
-}
-
-
 
 ## Universe channel of this fixture
 var channel: int
@@ -130,8 +118,16 @@ var _compiled_dmx_data: Dictionary
 
 ## Called when this EngineComponent is ready
 func _component_ready() -> void:
-	name = "Fixture"
-	self_class_name = "Fixture"
+	set_name("Fixture")
+	set_self_class("Fixture")
+	register_high_frequency_signals([
+		on_color_changed,
+		on_white_intensity_changed,
+		on_amber_intensity_changed,
+		on_uv_intensity_changed,
+		on_dimmer_changed,
+		on_override_value_changed,
+	])
 
 
 ## Set the manifest of this fixture

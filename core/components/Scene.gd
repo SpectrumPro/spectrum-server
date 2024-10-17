@@ -11,16 +11,6 @@ signal on_state_changed(is_enabled: bool)
 ## Emitted when the fade speed has changed
 signal on_fade_time_changed(fade_in_speed: float, fade_out_speed: float)
 
-## Emitted when the current percentage step of this scene changes, ie the current position during the fade from 0 to 1.0
-signal on_percentage_step_changed(percentage: float)
- 
-
-var network_config: Dictionary = {
-	"high_frequency_signals": [
-		on_percentage_step_changed
-	]
-}
-
 
 ## Fade in time in seconds, defaults to 2 seconds
 var fade_in_speed: float = 2 : set = set_fade_in_speed
@@ -47,10 +37,8 @@ var _flash_active: bool = false
 
 ## Called when this EngineComponent is ready
 func _component_ready() -> void:
-
-	name = "New Scene"
-	self_class_name = "Scene"
-
+	set_name("New Scene")
+	set_self_class("Scene")
 	_allow_store_zero_data = false
 
 	_animator.steped.connect(func (step: float): 
@@ -61,7 +49,7 @@ func _component_ready() -> void:
 		else:
 			value = remap(step, 0, _animator.length, 0.0, 1.0)
 
-		on_percentage_step_changed.emit(value)
+		on_intensity_changed.emit(value)
 	)
 
 
@@ -105,16 +93,18 @@ func pause() -> void:
 
 
 ## Set the step percentage of this scene, value ranges from 0.0 to 1.0, and is used as a percentage to control the underlaying animation
-func set_step_percentage(step: float) -> void:
-	_enabled = true if step else false
-	on_state_changed.emit(_enabled)
+func set_intensity(intensity: float) -> void:
+	var new_enabled_state: bool = bool(intensity)
+	
+	if new_enabled_state != _enabled:
+		_enabled = new_enabled_state
+		on_state_changed.emit(_enabled)
 
 	_animator.pause()
-	_animator.seek_to_percentage(step)
-
+	_animator.seek_to_percentage(intensity)
 
 ## Returnes the percentage step
-func get_step_percentage() -> float:
+func get_intensity() -> float:
 	return _animator.elapsed_time / _animator.length
 
 
@@ -188,7 +178,7 @@ func _on_serialize_request(mode: int) -> Dictionary:
 
 	if mode == CoreEngine.SERIALIZE_MODE_NETWORK:
 		serialized_data["enabled"] = is_enabled()
-		serialized_data["percentage_step"] = get_step_percentage()
+		serialized_data["intensity"] = get_intensity()
 
 	return serialized_data
 

@@ -31,7 +31,20 @@ var local_data: Dictionary
 var uuid: String = ""
 
 ## The class_name of this component this should always be set by the object that extends EngineComponent
-var self_class_name: String = "EngineComponent"
+var self_class_name: String = "EngineComponent": set = set_self_class
+
+
+## Network Config:
+## high_frequency_signals: Contains all the signals that should be send over the udp stream, instead of the tcp websocket 
+var network_config: Dictionary = {
+	"high_frequency_signals": [
+		
+	]
+}
+
+
+## Disables signal emmition during loading 
+var _disable_signals: bool = false
 
 
 func _init(p_uuid: String = UUID_Util.v4()) -> void:
@@ -46,12 +59,16 @@ func _component_ready() -> void:
 	pass
 
 
+func register_high_frequency_signals(p_high_frequency_signals: Array) -> void:
+	network_config.high_frequency_signals.append_array(p_high_frequency_signals)
+
+
 ## Sets user_meta from the given value
 func set_user_meta(key: String, value: Variant, no_signal: bool = false):
 	
 	user_meta[key] = value
 	
-	if not no_signal:
+	if not no_signal and not _disable_signals:
 		on_user_meta_changed.emit(key, value)
 
 
@@ -70,7 +87,7 @@ func get_all_user_meta() -> Dictionary:
 ## Delets an item from user meta, returning true if item was found and deleted, and false if not
 func delete_user_meta(key: String, no_signal: bool = false) -> bool:
 	
-	if not no_signal:
+	if not no_signal and not _disable_signals:
 		on_user_meta_deleted.emit(key)
 
 	
@@ -81,7 +98,12 @@ func delete_user_meta(key: String, no_signal: bool = false) -> bool:
 func set_name(new_name: String) -> void:
 	name = new_name
 	print_verbose(uuid, ": Changing name to: ", new_name)
-	on_name_changed.emit(name)
+	if not _disable_signals: on_name_changed.emit(name)
+
+
+## Sets the self class name
+func set_self_class(p_self_class_name: String) -> void:
+	self_class_name = p_self_class_name
 
 
 ## Returns serialized version of this component, change the mode to define if this object should be serialized for saving to disk, or for networking to clients
@@ -120,11 +142,13 @@ func _on_delete_request() -> void:
 
 ## Loades this object from a serialized version
 func load(serialized_data: Dictionary) -> void:
+	_disable_signals = true
 	name = serialized_data.get("name", name)
 	self_class_name = serialized_data.get("class_name", self_class_name)
 	user_meta = serialized_data.get("user_meta", {})
 	
 	_on_load_request(serialized_data)
+	_disable_signals = false
 
 
 ## Overide this function to handle load requests

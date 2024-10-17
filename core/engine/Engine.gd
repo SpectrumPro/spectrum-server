@@ -8,8 +8,6 @@ class_name CoreEngine extends Node
 # SIGNALS:
 # Emitted when things happen in this engine, or in the Universes, Fixtures, Functions ect... that are apart of it 
 
-## Emitted when any of the universes in this engine have there name changed
-signal on_universe_name_changed(universe: Universe, new_name: String) 
 
 ## Emited when a universe / universes are added to this engine, contains a list of all universe uuids for server-client synchronization
 signal on_universes_added(universes: Array[Universe], universe_uuids: Array[String]) 
@@ -17,9 +15,6 @@ signal on_universes_added(universes: Array[Universe], universe_uuids: Array[Stri
 ## Emited when a universe / universes are removed from this engine, contains a list of all universe uuids for server-client synchronization
 signal on_universes_removed(universes: Array[Universe], universe_uuids: Array[String])
 
-
-## Emitted when any of the fixtures in any of the universes in this engine have there name changed
-signal on_fixture_name_changed(fixture: Fixture, new_name: String) 
 
 ## Emited when a fixture / fixtures are added to any of the universes in this engine, contains a list of all fixture uuids for server-client synchronization
 signal on_fixtures_added(fixtures: Array[Fixture], fixture_uuids: Array[String])
@@ -34,8 +29,6 @@ signal on_functions_added(functions: Array[Function], function_uuids: Array[Stri
 ## Emited when a function / functions are removed from this engine, contains a list of all function uuids for server-client synchronization
 signal on_functions_removed(functions: Array[Function], function_uuids: Array[String])
 
-## Emitted when a function has its name changed, contains a list of all function uuids for server-client synchronization
-signal on_function_name_changed(function: Function, new_name: String, function_uuids: Array[String]) 
 
 
 signal _output_timer() ## Emited [member CoreEngine.call_interval] number of times per second.
@@ -72,13 +65,6 @@ var _accumulated_time: float = 0.0 ## Used as an internal refernce for timing ca
 
 ## SIGNAL CONNECTIONS:
 ## Folowing functions are for connecting universe signals to engine signals, they are defined as vairables so they can be dissconnected when universe is to be deleted
-func _universe_on_name_changed(new_name: String, universe: Universe): 
-	on_universe_name_changed.emit(universe, new_name)
-	
-
-func _universe_on_fixture_name_changed(fixture: Fixture, new_name: String):
-	on_fixture_name_changed.emit(fixture, new_name)
-
 
 func _universe_on_fixtures_added(p_fixtures: Array[Fixture], fixture_uuids: Array):
 	for fixture: Fixture in p_fixtures:
@@ -98,11 +84,6 @@ func _universe_on_fixtures_removed(p_fixtures: Array, fixture_uuids: Array):
 ## To counter act this, _universe_signal_connections stored as Universe:Dictionary{"callable": Callable}. Stores the copy of [member Engine._universe_on_name_changed] that is returned when it is .bind(universe) [br]
 ## This allows the callable to be dissconnected from the universe, and freed from memory
 var _universe_signal_connections: Dictionary = {}
-
-
-## Folowing functions are for connecting Function signals to Engine signals, they are defined as vairables so they can be dissconnected when Functions are to be deleted
-func _function_on_name_changed(new_name: String, function: Function) -> void:
-	on_function_name_changed.emit(function, new_name)
 
 
 ## See _universe_signal_connections for details
@@ -167,7 +148,7 @@ func _ready() -> void:
 		load_from_file(save_name)
 
 
-	if "--test" in cli_args:
+	if "--tests" in cli_args:
 		print("\nRunning Tests")
 		var tester = Tester.new()
 		tester.run(Tester.test_type.UNIT_TESTS)
@@ -177,7 +158,7 @@ func _ready() -> void:
 			get_tree().quit.call_deferred()	
 
 
-	if "--test-global" in cli_args:
+	if "--tests-global" in cli_args:
 		print("\nRunning Tests")
 		var tester = Tester.new()
 		tester.run(Tester.test_type.GLOBAL_TESTS)
@@ -280,14 +261,17 @@ func load_from_file(file_name: String) -> void:
 
 ## Loads serialized data into this engine
 func load(serialized_data: Dictionary) -> void:
-
+	# Arrays to keep track of all the components that have just been added, allowing them all to be networked to the client in the same message
+	var just_added_universes: Array[Universe] = []
+	var just_added_functions: Array[Function] = []
 
 	# Loops through each universe in the save file (if any), and adds them into the engine
 	for universe_uuid: String in serialized_data.get("universes", {}):
 		var new_universe: Universe = Universe.new(universe_uuid)
 
-		add_universe("New Universe", new_universe)
+		add_universe("New Universe", new_universe, true)
 		new_universe.load(serialized_data.universes[universe_uuid])
+		just_added_universes.append(new_universe)
 
 	
 	# Loops through each function in the save file (if any), and adds them into the engine
@@ -295,8 +279,12 @@ func load(serialized_data: Dictionary) -> void:
 		if serialized_data.functions[function_uuid].get("class_name", "") in ClassList.function_class_table:
 			var new_function: Function = ClassList.function_class_table[serialized_data.functions[function_uuid]["class_name"]].new(function_uuid)
 
-			add_function(new_function)
+			add_function(new_function, true)
 			new_function.load.call_deferred(serialized_data.functions[function_uuid])
+			just_added_functions.append(new_function)
+	
+	on_universes_added.emit.call_deferred(just_added_universes, universes.keys())
+	on_functions_added.emit.call_deferred(just_added_functions, functions.keys())
 
 
 ## Resets the engine, then loads from a save file:
@@ -328,9 +316,7 @@ func reload_scripts() -> void:
 		if file_name.ends_with(".gd"):
 			var node: Node = Node.new()
 			var script: GDScript = load(user_script_folder + "/" + file_name)
-
-			print(file_name)
-
+			
 			node.name = file_name.replace(".gd", "")
 			node.set_script(script)
 			add_child(node)
@@ -390,39 +376,22 @@ func add_universes(universes_to_add: Array, no_signal: bool = false) -> Array[Un
 func _connect_universe_signals(universe: Universe):
 	
 	_universe_signal_connections[universe] = {
-		"_universe_on_name_changed": _universe_on_name_changed.bind(universe),
 		"remove_universe": remove_universe.bind(universe, false, false)
 		}
 
-	universe.on_name_changed.connect(_universe_signal_connections[universe]._universe_on_name_changed)
-
 	universe.on_delete_requested.connect(_universe_signal_connections[universe].remove_universe)
-	
 
-	universe.on_fixture_name_changed.connect(_universe_on_fixture_name_changed)
-	
 	universe.on_fixtures_added.connect(_universe_on_fixtures_added)
-	
 	universe.on_fixtures_removed.connect(_universe_on_fixtures_removed)
 
 
 
 ## Disconnects all the signals of the universe to the signals of this engine
-func _disconnect_universe_signals(universe: Universe):
-	
-	print("Disconnecting Signals")
-
-	universe.on_name_changed.disconnect(_universe_signal_connections[universe]._universe_on_name_changed)
-	
+func _disconnect_universe_signals(universe: Universe):	
 	universe.on_delete_requested.disconnect(_universe_signal_connections[universe].remove_universe)
-
-
-	universe.on_fixture_name_changed.disconnect(_universe_on_fixture_name_changed)
 	
 	universe.on_fixtures_added.disconnect(_universe_on_fixtures_added)
-	
 	universe.on_fixtures_removed.disconnect(_universe_on_fixtures_removed)
-
 
 	_universe_signal_connections[universe] = {}
 	_universe_signal_connections.erase(universe)
@@ -535,18 +504,13 @@ func add_function(function: Function, no_signal: bool = false) -> Function:
 
 func _connect_function_signals(function: Function) -> void:
 	_function_signal_connections[function] = {
-		"_function_on_name_changed": _function_on_name_changed.bind(function),
 		"_remove_functions": remove_functions.bind([function])
 		}
 	
-	function.on_name_changed.connect(_function_signal_connections[function]._function_on_name_changed)
 	function.on_delete_requested.connect(_function_signal_connections[function]._remove_functions)
 
 
-
 func _disconnect_function_signals(function: Function) -> void:
-	
-	function.on_name_changed.disconnect(_function_signal_connections[function]._function_on_name_changed)
 	function.on_delete_requested.disconnect(_function_signal_connections[function]._remove_functions)
 	
 	_function_signal_connections[function] = {}
