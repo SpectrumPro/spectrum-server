@@ -242,7 +242,7 @@ func _on_web_socket_server_message_received(peer_id, message):
 					return
 
 		print_verbose("Calling Methord: ", method.callable)
-		var result: Variant = method.callable.callv(command.get("args", []))
+		var result: Variant = await method.callable.callv(command.get("args", []))
 
 		# If there is a callback_id in the command, send the result of the function back to the client
 		if "callback_id" in command:

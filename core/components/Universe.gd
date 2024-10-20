@@ -271,10 +271,10 @@ func _on_serialize_request(mode: int = Core.SERIALIZE_MODE_NETWORK) -> Dictionar
 		serialized_outputs[output.uuid] = output.serialize(mode)
 	
 	for channel: int in fixture_channels.keys():
-		serialized_fixtures[channel] = []
+		serialized_fixtures[str(channel)] = []
 
 		for fixture: Fixture in fixture_channels[channel]:
-			serialized_fixtures[channel].append(fixture.serialize(mode))
+			serialized_fixtures[str(channel)].append(fixture.serialize(mode))
 
 	return {
 		"outputs": serialized_outputs,

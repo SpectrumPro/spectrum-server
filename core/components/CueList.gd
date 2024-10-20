@@ -519,7 +519,7 @@ func set_mode(p_mode: MODE) -> void:
 func _on_serialize_request(p_mode: int) -> Dictionary:
 	var serialized_cues: Dictionary = {}
 	for cue_index: float in _index_list:
-		serialized_cues[cue_index] = _cues[cue_index].serialize()
+		serialized_cues[str(cue_index)] = _cues[cue_index].serialize()
 
 	var serialized_data: Dictionary = {
 		"cues": serialized_cues,

@@ -8,8 +8,11 @@ class_name Scene extends Function
 ## Emitted when this scene is _enabled or dissabled
 signal on_state_changed(is_enabled: bool)
 
-## Emitted when the fade speed has changed
-signal on_fade_time_changed(fade_in_speed: float, fade_out_speed: float)
+## Emitted when the fade in time has changed
+signal on_fade_in_speed_changed(fade_in_time: float)
+
+## Emitted when the fade out time has changed
+signal on_fade_out_speed_changed(fade_out_time: float)
 
 
 ## Fade in time in seconds, defaults to 2 seconds
@@ -138,10 +141,17 @@ func flash_release(fade_out: float = fade_out_speed) -> void:
 	_animator.play_backwards = true
 	_animator.play(_time_befour_flash)
 
+	if not _flash_active:
+		_animator.finished.connect(_animator_finished_flash_callback, CONNECT_ONE_SHOT)
 
-	_animator.finished.connect(_animator_finished_flash_callback, CONNECT_ONE_SHOT)
 
-	
+func flash(fade_in: float = fade_in_speed, fade_out: float = fade_out_speed, hold: float = 0.2) -> void:
+	flash_hold(fade_in)
+
+	await Core.get_tree().create_timer(hold).timeout
+
+	flash_release(fade_out)
+
 
 ## Add a method to this scene
 func store_data(fixture: Fixture, channel_key: String, value: Variant, p_store_data: Dictionary = _save_data) -> bool:
@@ -158,13 +168,13 @@ func store_data(fixture: Fixture, channel_key: String, value: Variant, p_store_d
 ## Sets the fade in speed in seconds
 func set_fade_in_speed(speed: float) -> void:
 	fade_in_speed = speed
-	on_fade_time_changed.emit(fade_in_speed, fade_out_speed)
+	on_fade_in_speed_changed.emit(fade_in_speed)
 
 
 ## Sets the fade out speed in seconds
 func set_fade_out_speed(speed: float) -> void:
 	fade_out_speed = speed
-	on_fade_time_changed.emit(fade_in_speed, fade_out_speed)
+	on_fade_out_speed_changed.emit(fade_out_speed)
 
 
 ## Serializes this scene and returnes it in a dictionary
