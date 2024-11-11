@@ -194,32 +194,6 @@ func _process(delta: float) -> void:
 		_accumulated_time -= call_interval
 
 
-# func _user_input_process() -> void:
-# 	while true:
-# 		var input: String = OS.read_string_from_stdin()
-
-# 		var object_name: String = input.split(".")[0]
-# 		var member: String = input.substr(len(object_name) + 1, -1).replace("\n", "")
-# 		var args_string_array: Array = input.split("(")
-# 		var args: Array = []
-# 		if len(args_string_array) == 2:
-# 			var converted_array: Variant = str_to_var("[" + args_string_array[1].substr(0, len(args_string_array[1]) - 2) + "]")
-# 			if converted_array is Array:
-# 				args = converted_array
-# 			else:
-# 				print(TF.auto_format(TF.AUTO_MODE.ERROR, "Syntax Error: Invalid Args: ", args_string_array[1].substr(0, len(args_string_array[1]) - 2)))
-# 				continue
-
-# 		var valid_objects: Dictionary = Server.get_networked_objects()
-# 		print(valid_objects)
-# 		if object_name in valid_objects:
-# 			var object: Object = valid_objects.object
-
-# 			print(object)
-
-
-
-
 ## Serializes all elements of this engine, used for file saving, and network synchronization
 func serialize(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
 	return {
@@ -500,6 +474,16 @@ func add_function(function: Function, no_signal: bool = false) -> Function:
 		print("Function: ", function.uuid, " is already in this engine")
 
 	return function
+
+
+## Creates a new function and returns it
+func create_function(function_class_name: String) -> Function:
+	var new_function: Function = ClassList.function_class_table.get(function_class_name, Script).new()
+
+	if new_function:
+		add_function(new_function)
+	
+	return new_function
 
 
 func _connect_function_signals(function: Function) -> void:

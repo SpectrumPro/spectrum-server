@@ -48,8 +48,6 @@ var _current_animated_fixtures: Dictionary = {}
 ## Stores all the current animators, stored at {cue_number: Animator}
 var _current_animators: Dictionary = {}
 
-var _previous_autoplay_animator: Animator = null
-
 ## Stores all the cues, these are stored unordered
 var _cues: Dictionary = {}
 
@@ -58,6 +56,9 @@ var _index_list: Array = []
 
 ## The current index in the _index_list array
 var _index: int = -1
+
+## The intensity of this cuelist
+var _intensity: float = 1
 
 
 ## Contains all the keyframes for timecode, stored as {frame: [cue_number, cue_number...]}
@@ -74,8 +75,6 @@ var last_triggered_keyframe: int = -1
 var force_reload: bool = false
 
 var _autoplay: bool = false
-
-var _previous_with_last_timer: SceneTreeTimer
 
 
 func _component_ready() -> void:
@@ -204,7 +203,6 @@ func _find_keyframes(frame: int) -> void:
 		var mid = int((left + right) / 2)
 		if _sorted_keyframes[mid] == frame and _sorted_keyframes[mid] != last_triggered_keyframe :
 			last_triggered_keyframe = _sorted_keyframes[mid]
-			print("Calling keyframe: ", _sorted_keyframes[right])
 			_trigger_keyframe(_sorted_keyframes[mid])
 			return
 		elif _sorted_keyframes[mid] < frame:
@@ -216,12 +214,13 @@ func _find_keyframes(frame: int) -> void:
 	if right >= 0:
 		if _sorted_keyframes[right] <= frame and _sorted_keyframes[right] != last_triggered_keyframe:
 			last_triggered_keyframe = _sorted_keyframes[right]
-			print("Calling keyframe: ", _sorted_keyframes[right])
 			_trigger_keyframe(_sorted_keyframes[right])
 		return
 
 
 func _trigger_keyframe(keyframe: int) -> void:
+	print("Calling keyframe: ", keyframe)
+
 	for cue_number: float in _keyframes[keyframe]:
 		seek_to(cue_number)
 
@@ -286,39 +285,32 @@ func seek_to(cue_number: float) -> void:
 
 	force_reload = false
 
-	if is_instance_valid(_previous_autoplay_animator):
-		if _previous_autoplay_animator.finished.is_connected(_autoplay_callback):
-			_previous_autoplay_animator.finished.disconnect(_autoplay_callback)
-	
-	if _autoplay or ( next_cue.trigger_mode == Cue.TRIGGER_MODE.AFTER_LAST and len(cue_range) == 1 ):
-		animator.finished.connect(_autoplay_callback.bind(_index, next_cue), CONNECT_ONE_SHOT)
-		_previous_autoplay_animator = animator
 
-	if is_instance_valid(_previous_with_last_timer) and _previous_with_last_timer.timeout.is_connected(_with_last_callback):
-		_previous_with_last_timer.timeout.disconnect(_with_last_callback)
+	if (not going_backwards or mode == MODE.LOOP) and not reset:
+		match next_cue.trigger_mode:
+			Cue.TRIGGER_MODE.AFTER_LAST:
+				_seek_to_next_cue_after(next_cue.pre_wait + fade_time)
+			
+			Cue.TRIGGER_MODE.WITH_LAST:
+				_seek_to_next_cue_after(next_cue.pre_wait)
+			
+			Cue.TRIGGER_MODE.MANUAL:
+				if _autoplay:
+					_seek_to_next_cue_after(next_cue.pre_wait + fade_time)
 
-	if next_cue.trigger_mode == Cue.TRIGGER_MODE.WITH_LAST:
-		_previous_with_last_timer = Core.get_tree().create_timer(next_cue.pre_wait)
-		_previous_with_last_timer.timeout.connect(_with_last_callback)
 
 	last_cue = current_cue
 	on_cue_changed.emit(_index_list[_index] if not reset else -1.0)
 
 
-func _with_last_callback() -> void:
-	go_next()
 
+func _seek_to_next_cue_after(seconds: float) -> void:
+	var orignal_index: int = _index
 
-func _autoplay_callback(p_old_inedx: int, p_next_cue: Cue) -> void:
-	if _autoplay or next_cue.trigger_mode == Cue.TRIGGER_MODE.AFTER_LAST:
-		# var next_cue: Cue = _cues[_index_list[wrapi(_index + 1, 0, len(_cues))]]
-		# var old_index: int = _index
+	await Core.get_tree().create_timer(seconds).timeout
 
-		await Core.get_tree().create_timer(p_next_cue.pre_wait).timeout
-		if ((_autoplay or p_next_cue.trigger_mode == Cue.TRIGGER_MODE.AFTER_LAST) and p_old_inedx == _index) or p_next_cue.trigger_mode == Cue.TRIGGER_MODE.WITH_LAST:	
-			go_next()
-	
-	_previous_autoplay_animator = null
+	if _index == orignal_index:
+		go_next()
 
 
 func _reset_animated_fixtures(animator: Animator, accumulated_animated_data: Dictionary) -> void:
@@ -354,7 +346,7 @@ func _accumulate_state(cue: Cue, accumulated_animated_data: Dictionary, animator
 		for method_name: String in cue.stored_data[fixture]:
 			var stored_value: Dictionary = cue.stored_data[fixture][method_name]
 			var from_value: Variant = fixture.get_value_from_layer_id(uuid, method_name)
-			var to_value: Variant = stored_value.value
+			var to_value: Variant = stored_value.value * _intensity
 
 			var animation_id: String = fixture.uuid + method_name
 			if animation_id in accumulated_animated_data:
@@ -513,6 +505,12 @@ func get_cue(cue_number: float) -> Cue:
 func set_mode(p_mode: MODE) -> void:
 	mode = p_mode
 	on_mode_changed.emit(mode)
+
+
+## Sets the intensity of this function, from 0.0 to 1.0
+func set_intensity(p_intensity: float) -> void:
+	print(p_intensity)
+	_intensity = p_intensity
 
 
 ## Saves this cue list to a Dictionary
