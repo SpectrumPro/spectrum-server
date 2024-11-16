@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "info": {
+    "brand": "Generic",
+    "name": "DRGB",
+    "date": "10-08-2024",
+    "author": ["Liam Sherwin"],
+    "categories": ["Color Changer"]
+  },
+  "modes": {
+    "10 Channel": {
+      "channels": [
+        "Dimmer",
+        "ColorIntensityRed",
+        "ColorIntensityGreen",
+        "ColorIntensityBlue"
+      ]
+    }
+  }
+}

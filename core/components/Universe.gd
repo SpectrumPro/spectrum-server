@@ -270,7 +270,10 @@ func _on_serialize_request(mode: int = Core.SERIALIZE_MODE_NETWORK) -> Dictionar
 	for output: DataOutputPlugin in outputs.values():
 		serialized_outputs[output.uuid] = output.serialize(mode)
 	
-	for channel: int in fixture_channels.keys():
+	var sorted_channels: Array = fixture_channels.keys()
+	sorted_channels.sort()
+	print(sorted_channels)
+	for channel: int in sorted_channels:
 		serialized_fixtures[str(channel)] = []
 
 		for fixture: Fixture in fixture_channels[channel]:

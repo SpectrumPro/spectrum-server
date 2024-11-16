@@ -335,7 +335,7 @@ func _reset_animated_fixtures(animator: Animator, accumulated_animated_data: Dic
 			"method_name": animating_fixture.method_name,
 			"fixture": animating_fixture.fixture,
 			"animator": animator,
-			# "current_value": to_value
+			"current_value": to_value
 		}
 
 
@@ -363,9 +363,7 @@ func _accumulate_state(cue: Cue, accumulated_animated_data: Dictionary, animator
 			}
 
 			if animation_id in _current_animated_fixtures:
-				if _current_animated_fixtures[animation_id].has("current_value"):
-					print(_current_animated_fixtures[animation_id].current_value)
-					accumulated_animated_data[animation_id].from = _current_animated_fixtures[animation_id].current_value
+				accumulated_animated_data[animation_id].from = _current_animated_fixtures[animation_id].current_value
 
 				var _animator = _current_animated_fixtures[animation_id].animator
 				if is_instance_valid(_animator) and _animator != animator:
@@ -395,6 +393,7 @@ func _handle_animator_finished(animator: Animator, cue_number: float, fade_time:
 		_current_animators.erase(cue_number)
 
 	animator.time_scale = 1 / (fade_time)
+	print("Time Scale For: ", cue_number, ": ", animator.time_scale)
 	_current_animators[cue_number] = animator
 	animator.play()
 
