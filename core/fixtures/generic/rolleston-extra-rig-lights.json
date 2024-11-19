@@ -7,8 +7,9 @@
     "author": ["Liam Sherwin"],
     "categories": ["Color Changer"]
   },
-  "modes": {
-    "10 Channel": {
+  "modes": [
+    {
+      "name": "10 Channel",
       "channels": [
         "Dimmer",
         "Unsupported",
@@ -22,5 +23,5 @@
         "ColorIntensityUV"
       ]
     }
-  }
+  ]
 }

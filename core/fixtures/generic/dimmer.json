@@ -1,15 +1,17 @@
 {
-  "schema_version": "1.0",
-  "info": {
-	"brand": "Generic",
-	"name": "Dimmer",
-	"date": "20-07-2024",
-	"author": ["Liam Sherwin"],
-	"categories": ["Dimmer"]
-  },
-  "modes": {
-	"1 Channel": {
-	  "channels": ["Dimmer"]
-	}
+	"schema_version": "1.0",
+	"info": {
+	  "brand": "Generic",
+	  "name": "Dimmer",
+	  "date": "20-07-2024",
+	  "author": ["Liam Sherwin"],
+	  "categories": ["Dimmer"]
+	},
+	"modes": [
+	  {
+		"name": "1 Channel",
+		"channels": ["Dimmer"]
+	  }
+	]
   }
-}
+  

@@ -7,26 +7,15 @@
     "author": ["Liam Sherwin"],
     "categories": ["Color Changer"]
   },
-  "modes": {
-    "4 Channel": {
+  "modes": [
+    {
+      "name": "4 Channel",
       "channels": [
         "ColorIntensityRed",
         "ColorIntensityGreen",
         "ColorIntensityBlue",
         "ColorIntensityAmber"
       ]
-    },
-    "8 Channel": {
-      "channels": [
-        "ColorIntensityRed",
-        "ColorIntensityRed-Fine",
-        "ColorIntensityGreen",
-        "ColorIntensityGreen-Fine",
-        "ColorIntensityBlue",
-        "ColorIntensityBlue-Fine",
-        "ColorIntensityAmber",
-        "ColorIntensityAmber-Fine"
-      ]
     }
-  }
+  ]
 }

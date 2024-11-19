@@ -7,8 +7,9 @@
     "author": ["Liam Sherwin"],
     "categories": ["Color Changer"]
   },
-  "modes": {
-    "6 Channel": {
+  "modes": [
+    {
+      "name": "6 Channel",
       "channels": [
         "ColorIntensityRed",
         "ColorIntensityGreen",
@@ -18,5 +19,5 @@
         "ColorIntensityUV"
       ]
     }
-  }
+  ]
 }
