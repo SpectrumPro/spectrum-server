@@ -178,6 +178,8 @@ func _ready() -> void:
 		else:
 			print(TF.auto_format(TF.AUTO_MODE.ERROR, "Unable to connect to relay server, invalid IP address"))
 	
+	#var dmx = load("res://core/output_plugins/DMXController.cs").new()
+	
 	# _user_input_thread.start(_user_input_process)
 
 

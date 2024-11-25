@@ -145,8 +145,6 @@ func _on_cue_timecode_trigger_changed(timecode_trigger: int, cue: Cue) -> void:
 	if cue.timecode_enabled:
 		var old_trigger: int = cue.local_data.get(uuid+"old_timecode_trigger", -1)
 
-		print("Old trigger: ", old_trigger)
-
 		if old_trigger != -1 and old_trigger in _keyframes.keys():
 			_keyframes[old_trigger].erase(cue.number)
 
@@ -154,9 +152,6 @@ func _on_cue_timecode_trigger_changed(timecode_trigger: int, cue: Cue) -> void:
 				_keyframes.erase(old_trigger)
 		
 		_add_cue_keyframe(cue)
-
-	
-	print(_keyframes)
 
 
 
@@ -219,8 +214,6 @@ func _find_keyframes(frame: int) -> void:
 
 
 func _trigger_keyframe(keyframe: int) -> void:
-	print("Calling keyframe: ", keyframe)
-
 	for cue_number: float in _keyframes[keyframe]:
 		seek_to(cue_number)
 
@@ -240,7 +233,7 @@ func go_previous() -> void:
 
 
 ## Skips to the cue index
-func seek_to(cue_number: float) -> void:
+func seek_to(cue_number: float, p_fade_time: float = -1) -> void:
 	if not cue_number in _index_list and cue_number != -1 or _index == _index_list.find(cue_number):
 		return
 	
@@ -257,6 +250,8 @@ func seek_to(cue_number: float) -> void:
 		current_cue = _cues[cue_number]
 		fade_time = current_cue.fade_time
 		next_cue = _cues[_index_list[(_index + 1) % len(_index_list)]]
+
+	if p_fade_time != -1 : fade_time = p_fade_time
 
 	var current_cue_index: int = _index_list.find(current_cue.number) if current_cue else -1
 
@@ -364,7 +359,6 @@ func _accumulate_state(cue: Cue, accumulated_animated_data: Dictionary, animator
 
 			if animation_id in _current_animated_fixtures:
 				if _current_animated_fixtures[animation_id].has("current_value"):
-					print(_current_animated_fixtures[animation_id].current_value)
 					accumulated_animated_data[animation_id].from = _current_animated_fixtures[animation_id].current_value
 
 				var _animator = _current_animated_fixtures[animation_id].animator
@@ -521,9 +515,15 @@ func set_intensity(p_intensity: float) -> void:
 	_intensity = p_intensity
 	on_intensity_changed.emit(_intensity)
 
-	for animated_fixture: Dictionary in _current_animated_fixtures.values():
-		if not is_instance_valid(animated_fixture.animator):
-			animated_fixture.fixture.get(animated_fixture.method_name).call(animated_fixture.current_value * _intensity, uuid)
+	if _index != -1:
+		for animated_fixture: Dictionary in _current_animated_fixtures.values():
+			if not is_instance_valid(animated_fixture.animator) and animated_fixture.has("current_value"):
+				animated_fixture.fixture.get(animated_fixture.method_name).call(animated_fixture.current_value * _intensity, uuid)
+
+
+## Called when this CueList is to be deleted
+func _on_delete_request() -> void:
+	seek_to(-1, 0)
 
 
 ## Saves this cue list to a Dictionary

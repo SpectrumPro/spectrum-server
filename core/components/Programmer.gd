@@ -5,7 +5,7 @@ class_name Programmer extends EngineComponent
 ## Engine class for programming lights, colors, positions, etc.
 
 
-## Current data in the programmer
+## Current data in the programmer, {Fixture: {"channel_key": value...}...}
 var save_data: Dictionary = {}
 
 ## Fixture layer IDs to use
@@ -54,6 +54,14 @@ func import(fixtures: Array) -> void:
 				_set_individual_fixture_data(fixture, value, channel_key, fixture_set_layer_id)
 
 
+## Clears all values in the programmer
+func clear() -> void:
+	for fixture: Fixture in save_data.keys():
+		for channel_key in save_data[fixture].duplicate():
+			_set_individual_fixture_data(fixture, fixture.get_zero_from_channel_key(channel_key), channel_key, fixture_reset_layer_id)
+
+
+## Sets random data for mutiple fixtures
 func set_random(fixtures: Array, min: int, max: int, channel_key: String) -> void:
 	if channel_key in random_allowed_channel_keys:
 		for fixture in fixtures:
@@ -61,6 +69,7 @@ func set_random(fixtures: Array, min: int, max: int, channel_key: String) -> voi
 				_set_individual_fixture_data(fixture, randi_range(min, max), channel_key, fixture_set_layer_id)
 
 
+## Random function for the color channel
 func set_color_random(fixtures: Array, min: int, max: int, color_key: String) -> void:
 	for fixture in fixtures:
 		if fixture is Fixture:
@@ -76,7 +85,7 @@ func set_color_random(fixtures: Array, min: int, max: int, color_key: String) ->
 			_set_individual_fixture_data(fixture, new_color, "set_color", fixture_set_layer_id)
 
 
-
+## Sets values
 func set_color(fixtures: Array, color: Color) -> void: 			_set_fixture_data(fixtures, color, "set_color", 			fixture_set_layer_id)
 func ColorIntensityWhite(fixtures: Array, value: int) -> void: 	_set_fixture_data(fixtures, value, "ColorIntensityWhite", 	fixture_set_layer_id)
 func ColorIntensityAmber(fixtures: Array, value: int) -> void: 	_set_fixture_data(fixtures, value, "ColorIntensityAmber", 	fixture_set_layer_id)
@@ -84,6 +93,7 @@ func ColorIntensityUV(fixtures: Array, value: int) -> void: 	_set_fixture_data(f
 func Dimmer(fixtures: Array, value: int) -> void: 				_set_fixture_data(fixtures, value, "Dimmer", 				fixture_set_layer_id)
 
 
+## Resets values
 func reset_color(fixtures: Array) -> void: 						_set_fixture_data(fixtures, Color.BLACK, "set_color", 		fixture_reset_layer_id)
 func reset_ColorIntensityWhite(fixtures: Array) -> void:		_set_fixture_data(fixtures, 0, "ColorIntensityWhite", 		fixture_reset_layer_id)
 func reset_ColorIntensityAmber(fixtures: Array) -> void: 		_set_fixture_data(fixtures, 0, "ColorIntensityAmber",		fixture_reset_layer_id)
@@ -112,6 +122,7 @@ func _set_individual_fixture_data(fixture: Fixture, value: Variant, channel_key:
 		save_data[fixture].erase(channel_key)
 
 
+## Stores data into a function
 func store_data_to_function(function: Function, mode: SAVE_MODE, fixtures: Array = []) -> void:
 	match mode:
 		SAVE_MODE.MODIFIED:
@@ -134,6 +145,7 @@ func store_data_to_function(function: Function, mode: SAVE_MODE, fixtures: Array
 							function.store_data(fixture, channel_key, fixture.current_values[channel_key])
 
 
+## Eraces data into a function
 func erace_data_from_function(function: Function, mode: SAVE_MODE, fixtures: Array = []) -> void:
 	match mode:
 		SAVE_MODE.MODIFIED:
@@ -175,8 +187,10 @@ func save_to_new_cue(fixtures: Array, cue_list: CueList, mode: SAVE_MODE) -> voi
 	store_data_to_function(new_cue, mode, fixtures)
 
 	cue_list.add_cue(new_cue, 0, true)
+	cue_list.seek_to(new_cue.number)
 
 
+## Merges data into a cue by its number in a cue list
 func merge_into_cue(fixtures: Array, cue_list: CueList, cue_number: float, mode: SAVE_MODE) -> void:
 	var cue: Cue = cue_list.get_cue(cue_number)
 
@@ -185,6 +199,7 @@ func merge_into_cue(fixtures: Array, cue_list: CueList, cue_number: float, mode:
 		cue_list.force_reload = true
 
 
+## Eraces data into a cue by its number in a cue list
 func erace_from_cue(fixtures: Array, cue_list: CueList, cue_number: float, mode: SAVE_MODE) -> void:
 	var cue: Cue = cue_list.get_cue(cue_number)
 

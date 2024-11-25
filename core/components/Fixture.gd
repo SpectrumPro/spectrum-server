@@ -132,11 +132,11 @@ func _component_ready() -> void:
 
 ## Set the manifest of this fixture
 func set_manifest(p_manifest: Dictionary, p_manifest_path: String = "") -> void:
-	length = len(p_manifest.modes.values()[mode - 1].channels)
+	length = len(p_manifest.modes[mode].channels)
 	manifest = p_manifest
 
 	channel_ranges = p_manifest.get("channels", {})
-	channels = p_manifest.modes.values()[mode - 1].channels
+	channels = p_manifest.modes[mode].channels
 
 	if p_manifest_path:
 		manifest_path = p_manifest_path
@@ -318,7 +318,7 @@ func emit_zero_values() -> void:
 
 
 ## Returnes serialized infomation about this fixture
-func _on_serialize_request(mode: int) -> Dictionary:
+func _on_serialize_request(network_mode: int) -> Dictionary:
 
 	var serialized_data: Dictionary = {
 		"channel": channel,
@@ -326,7 +326,7 @@ func _on_serialize_request(mode: int) -> Dictionary:
 		"manifest_path": manifest_path
 	}
 
-	if mode == CoreEngine.SERIALIZE_MODE_NETWORK:
+	if network_mode == CoreEngine.SERIALIZE_MODE_NETWORK:
 		serialized_data.current_values = current_values
 		serialized_data.current_override_values = current_override_values
 		serialized_data.channels = channels
@@ -340,7 +340,7 @@ func _on_delete_request() -> void:
 
 func _on_load_request(serialized_data: Dictionary) -> void:
 	channel = serialized_data.get("channel", 1)
-	mode = serialized_data.get("mode", 1)
+	mode = serialized_data.get("mode", 0)
 	manifest_path = serialized_data.get("manifest_path", "")
 
 	set_manifest(Core.fixtures_definitions[manifest_path.split("/")[0]][manifest_path.split("/")[1]], manifest_path)
