@@ -343,4 +343,11 @@ func _on_load_request(serialized_data: Dictionary) -> void:
 	mode = serialized_data.get("mode", 0)
 	manifest_path = serialized_data.get("manifest_path", "")
 
-	set_manifest(Core.fixtures_definitions[manifest_path.split("/")[0]][manifest_path.split("/")[1]], manifest_path)
+	if FixtureLibrary.is_loaded():
+		_load_manifest(manifest_path)
+	else:
+		FixtureLibrary.manifests_loaded.connect(_load_manifest.bind(manifest_path), CONNECT_ONE_SHOT)
+
+## Loads the manifest
+func _load_manifest(manifest_path: String) -> void:
+	set_manifest(FixtureLibrary.get_loaded_fixture_definitions()[manifest_path.split("/")[0]][manifest_path.split("/")[1]], manifest_path)

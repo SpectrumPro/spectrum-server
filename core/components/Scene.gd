@@ -52,7 +52,7 @@ func _component_ready() -> void:
 		else:
 			value = remap(step, 0, _animator.length, 0.0, 1.0)
 
-		on_intensity_changed.emit(value)
+		on_intensity_changed.emit(snapped(value, 0.001))
 	)
 
 

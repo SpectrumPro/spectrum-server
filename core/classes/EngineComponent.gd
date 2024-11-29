@@ -33,6 +33,8 @@ var uuid: String = ""
 ## The class_name of this component this should always be set by the object that extends EngineComponent
 var self_class_name: String = "EngineComponent": set = set_self_class
 
+## Stores all the classes this component inherits from
+var class_tree: Array[String] = ["EngineComponent"]
 
 ## Network Config:
 ## high_frequency_signals: Contains all the signals that should be send over the udp stream, instead of the tcp websocket 
@@ -103,6 +105,7 @@ func set_name(new_name: String) -> void:
 
 ## Sets the self class name
 func set_self_class(p_self_class_name: String) -> void:
+	class_tree.append(p_self_class_name)
 	self_class_name = p_self_class_name
 
 

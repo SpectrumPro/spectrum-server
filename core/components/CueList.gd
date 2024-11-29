@@ -513,12 +513,24 @@ func set_mode(p_mode: MODE) -> void:
 ## Sets the intensity of this function, from 0.0 to 1.0
 func set_intensity(p_intensity: float) -> void:
 	_intensity = p_intensity
-	on_intensity_changed.emit(_intensity)
+	on_intensity_changed.emit(snapped(_intensity, 0.001))
 
 	if _index != -1:
 		for animated_fixture: Dictionary in _current_animated_fixtures.values():
 			if not is_instance_valid(animated_fixture.animator) and animated_fixture.has("current_value"):
 				animated_fixture.fixture.get(animated_fixture.method_name).call(animated_fixture.current_value * _intensity, uuid)
+
+
+## Sets the fade time for all cues
+func set_global_fade_time(fade_time: float) -> void:
+	for cue: Cue in _cues.values():
+		cue.set_fade_time(fade_time)
+
+
+## Sets the pre wait time for all cues
+func set_global_pre_wait(pre_wait: float) -> void:
+	for cue: Cue in _cues.values():
+		cue.set_pre_wait(pre_wait)
 
 
 ## Called when this CueList is to be deleted

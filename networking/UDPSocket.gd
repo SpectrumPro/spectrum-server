@@ -28,6 +28,7 @@ func _process(delta):
 
 		print("Accepted UDP peer from: ", TF.blue(str(new_peer.get_packet_ip()) + ":" + str(new_peer.get_packet_port())))
 
+		print(new_peer)
 		_peers.append(new_peer)
 
 

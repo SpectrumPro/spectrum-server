@@ -103,8 +103,8 @@ func serialize_stored_data(stored_data: Dictionary) -> Dictionary:
 ## Loads the stored data, by calling the given method
 func load_stored_data(serialized_stored_data: Dictionary, stored_data: Dictionary, store_method: Callable = store_data_static) -> void:
 	for fixture_uuid: String in serialized_stored_data.keys():
-		if fixture_uuid in Core.fixtures:
-			var fixture: Fixture = Core.fixtures[fixture_uuid]
+		if ComponentDB.components.get(fixture_uuid) is Fixture:
+			var fixture: Fixture = ComponentDB.components[fixture_uuid]
 
 			for channel_key: String in serialized_stored_data[fixture_uuid]:
 				var stored_item: Dictionary = serialized_stored_data[fixture_uuid][channel_key]

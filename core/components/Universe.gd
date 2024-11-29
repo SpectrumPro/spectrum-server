@@ -133,7 +133,7 @@ func add_fixture(fixture: Fixture, channel: int = -1, no_signal: bool = false) -
 
 	fixtures[fixture.uuid] = fixture
 
-	Server.add_networked_object(fixture.uuid, fixture, fixture.on_delete_requested)
+	ComponentDB.register_component(fixture)
 	fixture.on_delete_requested.connect(remove_fixture.bind(fixture), CONNECT_ONE_SHOT)
 	fixture._fixture_data_changed.connect(self.set_data)
 
@@ -172,7 +172,7 @@ func add_fixtures_from_manifest(fixture_manifest: Dictionary, mode:int, start_ch
 	
 	for index: int in range(quantity):
 		var channel_index = start_channel + offset
-		channel_index += len(fixture_manifest.modes.values()[mode].channels) * index
+		channel_index += len(fixture_manifest.modes[mode].channels) * index
 
 		var new_fixture = add_fixture_from_manifest(fixture_manifest, mode, channel_index, true)
 		if new_fixture:
