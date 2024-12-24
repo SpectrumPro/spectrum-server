@@ -18,6 +18,7 @@ signal on_name_changed(new_name: String)
 signal on_delete_requested()
 
 
+
 ## The name of this object
 var name: String = "Unnamed EngineComponent": set = set_name
 
@@ -64,14 +65,6 @@ func _component_ready() -> void:
 func register_high_frequency_signals(p_high_frequency_signals: Array) -> void:
 	network_config.high_frequency_signals.append_array(p_high_frequency_signals)
 
-
-## Sets user_meta from the given value
-func set_user_meta(key: String, value: Variant, no_signal: bool = false):
-	
-	user_meta[key] = value
-	
-	if not no_signal and not _disable_signals:
-		on_user_meta_changed.emit(key, value)
 
 
 ## Returns the value from user meta at the given key, if the key is not found, default is returned

@@ -171,6 +171,8 @@ func add_networked_object(object_name: String, object: Object, delete_signal: Si
 
 ## Remove an object from the networked objects
 func remove_networked_object(object_name: String) -> void:
+	if not _networked_objects.has(object_name): return
+	
 	print_verbose("Removing Networked Object: ", object_name)
 
 	if _networked_object_callbacks.has(object_name):

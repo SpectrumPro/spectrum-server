@@ -14,13 +14,16 @@ var component_class_table: Dictionary = {
     "Universe": Universe,
     "Fixture": Fixture,
     "Programmer": Programmer,
+    "FixtureGroupItem": FixtureGroupItem
 }
 
 
 ## Contains all the function classes
 var function_class_table: Dictionary = {
     "Scene": Scene,
-    "CueList": CueList
+    "CueList": CueList,
+    "Function": Function,
+    "FixtureGroup": FixtureGroup
 }
 
 
@@ -39,8 +42,23 @@ func get_global_class_list() -> Dictionary:
     return merged_list
 
 
+## Returns only the class names for all the classes in the global table
+func get_global_class_list_keys() -> Dictionary:
+    return {
+        "component_class_table": component_class_table.keys(),
+        "function_class_table": function_class_table.keys(),
+        "output_class_table": output_class_table.keys()
+    }
+
+
 ## Returns the class names of all the functions
 func get_function_classes() -> Array: return function_class_table.keys()
 
 ## Returns the class names of all the outputs
 func get_output_classes() -> Array: return output_class_table.keys()
+
+
+## Adds a new class to the class list
+func register_function_class(classname: String, script: Script) -> void:
+    if classname not in function_class_table.keys():
+        function_class_table[classname] = script

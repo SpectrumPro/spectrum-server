@@ -31,6 +31,7 @@ var data_folder := (OS.get_environment("USERPROFILE") if OS.has_feature("windows
 ## The location for storing all the save show files
 var save_library_location: String = data_folder + "/saves"
 var user_script_folder: String = data_folder + "/scripts"
+var user_functions_folder: String = data_folder + "/functions"
 
 
 var EngineConfig = {
@@ -67,12 +68,12 @@ func _ready() -> void:
 	var script_child: Node = Node.new()
 	script_child.name = "Scripts"
 	add_child(script_child)
-	reload_scripts()
 
-	Details.print_startup_detils()
-	
-	if not DirAccess.dir_exists_absolute(save_library_location):
-		print(TF.auto_format(TF.AUTO_MODE.INFO, "The folder \"save_library_location\" does not exist, creating one now, errcode: ", DirAccess.make_dir_recursive_absolute(save_library_location)))
+	reload_scripts()
+	import_custom_functions()
+
+	Details.print_startup_detils()	
+	Utils.ensure_folder_exists(save_library_location)
 
 	_add_auto_network_classes.call_deferred()
 	Server.start_server()
@@ -156,12 +157,13 @@ func serialize(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
 
 
 ## Saves this engine to disk
-func save(file_name: String = "", autosave: bool = false) -> void:
+func save(file_name: String = "", autosave: bool = false) -> Error:
 	
 	if file_name:
 		var file_path: String = (save_library_location + "/autosave") if autosave else save_library_location
-		Utils.save_json_to_file(file_path, file_name, serialize(SERIALIZE_MODE_DISK))
-
+		return Utils.save_json_to_file(file_path, file_name, serialize(SERIALIZE_MODE_DISK))
+	else:
+		return ERR_FILE_BAD_PATH
 
 ## Get serialized data from a file, and load it into this engine
 func load_from_file(file_name: String) -> void:
@@ -199,9 +201,9 @@ func load(serialized_data: Dictionary) -> void:
 			# Check if the components class name is a valid class type in the engine
 			if serialized_component.get("class_name", "") in ClassList.global_class_table:
 				var new_component: EngineComponent = ClassList.global_class_table[serialized_component. class_name ].new(component_uuid)
+				new_component.load(serialized_component)
 				add_component(new_component, true)
 
-				new_component.load(serialized_component)
 				just_added_components.append(new_component)
 
 	
@@ -225,26 +227,44 @@ func reset() -> void:
 
 ## (Re)loads all the user scripts
 func reload_scripts() -> void:
-	if not DirAccess.dir_exists_absolute(user_script_folder):
-		print(TF.auto_format(TF.AUTO_MODE.INFO, "The folder ", TF.white(user_script_folder), " does not exist, creating one now, errcode: ", DirAccess.make_dir_recursive_absolute(user_script_folder)))
-	
-	var script_files: PackedStringArray = DirAccess.get_files_at(user_script_folder)
 
-	# Removes all the old script nodes if any
 	for old_child in $Scripts.get_children():
 		$Scripts.remove_child(old_child)
 		old_child.queue_free()
 
 	# Loop through all the script files if any, and add them
+	for script_name: String in get_scripts_from_folder(user_script_folder).keys():
+
+		var node: Node = Node.new()
+		var script: GDScript = load(user_script_folder + "/" + script_name)
+		
+		node.name = script_name.replace(".gd", "")
+		node.set_script(script)
+		$Scripts.add_child(node)
+	
+
+## Imports all the custon function types and adds them to the class list
+func import_custom_functions() -> void:
+	var scripts: Dictionary = get_scripts_from_folder(user_functions_folder)
+
+	for script_name: String in scripts:
+		var script: Script = scripts[script_name]
+		ClassList.register_function_class(script_name.replace(".gd", ""), script)
+
+
+## Returns all the scripts in the given folder, stored as {"ScriptName": Script}
+func get_scripts_from_folder(folder: String) -> Dictionary:
+	Utils.ensure_folder_exists(folder)
+	var script_files: PackedStringArray = DirAccess.get_files_at(folder)
+	var scripts: Dictionary = {}
+
+	# Loop through all the script files if any, and add them
 	for file_name: String in script_files:
 		if file_name.ends_with(".gd"):
-			var node: Node = Node.new()
-			var script: GDScript = load(user_script_folder + "/" + file_name)
-			
-			node.name = file_name.replace(".gd", "")
-			node.set_script(script)
-			$Scripts.add_child(node)
-			
+			scripts[file_name] = load(folder + "/" + file_name)
+
+	return scripts
+
 
 ## Returnes all the saves files from the save library
 func get_all_saves_from_library() -> Array[String]:
@@ -336,3 +356,15 @@ func create_animator() -> Animator:
 	add_child(animator)
 
 	return animator
+
+
+func _notification(what: int) -> void:
+	# Uh Oh
+	if what == NOTIFICATION_CRASH:
+		print(TF.auto_format(TF.AUTO_MODE.ERROR, "OH SHIT!"))
+		Details.shit()
+		print()
+
+		var file_name: String = "Crash Save on " + Time.get_date_string_from_system()
+		print(TF.info("Attempting Autosave, Error Code: ", error_string(save(file_name, true))))
+		print(TF.info("Saved as: \"", file_name, "\""))

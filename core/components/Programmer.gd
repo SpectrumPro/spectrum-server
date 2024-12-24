@@ -173,7 +173,7 @@ func save_to_scene(fixtures: Array, mode: SAVE_MODE = SAVE_MODE.MODIFIED) -> Sce
 	var new_scene: Scene = Scene.new()
 	store_data_to_function(new_scene, mode, fixtures)
 
-	Core.add_function(new_scene)
+	Core.add_component(new_scene)
 	return new_scene
 
 
@@ -227,4 +227,4 @@ func save_to_new_cue_list(fixtures: Array) -> void:
 	new_cue_list.add_cue(blackout_cue, 0.5)
 	new_cue_list.add_cue(new_cue, 1, true)
 
-	Core.add_function(new_cue_list)
+	Core.add_component(new_cue_list)

@@ -1,0 +1,70 @@
+{
+    "version": 1, // Interger value
+    "type": "DMX",
+    "meta_details":{
+        "short_name": "SlimPAR Pro H USB", // Short name eg, Generic RGB
+        "long_name": "SlimPAR Pro H USB", // Long name eg, Generic 3Ch RGB Light
+        "manufacturer": "ChauvetDJ",
+        "description": "" 
+    },
+    "manifest_details": {
+        "author": "Liam Sherwin", // Creator of this manifest file
+        "copyright_licence": "None",
+        "date_created": 1734657052, // Unix Timestamp
+        "notes": "notes" // Extra notes to be shown to the user
+    },
+    "modes": [ // All the modes of this fixture
+        {
+            "name": "Mode 1", // Name of mode
+            "heads": { // Each head / zone of this fixture, 0 is default
+                "0":{
+                    "channels": { // All the channels that make up this head, keyed by the dmx channel number 
+                        "1": {"-": "ColorIntensityRed"}, // Each channel has a range "-" for the whole channel, or (eg "15-60") for a dmx value range, for things like color wheels
+                        "2": {"-": "ColorIntensityGreen"},
+                        "3": {"-": "ColorIntensityBlue"},
+                        "4": {"-": "ColorIntensityAmber"},
+                        "5": {"-": "ColorIntensityWhite"},
+                        "6": {"-": "ColorIntensityUV"}
+                    }
+                }
+            }
+         },
+         {
+            "name": "Mode 2", // Name of mode
+            "heads": { // Each head / zone of this fixture, 0 is default
+                "0":{
+                    "channels": {
+                        "1": {"-": "Dimmer"}, 
+                        "2": {"-": "ColorIntensityRed"}, 
+                        "3": {"-": "ColorIntensityGreen"},
+                        "4": {"-": "ColorIntensityBlue"},
+                        "5": {"-": "ColorIntensityAmber"},
+                        "6": {"-": "ColorIntensityWhite"},
+                        "7": {"-": "ColorIntensityUV"}
+                    }
+                }
+            }
+         },
+         {
+            "name": "Mode 2", // Name of mode
+            "heads": { // Each head / zone of this fixture, 0 is default
+                "0":{
+                    "channels": { 
+                        "1": {"-": "Dimmer"}, 
+                        "2": {"-": "ColorIntensityRed"}, 
+                        "3": {"-": "ColorIntensityGreen"},
+                        "4": {"-": "ColorIntensityBlue"},
+                        "5": {"-": "ColorIntensityAmber"},
+                        "6": {"-": "ColorIntensityWhite"},
+                        "7": {"-": "ColorIntensityUV"},
+                        "8": {"-": "StrobeFrequency"},
+                        "9": {"-": "ColorMacros"},
+                        "10": {"-": "Functions"},
+                        "11": {"-": "FunctionSpeed"},
+                        "12": {"-": "DimmerSpeed"}
+                    }
+                }
+            }
+        }
+    ]
+}

@@ -147,9 +147,6 @@ func add_fixture(fixture: Fixture, channel: int = -1, no_signal: bool = false) -
 ## Returnes false if [parma fixture_manifest] is not valid fixture_manifest, see [method Utils.is_valid_fixture_manifest]
 func add_fixture_from_manifest(fixture_manifest: Dictionary, mode: int, channel: int, no_signal: bool = false) -> Variant:
 	
-	if not Utils.is_valid_fixture_manifest(fixture_manifest):
-		return false
-
 	var fixture: Fixture = Fixture.new()
 	fixture.name = fixture_manifest.info.name
 	fixture.channel = channel
@@ -164,10 +161,7 @@ func add_fixture_from_manifest(fixture_manifest: Dictionary, mode: int, channel:
 ## [param offset] adds a channel gap between each fixture [br]
 ## Will return false is manifest is not valid, otherwise Array[Fixture]
 func add_fixtures_from_manifest(fixture_manifest: Dictionary, mode:int, start_channel: int, quantity:int, offset:int = 0, no_signal: bool = false) -> Variant:
-	
-	if not Utils.is_valid_fixture_manifest(fixture_channels):
-		return false
-	
+
 	var just_added_fixtures: Array[Fixture] = []
 	
 	for index: int in range(quantity):

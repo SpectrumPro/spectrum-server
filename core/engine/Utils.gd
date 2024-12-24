@@ -4,11 +4,9 @@
 class_name Utils extends Object
 ## Usefull function that would be annoying to write out each time
 
-static func save_json_to_file(file_path: String, file_name: String, json: Dictionary) -> Error:
-	
-	if not DirAccess.dir_exists_absolute(file_path):
-		print("The folder \"" + file_path + "\" does not exist, creating one now, errcode: ", DirAccess.make_dir_recursive_absolute(file_path))
 
+static func save_json_to_file(file_path: String, file_name: String, json: Dictionary) -> Error:
+	ensure_folder_exists(file_path)
 	var file_access: FileAccess = FileAccess.open(file_path+"/"+file_name, FileAccess.WRITE)
 	
 	print_verbose("Saving a file to: ", file_path+"/"+file_name)
@@ -22,8 +20,15 @@ static func save_json_to_file(file_path: String, file_name: String, json: Dictio
 	return file_access.get_error()
 
 
+## Ensures a folder exists on the file system, if not one will be created
+static func ensure_folder_exists(folder_path: String) -> void:
+	if not DirAccess.dir_exists_absolute(folder_path):
+		print(TF.auto_format(TF.AUTO_MODE.INFO, "The folder \"",folder_path ,"\" does not exist, creating one now, errcode: ", DirAccess.make_dir_recursive_absolute(folder_path)))
+
+
+
+## Checks if there are any Objects in the data passed, also checks inside of arrays and dictionarys. If any are found, they are replaced with there uuid, if no uuid if found, it will be null instead 
 static func objects_to_uuids(data, just_uuid: bool = false):
-	## Checks if there are any Objects in the data passed, also checks inside of arrays and dictionarys. If any are found, they are replaced with there uuid, if no uuid if found, it will be null instead 
 	match typeof(data):
 		TYPE_OBJECT:
 			if just_uuid:
@@ -54,8 +59,8 @@ static func objects_to_uuids(data, just_uuid: bool = false):
 	return data
 
 
+## Checks if there are any uuids in the data passed, also checks inside of arrays and dictionarys. If any are found, they are replaced with there object refenrce, if no object refernce is found, null is returned
 static func uuids_to_objects(data: Variant, networked_objects: Dictionary):
-	## Checks if there are any uuids in the data passed, also checks inside of arrays and dictionarys. If any are found, they are replaced with there object refenrce, if no object refernce is found, null is returned
 	match typeof(data):
 		TYPE_DICTIONARY:
 			if "_object_ref" in data.keys():
@@ -92,23 +97,8 @@ static func uuids_to_objects(data: Variant, networked_objects: Dictionary):
 	return data
 
 
-static func serialize_variant(variant: Variant) -> Variant:
-	
-	return var_to_str(variant)
 
-
-static func deserialize_variant(variant: Variant) -> Variant:
-	return str_to_var(variant)
-	#match typeof(variant):
-		#TYPE_STRING:
-			#match variant[0]:
-				#"#":
-					#print(variant.right(8))
-					#return Color.from_string(variant.right(8), Color.BLACK)
-	#
-	#return ERR_INVALID_DATA
-
-
+## Returns the Highest Takes Precedence
 static func get_htp_color(color_1: Color, color_2: Color) -> Color:
 	# Calculate the intensity of each channel for color1
 	var intensity_1_r = color_1.r
@@ -127,8 +117,3 @@ static func get_htp_color(color_1: Color, color_2: Color) -> Color:
 	result_color.b = intensity_1_b if intensity_1_b > intensity_2_b else intensity_2_b
 
 	return result_color
-
-
-## Place holder function to check if a fixture manifest is valid
-static func is_valid_fixture_manifest(manifest: Dictionary) -> bool:
-	return true

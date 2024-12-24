@@ -85,18 +85,11 @@ static var auto_config: Dictionary = {
     }
 }
 
-## Default placeholder string used in auto_format function.
+## Default placeholder string used in auto_format function. Any data type can be passed to the autoformat function, but i don't think anyone will use this one... 
 static var _n: String = "⊙Ⲷ⧍"
 
 
 ## Adds a rainbow gradient to the given text with a specified size.
-
-# Parameters:
-# - text: The input string to apply the gradient to.
-# - gradient_size: The number of characters before the color changes in the gradient.
-
-# Returns:
-# - A string with the rainbow gradient applied.
 static func add_rainbow_gradient(text: String, gradient_size: int) -> String:
     var colors: Array = [
         FG_RED,
@@ -127,13 +120,6 @@ static func add_rainbow_gradient(text: String, gradient_size: int) -> String:
 
 
 ## Wraps the given string in the specified ANSI escape code.
-
-# Parameters:
-# - string: The input string to be wrapped.
-# - in_ANSI: The ANSI escape code to apply.
-
-# Returns:
-# - The input string wrapped with the specified ANSI escape code.
 static func wrap_string(string: String, in_ANSI: String) -> String:
     return in_ANSI + string + RESET
 
@@ -151,13 +137,6 @@ static func default(original_string: String) -> String: return wrap_string(origi
 
 
 ## Applies automatic formatting to the given arguments based on the specified mode.
-
-# Parameters:
-# - mode: The formatting mode to apply (default is AUTO_MODE.NORMAL).
-# - arg1 to arg8: Up to eight arguments to format.
-
-# Returns:
-# - A string with the formatting applied to each argument.
 static func auto_format(mode: AUTO_MODE = AUTO_MODE.NORMAL, arg1=_n, arg2=_n, arg3=_n, arg4=_n, arg5=_n, arg6=_n, arg7=_n, arg8=_n) -> String:
     var args: Array = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8]
 
@@ -170,3 +149,13 @@ static func auto_format(mode: AUTO_MODE = AUTO_MODE.NORMAL, arg1=_n, arg2=_n, ar
             result += wrap_string(str(arg), ansi)
 
     return result
+
+
+## Shorthand for auto_format(TF.AUTO_MODE.ERROR)
+static func error(arg1=_n, arg2=_n, arg3=_n, arg4=_n, arg5=_n, arg6=_n, arg7=_n, arg8=_n) -> String: 
+    return auto_format(AUTO_MODE.ERROR, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+
+
+## Shorthand for auto_format(TF.AUTO_MODE.INFO)
+static func info(arg1=_n, arg2=_n, arg3=_n, arg4=_n, arg5=_n, arg6=_n, arg7=_n, arg8=_n) -> String: 
+    return auto_format(AUTO_MODE.INFO, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
