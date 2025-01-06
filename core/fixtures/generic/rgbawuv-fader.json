@@ -1,26 +1,23 @@
 {
-	"schema_version": "1.0",
-	"info": {
-	  "brand": "Generic",
-	  "name": "RGBAWUV Fader",
-	  "date": "2024-01-25",
-	  "author": ["Liam Sherwin"],
-	  "categories": ["Color Changer"],
-	  "links": {
-		"Website": "https://spectrum.liamsherwin.tech"
-	  }
-	},
-	"modes": {
-	  "6 Channel": {
-		"channels": [
-		  "ColorIntensityRed",
-		  "ColorIntensityGreen",
-		  "ColorIntensityBlue",
-		  "ColorIntensityAmber",
-		  "ColorIntensityWhite",
-		  "ColorIntensityUV"
-		]
-	  }
-	}
-  }
-  
+  "schema_version": "1.0",
+  "info": {
+    "brand": "Generic",
+    "name": "Basic RGBAWUv",
+    "date": "20-07-2024",
+    "author": ["Liam Sherwin"],
+    "categories": ["Color Changer"]
+  },
+  "modes": [
+    {
+      "name": "6 Channel",
+      "channels": [
+        "ColorIntensityRed",
+        "ColorIntensityGreen",
+        "ColorIntensityBlue",
+        "ColorIntensityAmber",
+        "ColorIntensityWhite",
+        "ColorIntensityUV"
+      ]
+    }
+  ]
+}

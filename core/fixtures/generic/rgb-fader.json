@@ -2,44 +2,19 @@
   "schema_version": "1.0",
   "info": {
     "brand": "Generic",
-    "name": "RGB Fader",
-    "date": "27-1-2024",
+    "name": "Basic RGB",
+    "date": "27-07-2024",
     "author": ["Liam Sherwin"],
-    "categories": ["Color Changer"],
-    "links": {
-      "Website": "https://spectrum.liamsherwin.tech"
-    }
+    "categories": ["Color Changer"]
   },
-  "modes": {
-    "3 Channel": {
+  "modes": [
+    {
+      "name": "3 Channel",
       "channels": [
         "ColorIntensityRed",
         "ColorIntensityGreen",
         "ColorIntensityBlue"
       ]
-    },
-    "6 Channel": {
-      "channels": [
-        "ColorIntensityRed",
-        "ColorIntensityRedFine",
-        "ColorIntensityGreen",
-        "ColorIntensityGreenFine",
-        "ColorIntensityBlue",
-        "ColorIntensityBlueFine"
-      ]
-    },
-    "9 Channel": {
-      "channels": [
-        "ColorIntensityRed",
-        "ColorIntensityRedFine",
-        "ColorIntensityRedFine2",
-        "ColorIntensityGreen",
-        "ColorIntensityGreenFine",
-        "ColorIntensityGreenFine2",
-        "ColorIntensityBlue",
-        "ColorIntensityBlueFine",
-        "ColorIntensityBlueFine2"
-      ]
     }
-  }
+  ]
 }

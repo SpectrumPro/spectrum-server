@@ -11,24 +11,22 @@
       "OFLLibrary": "https://open-fixture-library.org/generic/cw-ww-fader"
     }
   },
-  "modes": {
-    "8 bit W/C": {
+  "modes": [
+    {
+      "name": "8 bit W/C",
       "channels": ["WarmWhite", "ColdWhite"]
     },
-    "8 bit C/W": {
+    {
+      "name": "8 bit C/W",
       "channels": ["ColdWhite", "WarmWhite"]
     },
-    "16 bit W/C": {
-      "channels": ["WarmWhite", "WarmWhiteFine", "ColdWhite", "ColdWhiteFine"]
+    {
+      "name": "Dimmer 8 bit W/C",
+      "channels": ["Dimmer", "WarmWhite", "ColdWhite"]
     },
-    "16 bit C/W": {
-      "channels": ["ColdWhite", "ColdWhiteFine", "WarmWhite", "WarmWhiteFine"]
-    },
-    "24 bit W/C": {
-      "channels": ["WarmWhite", "WarmWhiteFine", "WarmWhiteFine2", "ColdWhite", "ColdWhiteFine", "ColdWhiteFine2"]
-    },
-    "24 bit C/W": {
-      "channels": ["ColdWhite", "ColdWhiteFine", "ColdWhiteFine2", "WarmWhite", "WarmWhiteFine", "WarmWhiteFine2"]
+    {
+      "name": "Dimmer 8 bit C/W",
+      "channels": ["Dimmer", "ColdWhite", "WarmWhite"]
     }
-  }
+  ]
 }

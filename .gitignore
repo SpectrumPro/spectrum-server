@@ -23,3 +23,5 @@ android/
 
 Debug_save.spshow
 *.spshow
+
+.vscode/
