@@ -1,7 +1,7 @@
 {
     "version": 1, // Interger value
     "type": "DMX",
-    "meta_details":{
+    "fixture_details":{
         "short_name": "SlimPAR Pro H USB", // Short name eg, Generic RGB
         "long_name": "SlimPAR Pro H USB", // Long name eg, Generic 3Ch RGB Light
         "manufacturer": "ChauvetDJ",
@@ -13,58 +13,216 @@
         "date_created": 1734657052, // Unix Timestamp
         "notes": "notes" // Extra notes to be shown to the user
     },
-    "modes": [ // All the modes of this fixture
-        {
-            "name": "Mode 1", // Name of mode
-            "heads": { // Each head / zone of this fixture, 0 is default
+    "modes": { // All the modes of this fixture
+        "1": {
+            "name": "6-CH",
+            "heads": {
                 "0":{
-                    "channels": { // All the channels that make up this head, keyed by the dmx channel number 
-                        "1": {"-": "ColorIntensityRed"}, // Each channel has a range "-" for the whole channel, or (eg "15-60") for a dmx value range, for things like color wheels
-                        "2": {"-": "ColorIntensityGreen"},
-                        "3": {"-": "ColorIntensityBlue"},
-                        "4": {"-": "ColorIntensityAmber"},
-                        "5": {"-": "ColorIntensityWhite"},
-                        "6": {"-": "ColorIntensityUV"}
+                    "parameters": {
+                        "ColorIntensityRed": {
+                            "channels": [1],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityGreen": {
+                            "channels": [2],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityBlue": {
+                            "channels": [3],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityAmber": {
+                            "channels": [4],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityWhite": {
+                            "channels": [5],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityUV": {
+                            "channels": [6],
+                            "dmx_range": [0,255]
+                        }
                     }
                 }
             }
-         },
-         {
-            "name": "Mode 2", // Name of mode
-            "heads": { // Each head / zone of this fixture, 0 is default
+        },
+        "2": {
+            "name": "7-CH",
+            "heads": {
                 "0":{
-                    "channels": {
-                        "1": {"-": "Dimmer"}, 
-                        "2": {"-": "ColorIntensityRed"}, 
-                        "3": {"-": "ColorIntensityGreen"},
-                        "4": {"-": "ColorIntensityBlue"},
-                        "5": {"-": "ColorIntensityAmber"},
-                        "6": {"-": "ColorIntensityWhite"},
-                        "7": {"-": "ColorIntensityUV"}
+                    "parameters": {
+                        "Dimmer": {
+                            "channels": [1],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityRed": {
+                            "channels": [2],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityGreen": {
+                            "channels": [3],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityBlue": {
+                            "channels": [4],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityAmber": {
+                            "channels": [5],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityWhite": {
+                            "channels": [6],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityUV": {
+                            "channels": [7],
+                            "dmx_range": [0,255]
+                        }
                     }
                 }
             }
-         },
-         {
-            "name": "Mode 2", // Name of mode
-            "heads": { // Each head / zone of this fixture, 0 is default
+        },
+        "3": {
+            "name": "12-CH",
+            "heads": {
                 "0":{
-                    "channels": { 
-                        "1": {"-": "Dimmer"}, 
-                        "2": {"-": "ColorIntensityRed"}, 
-                        "3": {"-": "ColorIntensityGreen"},
-                        "4": {"-": "ColorIntensityBlue"},
-                        "5": {"-": "ColorIntensityAmber"},
-                        "6": {"-": "ColorIntensityWhite"},
-                        "7": {"-": "ColorIntensityUV"},
-                        "8": {"-": "StrobeFrequency"},
-                        "9": {"-": "ColorMacros"},
-                        "10": {"-": "Functions"},
-                        "11": {"-": "FunctionSpeed"},
-                        "12": {"-": "DimmerSpeed"}
+                    "parameters": {
+                        "Dimmer": {
+                            "channels": [1],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityRed": {
+                            "channels": [2],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityGreen": {
+                            "channels": [3],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityBlue": {
+                            "channels": [4],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityAmber": {
+                            "channels": [5],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityWhite": {
+                            "channels": [6],
+                            "dmx_range": [0,255]
+                        },
+                        "ColorIntensityUV": {
+                            "channels": [7],
+                            "dmx_range": [0,255]
+                        },
+                        "ShutterStrobe": {
+                            "channels": [8],
+                            "dmx_range": [16,255],
+                            "value_range": [0, 31] // Frequency range in Hz
+                        },
+                        "ColorMacros": {
+                            "channels": [9],
+                            "dmx_range": [0,255],
+                            "flags": ["unknown"]
+                        },
+                        "EffectMode": {
+                            "flags": ["unique"],
+                            "modes": {
+                                "0": {
+                                    "type": "None",
+                                    "channels": [10],
+                                    "dmx_range": [0, 31] 
+                                },
+                                "1": {
+                                    "type": "PulseStrobe.0-100",
+                                    "channels": [10],
+                                    "dmx_range": [32, 63]
+                                },
+                                "2": {
+                                    "type": "PulseStrobe.100-0",
+                                    "channels": [10],
+                                    "dmx_range": [65, 95]
+                                },
+                                "3": {
+                                    "type": "PulseStrobe.0-100-0",
+                                    "channels": [10],
+                                    "dmx_range": [96, 127]
+                                },
+                                "4": {
+                                    "type": "ColorFade",
+                                    "channels": [10],
+                                    "dmx_range": [128, 159]
+                                },
+                                "5": {
+                                    "type": "ColorJump.6",
+                                    "channels": [10],
+                                    "dmx_range": [160, 191]
+                                },
+                                "6": {
+                                    "type": "ColorJump.32",
+                                    "channels": [10],
+                                    "dmx_range": [192, 223]
+                                },
+                                "7": {
+                                    "type": "SoundActive.6",
+                                    "channels": [10],
+                                    "dmx_range": [224, 249]
+                                },
+                                "8": {
+                                    "type": "SoundActive.32",
+                                    "channels": [10],
+                                    "dmx_range": [250, 255]
+                                }
+                            }
+                        },
+                        "EffectSpeed": {
+                            "channels": [11],
+                            "dmx_range": [0,255],
+                            "note": "Only when using Effect 1-6",
+                            "flags": ["unique"]
+                        },
+                        "SoundSensitivity": {
+                            "channels": [11],
+                            "dmx_range": [0,255],
+                            "note": "Only when using Effect 7-8",
+                            "flags": ["unique"]
+                        },
+                        "DimmerSpeedMode": {
+                            "channels": [11],
+                            "modes": {
+                                "0": {
+                                    "description": "Set From Display",
+                                    "channels": [11],
+                                    "dmx_range": [0, 51]
+                                },
+                                "1": {
+                                    "description": "None",
+                                    "channels": [11],
+                                    "dmx_range": [52, 101]
+                                },
+                                "2": {
+                                    "description": "Speed Fast",
+                                    "channels": [11],
+                                    "dmx_range": [102, 152]
+                                },
+                                "3": {
+                                    "description": "Speed Medium",
+                                    "channels": [11],
+                                    "dmx_range": [153, 203]
+                                },
+                                "4": {
+                                    "description": "Speed Slow",
+                                    "channels": [11],
+                                    "dmx_range": [204, 255]
+                                }
+                            },
+                            "flags": ["unique"]
+                        }
                     }
                 }
             }
         }
-    ]
+    }
 }
