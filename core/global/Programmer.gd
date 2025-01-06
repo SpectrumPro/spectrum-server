@@ -1,7 +1,7 @@
 # Copyright (c) 2024 Liam Sherwin, All rights reserved.
 # This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
 
-class_name Programmer extends EngineComponent
+class_name CoreProgrammer extends Node
 ## Engine class for programming lights, colors, positions, etc.
 
 
@@ -30,12 +30,6 @@ enum SAVE_MODE {
 	ALL,			## Save all values of the fixtures
 	ALL_NONE_ZERO	## Save all values of the fixtures, as long as they are not the zero value for that channel
 }
-
-
-## Called when this EngineComponent is ready
-func _component_ready() -> void:
-	name = "Programmer"
-	self_class_name = "Programmer"
 
 
 func set_locate(fixtures: Array, enabled: bool) -> void:
@@ -123,55 +117,55 @@ func _set_individual_fixture_data(fixture: Fixture, value: Variant, channel_key:
 
 
 ## Stores data into a function
-func store_data_to_function(function: Function, mode: SAVE_MODE, fixtures: Array = []) -> void:
+func store_data_to_container(container: DataContainer, mode: SAVE_MODE, fixtures: Array = []) -> void:
 	match mode:
 		SAVE_MODE.MODIFIED:
 			for fixture: Fixture in fixtures:
 				if fixture in save_data:
 					for channel_key: String in save_data[fixture]:
-						function.store_data(fixture, channel_key, save_data[fixture][channel_key])
+						container.store_data(fixture, channel_key, save_data[fixture][channel_key])
 
 		SAVE_MODE.ALL:
 			for fixture in fixtures:
 				if fixture is Fixture:
 					for channel_key: String in fixture.current_values:
-						function.store_data(fixture, channel_key, fixture.current_values[channel_key])
+						container.store_data(fixture, channel_key, fixture.current_values[channel_key])
 
 		SAVE_MODE.ALL_NONE_ZERO:
 			for fixture in fixtures:
 				if fixture is Fixture:
 					for channel_key: String in fixture.current_values:
 						if fixture.current_values[channel_key]:
-							function.store_data(fixture, channel_key, fixture.current_values[channel_key])
+							container.store_data(fixture, channel_key, fixture.current_values[channel_key])
 
 
-## Eraces data into a function
-func erace_data_from_function(function: Function, mode: SAVE_MODE, fixtures: Array = []) -> void:
+## erases data into a function
+func erase_data_from_container(container: DataContainer, mode: SAVE_MODE, fixtures: Array = []) -> void:
 	match mode:
 		SAVE_MODE.MODIFIED:
 			for fixture: Fixture in fixtures:
 				if fixture in save_data:
 					for channel_key: String in save_data[fixture]:
-						function.erace_data(fixture, channel_key)
+						container.erase_data(fixture, channel_key)
 
 		SAVE_MODE.ALL:
 			for fixture in fixtures:
 				if fixture is Fixture:
 					for channel_key: String in fixture.current_values:
-						function.erace_data(fixture, channel_key)
+						container.erase_data(fixture, channel_key)
 
 		SAVE_MODE.ALL_NONE_ZERO:
 			for fixture in fixtures:
 				if fixture is Fixture:
 					for channel_key: String in fixture.current_values:
 						if fixture.current_values[channel_key]:
-							function.erace_data(fixture, channel_key)
+							container.erase_data(fixture, channel_key)
 
 
 ## Saves the current state of this programmer to a scene
 func save_to_scene(fixtures: Array, mode: SAVE_MODE = SAVE_MODE.MODIFIED) -> Scene:
 	var new_scene: Scene = Scene.new()
-	store_data_to_function(new_scene, mode, fixtures)
+	store_data_to_container(new_scene.get_data_container(), mode, fixtures)
 
 	Core.add_component(new_scene)
 	return new_scene
@@ -184,7 +178,7 @@ func save_to_new_cue(fixtures: Array, cue_list: CueList, mode: SAVE_MODE) -> voi
 
 	var new_cue: Cue = Cue.new()
 
-	store_data_to_function(new_cue, mode, fixtures)
+	store_data_to_container(new_cue, mode, fixtures)
 
 	cue_list.add_cue(new_cue, 0, true)
 	cue_list.seek_to(new_cue.number)
@@ -195,16 +189,16 @@ func merge_into_cue(fixtures: Array, cue_list: CueList, cue_number: float, mode:
 	var cue: Cue = cue_list.get_cue(cue_number)
 
 	if cue:
-		store_data_to_function(cue, mode, fixtures)
+		store_data_to_container(cue, mode, fixtures)
 		cue_list.force_reload = true
 
 
-## Eraces data into a cue by its number in a cue list
-func erace_from_cue(fixtures: Array, cue_list: CueList, cue_number: float, mode: SAVE_MODE) -> void:
+## erases data into a cue by its number in a cue list
+func erase_from_cue(fixtures: Array, cue_list: CueList, cue_number: float, mode: SAVE_MODE) -> void:
 	var cue: Cue = cue_list.get_cue(cue_number)
 
 	if cue:
-		erace_data_from_function(cue, mode, fixtures)
+		erase_data_from_container(cue, mode, fixtures)
 		cue_list.force_reload = true
 
 
@@ -218,7 +212,7 @@ func save_to_new_cue_list(fixtures: Array) -> void:
 
 	var new_cue: Cue = Cue.new()
 
-	store_data_to_function(new_cue, SAVE_MODE.MODIFIED, fixtures)
+	store_data_to_container(new_cue, SAVE_MODE.MODIFIED, fixtures)
 
 	for fixture: Fixture in save_data:
 		for channel_key: String in save_data[fixture]:

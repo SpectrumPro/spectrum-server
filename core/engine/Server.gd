@@ -1,7 +1,7 @@
 # Copyright (c) 2024 Liam Sherwin, All rights reserved.
 # This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
 
-extends Node
+class_name CoreServer extends Node
 ## Controls comunication bettween clients and servers
 
 
@@ -13,6 +13,9 @@ var udp_port: int = websocket_port - 1
 
 ## How often to send the the UDP queue
 var udp_frequency: float = 1.0 / 45.0  # 1 second divided by 45
+
+## Disables signal emissions to clients
+var disable_signals: bool = false
 
 
 ## Used as an internal refernce for timing call_interval correctly
@@ -29,9 +32,9 @@ var _udp_queue: Dictionary = {}
 
 
 func _ready() -> void:
-	MainSocketServer.message_received.connect(self._on_web_socket_server_message_received)
-	MainSocketServer.client_connected.connect(self._on_web_socket_server_client_connected)
-	MainSocketServer.client_disconnected.connect(self._on_web_socket_server_client_disconnected)
+	MainSocketServer.message_received.connect(_on_web_socket_server_message_received)
+	MainSocketServer.client_connected.connect(_on_web_socket_server_client_connected)
+	MainSocketServer.client_disconnected.connect(_on_web_socket_server_client_disconnected)
 
 
 ## Starts the server on the given port, 
@@ -57,10 +60,11 @@ func start_server(p_websocket_port: int = websocket_port, p_udp_port: int = udp_
 	print(TF.auto_format(TF.AUTO_MODE.SUCCESS, "UDP Socket started on port: ", p_udp_port))
 
 
+
+## Check if enough time has passed since the last function call
 func _process(delta: float) -> void:
 	_accumulated_time += delta
 	
-	# Check if enough time has passed since the last function call
 	if _accumulated_time >= udp_frequency:
 		
 		if _udp_queue:
@@ -131,13 +135,16 @@ func add_networked_object(object_name: String, object: Object, delete_signal: Si
 	for object_signal_dict: Dictionary in object_script.get_script_signal_list() :
 
 		# Checks if this signal start with an _ if so it is discarded as it is considered an internal signal, and not to be networked
-		if object_signal_dict.name.begins_with("_"):
+		if not object_signal_dict.name.begins_with("on_"):
 			continue
 		
 		var object_signal: Signal = object.get(object_signal_dict.name)
 
 		if object_signal in object_network_config.high_frequency_signals:
 			_networked_object_callbacks[object_name].signals[object_signal] = func (arg1: Variant = null, arg2: Variant = null, arg3: Variant = null, arg4: Variant = null, arg5: Variant = null, arg6: Variant = null, arg7: Variant = null, arg8: Variant = null):
+					if disable_signals:
+						return
+					
 					var args: Array = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8] # Create an array of the args
 					
 					args = args.filter(func (arg):
@@ -153,6 +160,9 @@ func add_networked_object(object_name: String, object: Object, delete_signal: Si
 			# Due the the fact that gdscript does not yet support vararg functions, this work around is needed to allow all args to be passed, how ever this does have the side efect of limiting signals to 8 args
 			# https://github.com/godotengine/godot/pull/82808
 			_networked_object_callbacks[object_name].signals[object_signal] = func (arg1: Variant = null, arg2: Variant = null, arg3: Variant = null, arg4: Variant = null, arg5: Variant = null, arg6: Variant = null, arg7: Variant = null, arg8: Variant = null):
+					if disable_signals:
+						return
+					
 					var args: Array = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8] # Create an array of the args
 
 					send({
@@ -234,7 +244,6 @@ func _on_web_socket_server_message_received(peer_id, message):
 		
 		# Search through all the values in the command and see if there is any object refernces, if so try and find the object
 		var command: Dictionary = Utils.uuids_to_objects(message, _networked_objects)
-
 
 		if "args" in command:
 			for index in len(command.args):

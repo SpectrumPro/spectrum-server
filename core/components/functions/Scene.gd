@@ -33,6 +33,7 @@ var _save_data: Dictionary = {}
 ## The Animator used for this scene
 var _animator: Animator = Core.create_animator()
 
+
 var _time_scale_befour_flash: float  = 0
 var _time_befour_flash: float = 0
 var _backwards_befour_flash: bool = false
@@ -42,7 +43,9 @@ var _flash_active: bool = false
 func _component_ready() -> void:
 	set_name("New Scene")
 	set_self_class("Scene")
-	_allow_store_zero_data = false
+
+	_data_container.set_allow_store_zero_data(false)
+	_data_container.on_data_stored.connect(_on_data_stored)
 
 	_animator.steped.connect(func (step: float): 
 		var value
@@ -75,7 +78,7 @@ func set_enabled(p_enabled: bool, fade_time: float = -1) -> void:
 
 
 	_animator.play_backwards = not _enabled
-	_animator.play()
+	_animator.play(0 if _animator.play_backwards else 1)
 
 	on_state_changed.emit(_enabled)
 
@@ -154,15 +157,8 @@ func flash(fade_in: float = fade_in_speed, fade_out: float = fade_out_speed, hol
 
 
 ## Add a method to this scene
-func store_data(fixture: Fixture, channel_key: String, value: Variant, p_store_data: Dictionary = _save_data) -> bool:
-	var store_state: bool = store_data_static(fixture, channel_key, value, p_store_data)
-
-	if store_state:
-		_animator.animate_method(fixture.get(channel_key).bind("scene_" + uuid), fixture.get_zero_from_channel_key(channel_key), value)
-
-
-	return store_state
-
+func _on_data_stored(fixture: Fixture, channel_key: String, value: Variant) -> void:
+	_animator.animate_method(fixture.get(channel_key).bind("scene_" + uuid), fixture.get_zero_from_channel_key(channel_key), value)
 
 
 ## Sets the fade in speed in seconds
@@ -183,7 +179,7 @@ func _on_serialize_request(mode: int) -> Dictionary:
 	var serialized_data: Dictionary = {
 		"fade_in_speed": fade_in_speed,
 		"fade_out_speed": fade_out_speed,
-		"save_data": serialize_stored_data(_save_data)
+		"save_data": _data_container.serialize()
 	}
 
 	if mode == CoreEngine.SERIALIZE_MODE_NETWORK:
@@ -199,7 +195,10 @@ func _on_load_request(serialized_data: Dictionary) -> void:
 	fade_in_speed = serialized_data.get("fade_in_speed", fade_in_speed)
 	fade_out_speed = serialized_data.get("fade_out_speed", fade_out_speed)
 	
-	load_stored_data(serialized_data.get("save_data", {}), _save_data, store_data)
+	Server.remove_networked_object(_data_container.uuid)
+	_data_container.load(serialized_data.get("save_data", {}))
+	Server.add_networked_object(_data_container.uuid, _data_container)
+
 
 ## Called when this scene is to be deleted
 func _on_delete_request() -> void:

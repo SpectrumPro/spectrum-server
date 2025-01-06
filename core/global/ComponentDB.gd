@@ -32,6 +32,14 @@ var _emit_class_callbacks_queued: bool = false
 var _component_requests: Dictionary = {}
 
 
+func _ready() -> void:
+	Core.on_resetting.connect(func () -> void:
+		_just_changed_components = {}
+		_class_callbacks = {}
+		_emit_class_callbacks_queued = false
+		_component_requests = {}
+	)
+
 
 ## Adds a component to the DB, returns false if it already exists
 func register_component(component: EngineComponent) -> bool:
@@ -52,7 +60,8 @@ func register_component(component: EngineComponent) -> bool:
 		_component_requests.erase(component.uuid)
 	
 	_check_class_callbacks(component)
-	
+	component.on_delete_requested.connect(deregister_component.bind(component), CONNECT_ONE_SHOT)
+
 	Server.add_networked_object(component.uuid, component, component.on_delete_requested)
 	component_added.emit(component)
 	return true
@@ -78,7 +87,7 @@ func deregister_component(component: EngineComponent) -> bool:
 
 ## Gets all the loaded components by classname
 func get_components_by_classname(classname: String) -> Array:
-	return components_by_classname.get(classname, [])
+	return components_by_classname.get(classname, []).duplicate()
 
 
 ## Gets a component by a uuid
@@ -116,7 +125,7 @@ func request_class_callback(classname: String, callback: Callable) -> void:
 
 
 ## Removes a request for a class callback
-func remove_class_callback(classname, callback: Callable) -> void:
+func remove_class_callback(classname: String, callback: Callable) -> void:
 	if _class_callbacks.has(classname):
 		_class_callbacks[classname].erase(callback)
 

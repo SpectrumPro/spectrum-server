@@ -30,7 +30,7 @@ signal on_override_value_removed(channel_key: String)
 signal on_locate_mode_toggled(locate_mode: bool)
 
 ## Emitted when any of the channels of this fixture are changed, emitted as channel:value for all channels this fixtures uses
-signal _fixture_data_changed(data: Dictionary)
+signal fixture_data_changed(data: Dictionary)
 
 
 
@@ -210,7 +210,7 @@ func set_color(p_color: Color, layer_id: String) -> void:
 		_current_input_data["set_color"].erase(layer_id)
 
 	if new_color != current_values.set_color or layer_id in [OVERRIDE, REMOVE_OVERRIDE]:
-		_fixture_data_changed.emit(_compiled_dmx_data)
+		fixture_data_changed.emit(_compiled_dmx_data)
 
 		current_values.set_color = new_color
 		on_color_changed.emit(new_color)
@@ -271,7 +271,7 @@ func set_current_input_data(layer_id: String, channel_key: String, value: Varian
 		_compiled_dmx_data[channels.find(channel_key) + channel] = new_value
 
 		if emit_signals:
-			_fixture_data_changed.emit(_compiled_dmx_data)
+			fixture_data_changed.emit(_compiled_dmx_data)
 
 			if not channel_signal.is_null():
 				channel_signal.emit(new_value)
@@ -314,7 +314,7 @@ func emit_zero_values() -> void:
 	for i in _compiled_dmx_data:
 		empty_data[i] = 0
 
-	_fixture_data_changed.emit(empty_data)
+	fixture_data_changed.emit(empty_data)
 
 
 ## Returnes serialized infomation about this fixture
@@ -350,4 +350,4 @@ func _on_load_request(serialized_data: Dictionary) -> void:
 
 ## Loads the manifest
 func _load_manifest(manifest_path: String) -> void:
-	set_manifest(FixtureLibrary.get_loaded_fixture_definitions()[manifest_path.split("/")[0]][manifest_path.split("/")[1]], manifest_path)
+	set_manifest(FixtureLibrary.get_loaded_fixture_manifests()[manifest_path.split("/")[0]][manifest_path.split("/")[1]], manifest_path)

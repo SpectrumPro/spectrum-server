@@ -12,32 +12,32 @@ signal manifests_loaded()
 ## File path for the built in fixture library
 const built_in_library_path: String = "res://core/fixtures/"
 
-## File path for the user fixture library
-var user_fixture_library_path: String = Core.data_folder + "/fixtures/"
+## File path for the user fixture library. This needs to be loaded after Core is ready, otherwise core.data_folder will be invalid
+var user_fixture_library_path: String = ""
 
-## All the current fixture definitions
+## All the current fixture manifests
 var fixture_manifests: Dictionary = {}
-
 
 
 ## Loaded state
 var _is_loaded: bool = false
 
 
+## Load the fixture manifests from the folders, buit in manifests will override user manifests
 func _ready() -> void:
-	# Load the fixture definitions from the folders, buit in manifests will override user manifests
-	fixture_manifests = get_fixture_definitions(user_fixture_library_path)
-	fixture_manifests.merge(get_fixture_definitions(built_in_library_path), true)
+	await Core.ready
+	user_fixture_library_path = Core.data_folder + "/fixtures/"
+	
+	fixture_manifests = get_fixture_manifests(user_fixture_library_path)
+	fixture_manifests.merge(get_fixture_manifests(built_in_library_path), true)
 	
 	_is_loaded = true
 	manifests_loaded.emit()
 
 
 ## Returns fixture definition files from the folder defined in [param folder]
-func get_fixture_definitions(folder: String) -> Dictionary:
-	
-	var loaded_fixtures_definitions: Dictionary = {}
-	
+func get_fixture_manifests(folder: String) -> Dictionary:
+	var loaded_fixtures_manifests: Dictionary = {}
 	var access = DirAccess.open(folder)
 	
 	if access:
@@ -50,16 +50,16 @@ func get_fixture_definitions(folder: String) -> Dictionary:
 				
 				manifest.info.manifest_path = fixture_folder+"/"+fixture
 				
-				if loaded_fixtures_definitions.has(fixture_folder):
-					loaded_fixtures_definitions[fixture_folder][fixture] = manifest
+				if loaded_fixtures_manifests.has(fixture_folder):
+					loaded_fixtures_manifests[fixture_folder][fixture] = manifest
 				else:
-					loaded_fixtures_definitions[fixture_folder] = {fixture:manifest}
+					loaded_fixtures_manifests[fixture_folder] = {fixture:manifest}
 
-	return loaded_fixtures_definitions
+	return loaded_fixtures_manifests
 
 
-## Returnes all currently loaded fixture definitions
-func get_loaded_fixture_definitions() -> Dictionary:
+## Returnes all currently loaded fixture manifests
+func get_loaded_fixture_manifests() -> Dictionary:
 	return fixture_manifests.duplicate(true)
 
 

@@ -5,18 +5,17 @@ class_name EngineComponent extends RefCounted
 ## Base class for engine components, contains functions for storing metadata, and uuid's
 
 
-## Emitted when an item is added or edited from user_meta
-signal on_user_meta_changed(key: String, value: Variant)
-
-## Emitted when an item is deleted from user_meta
-signal on_user_meta_deleted(key: String)
-
 ## Emitted when the name of this object has changed
 signal on_name_changed(new_name: String)
 
 ## Emited when this object is about to be deleted
 signal on_delete_requested()
 
+## Emitted when an item is added or edited from user_meta
+signal on_user_meta_changed(key: String, value: Variant)
+
+## Emitted when an item is deleted from user_meta
+signal on_user_meta_deleted(key: String)
 
 
 ## The name of this object
@@ -50,8 +49,9 @@ var network_config: Dictionary = {
 var _disable_signals: bool = false
 
 
-func _init(p_uuid: String = UUID_Util.v4()) -> void:
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = name) -> void:
 	uuid = p_uuid
+	name = p_name
 	_component_ready()
 
 	print_verbose("I am: ", name, " | ", uuid)
@@ -62,72 +62,52 @@ func _component_ready() -> void:
 	pass
 
 
-func register_high_frequency_signals(p_high_frequency_signals: Array) -> void:
-	network_config.high_frequency_signals.append_array(p_high_frequency_signals)
-
-
-
-## Returns the value from user meta at the given key, if the key is not found, default is returned
-func get_user_meta(key: String, default = null) -> Variant: 
-	
-	return user_meta.get(key, default)
-
-
-## Returns all user meta
-func get_all_user_meta() -> Dictionary:
-
-	return user_meta
-
-
-## Delets an item from user meta, returning true if item was found and deleted, and false if not
-func delete_user_meta(key: String, no_signal: bool = false) -> bool:
-	
-	if not no_signal and not _disable_signals:
-		on_user_meta_deleted.emit(key)
-
-	
-	return user_meta.erase(key)
-
-
 ## Sets the name of this component
-func set_name(new_name: String) -> void:
-	name = new_name
-	print_verbose(uuid, ": Changing name to: ", new_name)
+func set_name(p_name: String) -> void:
+	name = p_name
+	print_verbose(uuid, ": Changing name to: ", name)
 	if not _disable_signals: on_name_changed.emit(name)
 
 
 ## Sets the self class name
 func set_self_class(p_self_class_name: String) -> void:
+	if p_self_class_name == self_class_name or p_self_class_name in class_tree:
+		return
+	
 	class_tree.append(p_self_class_name)
 	self_class_name = p_self_class_name
 
 
-## Returns serialized version of this component, change the mode to define if this object should be serialized for saving to disk, or for networking to clients
-func serialize(mode: int = CoreEngine.SERIALIZE_MODE_NETWORK) -> Dictionary:
-	
-	var serialized_data: Dictionary = {}
-	serialized_data = _on_serialize_request(mode)
-	
-	serialized_data.uuid = uuid
-	serialized_data.name = name
-	serialized_data.class_name = self_class_name
-	serialized_data.user_meta = get_all_user_meta()
-	
-	return serialized_data
+## Adds a high frequency signal to the network config
+func register_high_frequency_signals(p_high_frequency_signals: Array) -> void:
+	network_config.high_frequency_signals.append_array(p_high_frequency_signals)
 
 
-## Overide this function to serialize your object
-func _on_serialize_request(mode: int) -> Dictionary:
-	return {}
+## Returns the value from user meta at the given key, if the key is not found, default is returned
+func get_user_meta(p_key: String, p_default = null) -> Variant: 
+	return user_meta.get(p_key, p_default)
+
+
+## Returns all user meta
+func get_all_user_meta() -> Dictionary:
+	return user_meta
+
+
+## Delets an item from user meta, returning true if item was found and deleted, and false if not
+func delete_user_meta(p_key: String, p_no_signal: bool = false) -> bool:
+	var state: bool = user_meta.erase(p_key)
+
+	if not p_no_signal and not _disable_signals and state:
+		on_user_meta_deleted.emit(p_key)
+
+	return state
 
 
 ## Always call this function when you want to delete this component. 
 ## As godot uses reference counting, this object will not truly be deleted untill no other script holds a refernce to it.
 func delete() -> void:
 	_on_delete_request()
-	
 	on_delete_requested.emit()
-	
 	print_verbose(uuid, " Has had a delete request send. Currently has:", str(get_reference_count()), " refernces")
 
 
@@ -136,23 +116,43 @@ func _on_delete_request() -> void:
 	return
 
 
-## Loades this object from a serialized version
-func load(serialized_data: Dictionary) -> void:
-	_disable_signals = true
-	name = serialized_data.get("name", name)
-	self_class_name = serialized_data.get("class_name", self_class_name)
-	user_meta = serialized_data.get("user_meta", {})
+## Returns serialized version of this component, change the mode to define if this object should be serialized for saving to disk, or for networking to clients
+func serialize(p_mode: int = CoreEngine.SERIALIZE_MODE_NETWORK) -> Dictionary:
+	var serialized_data: Dictionary = {}
+	serialized_data = _on_serialize_request(p_mode)
 	
-	_on_load_request(serialized_data)
+	serialized_data.merge({
+		"uuid": uuid,
+		"name": name,
+		"class_name": self_class_name,
+		"user_meta": get_all_user_meta()
+	}, true)
+	
+	return serialized_data
+
+
+## Overide this function to serialize your object
+func _on_serialize_request(p_mode: int) -> Dictionary:
+	return {}
+
+
+## Loades this object from a serialized version
+func load(p_serialized_data: Dictionary) -> void:
+	_disable_signals = true
+	name = p_serialized_data.get("name", name)
+	self_class_name = p_serialized_data.get("class_name", self_class_name)
+	user_meta = p_serialized_data.get("user_meta", {})
+	
+	_on_load_request(p_serialized_data)
 	_disable_signals = false
 
 
 ## Overide this function to handle load requests
-func _on_load_request(serialized_data: Dictionary) -> void:
+func _on_load_request(p_serialized_data: Dictionary) -> void:
 	pass
 
 
 ## Debug function to tell if this component is freed from memory
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_PREDELETE:
+func _notification(p_what: int) -> void:
+	if p_what == NOTIFICATION_PREDELETE:
 		print("\"", self.name, "\" Is being freed, uuid: ", self.uuid)

@@ -31,13 +31,14 @@ driver/enable_input=true
 [autoload]
 
 ClassList="*res://core/global/ClassList.gd"
+FixtureLibrary="*res://core/global/FixtureLibrary.gd"
+Programmer="*res://core/global/Programmer.gd"
 Core="*res://core/engine/Engine.gd"
 MainSocketServer="*res://networking/WebSocketServer.gd"
 MainUDPSocket="*res://networking/UDPSocket.gd"
 Server="*res://core/engine/Server.gd"
 TC="*res://core/global/Timecode.gd"
 ComponentDB="*res://core/global/ComponentDB.gd"
-FixtureLibrary="*res://core/global/FixtureLibrary.gd"
 
 [debug]
 

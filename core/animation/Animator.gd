@@ -61,6 +61,8 @@ func play(stop_at: float = -1) -> void:
 
 	if not stop_at == -1:
 		_stop_at = stop_at 
+	else:
+		_stop_at = length
 
 
 ## Pauses this animation

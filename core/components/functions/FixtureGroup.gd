@@ -5,6 +5,7 @@ class_name FixtureGroup extends Function
 ## Stores a group of fixtures, using FixtureGroupItem
 
 
+
 ## Emitted when fixtures are added to this FixtureGroup
 signal on_fixtures_added(group_items: Array[FixtureGroupItem])
 
@@ -17,11 +18,11 @@ signal on_fixtrues_removed(fixtures: Array[Fixture])
 var _fixtures: Dictionary = {}
 
 
+
 ## Called when this EngineComponent is ready
 func _component_ready() -> void:
 	set_self_class("FixtureGroup")
 	set_name("Fixture Group")
-
 
 
 ## Gets a FixtureGroupItem
@@ -53,9 +54,7 @@ func add_group_item(group_item: FixtureGroupItem, no_signal: bool = false) -> bo
 	if group_item.fixture in _fixtures: return false
 
 	_fixtures[group_item.fixture] = group_item
-	
 	Server.add_networked_object(group_item.uuid, group_item, group_item.on_delete_requested)
-	ComponentDB.register_component(group_item)
 
 	if not no_signal:
 		on_fixtures_added.emit([group_item])

@@ -36,7 +36,7 @@ var next_cue: Cue = null
 
 ## The current mode of this cuelist. When in loop mode the cuelist will not reset fixtures to 0-value when looping back to the start
 enum MODE {NORMAL, LOOP}
-var mode: int = MODE.NORMAL
+var _mode: int = MODE.NORMAL
 
 ## Stores all fixtures that are currently being animated
 ## str(fixture.uuid + method_name):{
@@ -57,9 +57,6 @@ var _index_list: Array = []
 ## The current index in the _index_list array
 var _index: int = -1
 
-## The intensity of this cuelist
-var _intensity: float = 1
-
 
 ## Contains all the keyframes for timecode, stored as {frame: [cue_number, cue_number...]}
 var _keyframes: Dictionary = {}
@@ -78,9 +75,10 @@ var _autoplay: bool = false
 
 
 func _component_ready() -> void:
-	name = "CueList"
-	self_class_name = "CueList"
+	set_name("CueList")
+	set_self_class("CueList")
 
+	_intensity = 1
 	TC.frames_changed.connect(_find_keyframes)
 
 ## Adds a pre-existing cue to this CueList
@@ -138,6 +136,8 @@ func remove_cue(cue: Cue) -> void:
 		cue.local_data.erase(uuid+"on_timecode_enabled_state_changed")
 		cue.local_data.erase(uuid+"old_timecode_trigger")
 
+		Server.remove_networked_object(cue.uuid)
+		cue.delete()
 		on_cues_removed.emit([cue])
 
 
@@ -261,7 +261,7 @@ func seek_to(cue_number: float, p_fade_time: float = -1) -> void:
 	var accumulated_animated_data: Dictionary = {}
 	var going_backwards: bool = (last_cue and (_index_list.find(last_cue.number) > current_cue_index)) if not reset else true
 
-	if (going_backwards and mode != MODE.LOOP) or force_reload or reset:
+	if (going_backwards and _mode != MODE.LOOP) or force_reload or reset:
 		_reset_animated_fixtures(animator, accumulated_animated_data)
 		_remove_all_animators()
 
@@ -281,7 +281,7 @@ func seek_to(cue_number: float, p_fade_time: float = -1) -> void:
 	force_reload = false
 
 
-	if (not going_backwards or mode == MODE.LOOP) and not reset:
+	if (not going_backwards or _mode == MODE.LOOP) and not reset:
 		match next_cue.trigger_mode:
 			Cue.TRIGGER_MODE.AFTER_LAST:
 				_seek_to_next_cue_after(next_cue.pre_wait + fade_time)
@@ -340,12 +340,12 @@ func _remove_all_animators() -> void:
 
 
 func _accumulate_state(cue: Cue, accumulated_animated_data: Dictionary, animator: Animator) -> void:
-	for fixture: Fixture in cue.stored_data.keys():
-		for method_name: String in cue.stored_data[fixture]:
-			var stored_value: Dictionary = cue.stored_data[fixture][method_name]
+	for fixture: Fixture in cue.get_fixture_data().keys():
+		for method_name: String in cue.get_fixture_data()[fixture]:
+			var stored_value: Dictionary = cue.get_fixture_data()[fixture][method_name]
 			var from_value: Variant = fixture.get_value_from_layer_id(uuid, method_name)
 			var to_value: Variant = stored_value.value
-
+			print(stored_value)
 			var animation_id: String = fixture.uuid + method_name
 			accumulated_animated_data[animation_id] = {
 				"method": func (new_value: Variant) -> void: 
@@ -506,8 +506,8 @@ func get_cue(cue_number: float) -> Cue:
 
 ## Changes the current mode
 func set_mode(p_mode: MODE) -> void:
-	mode = p_mode
-	on_mode_changed.emit(mode)
+	_mode = p_mode
+	on_mode_changed.emit(_mode)
 
 
 ## Sets the intensity of this function, from 0.0 to 1.0
@@ -537,6 +537,10 @@ func set_global_pre_wait(pre_wait: float) -> void:
 func _on_delete_request() -> void:
 	seek_to(-1, 0)
 
+	for cue: Cue in _cues.values():
+		Server.remove_networked_object(cue.uuid)
+		cue.delete()
+
 
 ## Saves this cue list to a Dictionary
 func _on_serialize_request(p_mode: int) -> Dictionary:
@@ -546,7 +550,7 @@ func _on_serialize_request(p_mode: int) -> Dictionary:
 
 	var serialized_data: Dictionary = {
 		"cues": serialized_cues,
-		"mode": mode,
+		"mode": _mode,
 	}
 
 	if p_mode == CoreEngine.SERIALIZE_MODE_NETWORK:
@@ -560,7 +564,7 @@ func _on_serialize_request(p_mode: int) -> Dictionary:
 
 ## Loads this cue list from a Dictionary
 func _on_load_request(serialized_data: Dictionary) -> void:
-	mode = int(serialized_data.get("mode", MODE.NORMAL))
+	_mode = int(serialized_data.get("mode", MODE.NORMAL))
 
 	for cue_index: String in serialized_data.get("cues").keys():
 		var new_cue: Cue = Cue.new()

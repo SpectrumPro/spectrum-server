@@ -14,6 +14,10 @@ func _init() -> void:
     if not DirAccess.dir_exists_absolute(debug_file_location):
         print(TF.auto_format(TF.AUTO_MODE.INFO, "The folder \"debug_file_location\" does not exist, creating one now, errcode: ", DirAccess.make_dir_recursive_absolute(debug_file_location)))
 
+## Resets the engine
+func reset() -> void:
+    Core.reset()
+
 
 ## Quits the engine
 func quit() -> void:
