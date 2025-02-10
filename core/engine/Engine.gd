@@ -65,7 +65,7 @@ var EngineConfig = {
 		},
 		{
 			"object": (ClassList),
-			"name": "classlist"
+			"name": "ClassList"
 		},
 	],
 	## Root classes are the primary classes that will be seralized and loaded 
@@ -179,9 +179,12 @@ func serialize(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
 func save(file_name: String = _current_file_name, autosave: bool = false) -> Error:
 	
 	if file_name:
+		set_file_name(file_name)
 		var file_path: String = (save_library_location + "/autosave") if autosave else save_library_location
 		return Utils.save_json_to_file(file_path, file_name, serialize(SERIALIZE_MODE_DISK))
+
 	else:
+		print_verbose("save(): ", error_string(ERR_FILE_BAD_PATH))
 		return ERR_FILE_BAD_PATH
 
 
@@ -221,8 +224,8 @@ func load(serialized_data: Dictionary) -> void:
 			var serialized_component: Dictionary = serialized_data[object_class_name][component_uuid]
 		
 			# Check if the components class name is a valid class type in the engine
-			if serialized_component.get("class_name", "") in ClassList.global_class_table:
-				var new_component: EngineComponent = ClassList.global_class_table[serialized_component.class_name].new(component_uuid)
+			if ClassList.has_class(serialized_component.get("class_name", "")):
+				var new_component: EngineComponent = ClassList.get_class_script(serialized_component.class_name).new(component_uuid)
 				new_component.load(serialized_component)
 				add_component(new_component, true)
 
@@ -274,6 +277,9 @@ func rename_file(orignal_name: String, new_name: String) -> Error:
 		if err == OK:
 			access.remove(orignal_name)
 		
+			if orignal_name == get_file_name():
+				set_file_name(new_name)
+
 		return err
 	
 	else:
@@ -336,10 +342,9 @@ func reload_scripts() -> void:
 ## Imports all the custon function types and adds them to the class list
 func import_custom_functions() -> void:
 	var scripts: Dictionary = get_scripts_from_folder(user_functions_folder)
-
 	for script_name: String in scripts:
 		var script: Script = scripts[script_name]
-		ClassList.register_function_class(script_name.replace(".gd", ""), script)
+		ClassList.register_custom_class(["EngineComponent", "Function", script_name.replace(".gd", "")], script)
 
 
 ## Returns all the scripts in the given folder, stored as {"ScriptName": Script}
@@ -358,8 +363,12 @@ func get_scripts_from_folder(folder: String) -> Dictionary:
 
 ## Creates and adds a new component using the classname to get the type, will return null if the class is not found
 func create_component(classname: String, name: String = "") -> EngineComponent:
-	if ClassList.global_class_table.has(classname):
-		var new_component: EngineComponent = ClassList.global_class_table[classname].new()
+	if ClassList.has_class(classname):
+		var new_component: EngineComponent = ClassList.get_class_script(classname).new()
+
+		if name:
+			new_component.name = name
+		
 		add_component(new_component)
 
 		return new_component

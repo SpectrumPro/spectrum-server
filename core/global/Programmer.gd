@@ -9,8 +9,8 @@ class_name CoreProgrammer extends Node
 var save_data: Dictionary = {}
 
 ## Fixture layer IDs to use
-var fixture_set_layer_id: String = Fixture.OVERRIDE
-var fixture_reset_layer_id: String = Fixture.REMOVE_OVERRIDE
+var fixture_set_layer_id: String = "Fixture.OVERRIDE"
+var fixture_reset_layer_id: String = "Fixture.REMOVE_OVERRIDE"
 
 ## List of all the channel keys which set_random is allowed to change. set_color is not in this list, as colors are handled differntly to other channels
 var random_allowed_channel_keys: Array = [
@@ -106,7 +106,7 @@ func _set_fixture_data(fixtures: Array, value: Variant, channel_key: String, lay
 func _set_individual_fixture_data(fixture: Fixture, value: Variant, channel_key: String, layer_id: String) -> void:
 	fixture.get(channel_key).call(value, layer_id)
 	# Check to see if the value is 0, if so remove it from save_data
-	if value or layer_id == Fixture.OVERRIDE:
+	if value or layer_id == "Fixture.OVERRIDE":
 		if fixture not in save_data:
 			save_data[fixture] = {}
 

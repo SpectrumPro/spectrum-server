@@ -5,70 +5,165 @@ class_name ComponentClassList extends Node
 ## Contains a list of all the classes that can be networked, stored here so they can be found when deserializing a network request
 
 
-## Contains all the classes in this engine, will merge component_class_table, function_class_table, and output_class_table
-var global_class_table: Dictionary = {} : get = get_global_class_list
-
-
-## Contains all the core component classes
-var component_class_table: Dictionary = {
-	"Universe": Universe,
-	"Fixture": Fixture,
-	"FixtureGroupItem": FixtureGroupItem
-}
-
-
-## Contains all the function classes
-var function_class_table: Dictionary = {
-	"Scene": Scene,
-	"CueList": CueList,
-	"Cue": Cue,
-	"Function": Function,
-	"FixtureGroup": FixtureGroup,
-	"DataPalette": DataPalette,
-}
-
-
-## Contains all the data container classes
-var data_container_class_table: Dictionary = {
-	"DataContainer": DataContainer,
-	"DataPaletteItem": DataPaletteItem
-}
-
-
-## Contains all the output plugin classes
-var output_class_table: Dictionary = {
-	"ArtNetOutput": ArtNetOutput
-}
-
-
-## Returns component_class_table, function_class_table, and output_class_table merged into one 
-func get_global_class_list() -> Dictionary:
-	var merged_list = component_class_table.duplicate()
-	merged_list.merge(function_class_table)
-	merged_list.merge(output_class_table)
-	merged_list.merge(data_container_class_table)
-		
-	return merged_list
-
-
-## Returns only the class names for all the classes in the global table
-func get_global_class_list_keys() -> Dictionary:
-	return {
-		"component_class_table": component_class_table.keys(),
-		"function_class_table": function_class_table.keys(),
-		"output_class_table": output_class_table.keys(),
-		"data_container_class_table": data_container_class_table.keys()
+## Contains all the classes sorted by the system hierarchy tree
+var _global_class_tree: Dictionary = {
+	"EngineComponent": {
+		"DataContainer": {
+			"Cue": Cue,
+			"DataContainer": DataContainer,
+			"DataPaletteItem": DataPaletteItem,
+		},
+		"Fixture": {
+			"Fixture": Fixture,
+			"DMXFixture": DMXFixture
+		},
+		"Function": {
+			"CueList": CueList,
+			"DataPalette": DataPalette,
+			"FixtureGroup": FixtureGroup,
+			"Function": Function,
+			"Scene": Scene,
+		},
+		"DMXOutput": {
+			"ArtNetOutput": ArtNetOutput,
+			"DMXOutput": DMXOutput,
+		},
+		"EngineComponent": EngineComponent,
+		"FixtureGroupItem": FixtureGroupItem,
+		"Universe": Universe,
 	}
+}
+
+## Contains all classes sorted by the inheritance tree
+var _inheritance_map: Dictionary = {
+
+}
+
+## Contains the class tree for each class
+var _inheritance_trees: Dictionary = {
+
+}
+
+## Contains all the class scripts keyed by the classname
+var _script_map: Dictionary = {
+
+}
+
+## Contains all the custom classes loaded at runtime
+var _custom_classes: Dictionary = {
+
+}
 
 
-## Returns the class names of all the functions
-func get_function_classes() -> Array: return function_class_table.keys()
+func _ready() -> void:
+	rebuild_maps(_global_class_tree)
+	
 
-## Returns the class names of all the outputs
-func get_output_classes() -> Array: return output_class_table.keys()
+
+## Builds both the inheritance map and the class script map from the class_tree.
+func rebuild_maps(tree: Dictionary) -> void:
+	var inheritance_map: Dictionary = {}
+	var inheritance_trees: Dictionary = {}
+	var class_script_map: Dictionary = {}
+	
+	for key in tree.keys():
+		_process_node(key, tree[key], inheritance_map, inheritance_trees, class_script_map, [key])
+	
+	_inheritance_map = inheritance_map
+	_inheritance_trees = inheritance_trees
+	_script_map = class_script_map
+
+
+## Processes a node in the class_tree.
+func _process_node(key: String, node: Variant, inheritance_map: Dictionary, inheritance_trees: Dictionary, class_script_map: Dictionary, current_position: Array) -> void:
+	if node is Dictionary:
+		var leaves: Array = []
+		for subkey in node.keys():
+			var subnode = node[subkey]
+			
+			inheritance_map.get_or_add(key, []).append(subkey)
+			current_position.push_back(subkey)
+			
+			if subnode is Dictionary:
+				_process_node(subkey, subnode, inheritance_map, inheritance_trees, class_script_map, current_position)
+			else:
+				leaves.append(subkey)
+				class_script_map[subkey] = subnode
+				inheritance_trees[subkey] = current_position.duplicate()
+			
+			current_position.pop_back()
+	else:
+		class_script_map[key] = node
+
+
+## Returns the class script from the script map, or null if not found
+func get_class_script(classname: String) -> Script:
+	return _script_map.get(classname, null)
+
+
+## Checks if a class exists in the map
+func has_class(classname: String, match_parent: String = "") -> bool:
+	if match_parent:
+		return _script_map.has(classname) and _inheritance_map.get(match_parent, {}).has(classname)
+	else:
+		return _script_map.has(classname)
+
+
+## Returns a copy of the global class tree
+func get_global_class_tree() -> Dictionary:
+	return _global_class_tree.duplicate(true)
+
+
+## Returns a copy of the class inheritance map
+func get_inheritance_map() -> Dictionary:
+	return _inheritance_map.duplicate(true)
+
+
+## Returns a copy of the script map
+func get_script_map() -> Dictionary:
+	return _script_map.duplicate()
+
+
+## Returns a copy of all custom classes
+func get_custon_classes() -> Dictionary:
+	return _custom_classes.duplicate()
+
+
+## Gets all the classes that extend the given parent class
+func get_classes_from_parent(parent_class: String) -> Dictionary:
+	return _inheritance_map.get(parent_class, {}).duplicate()
+
+
+## Returns a copy of a class's inheritance
+func get_class_inheritance_tree(classname: String) -> Array:
+	return _inheritance_trees.get(classname, []).duplicate()
+
+
+## Checks if the given class is custom
+func is_class_custom(classname: String) -> bool:
+	return _custom_classes.has(classname)
 
 
 ## Adds a new class to the class list
-func register_function_class(classname: String, script: Script) -> void:
-	if classname not in function_class_table.keys():
-		function_class_table[classname] = script
+func register_custom_class(class_tree: Array[String], script: Script) -> void:
+	var branch: Dictionary = _global_class_tree
+	var script_class: String = class_tree[-1]
+
+	if script_class in _custom_classes:
+		return
+	
+	_custom_classes[script_class] = class_tree
+
+	for classname: String in class_tree:
+		if classname == script_class:
+			branch[classname] = script
+			_script_map[classname] = script
+			_inheritance_map.get_or_add(class_tree[-2], []).append(script_class)
+
+		else:
+			branch = branch.get_or_add(classname, {})
+
+
+## Returns a copy of all the custom classes
+func get_custom_classes() -> Dictionary:
+	return _custom_classes.duplicate()

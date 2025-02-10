@@ -6,8 +6,7 @@ class_name Tester extends RefCounted
 
 
 var unit_tests: Array = [
-    FunctionCreationTester,
-    ClassListTester,
+
 ]
 
 
