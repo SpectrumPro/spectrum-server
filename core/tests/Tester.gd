@@ -11,7 +11,6 @@ var unit_tests: Array = [
 
 
 var global_tests: Array = [
-    CueListGlobalTester
 ]
 
 

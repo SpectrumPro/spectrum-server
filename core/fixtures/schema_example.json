@@ -1,0 +1,1000 @@
+{
+    "root": {
+        "Pan": {
+            "attribute": "Pan",
+            "offset": [
+                1,
+                2
+            ],
+            "functions": {
+                "Pan": {
+                    "attribute": "Pan",
+                    "name": "Pan",
+                    "default": "32768",
+                    "dmx_range": [
+                        0,
+                        65535
+                    ],
+                    "sets": [
+                        {
+                            "from": "0/2",
+                            "name": ""
+                        },
+                        {
+                            "from": "32768/2",
+                            "name": "Center"
+                        },
+                        {
+                            "from": "32769/2",
+                            "name": ""
+                        }
+                    ]
+                }
+            }
+        },
+        "Tilt": {
+            "attribute": "Tilt",
+            "offset": [
+                3,
+                4
+            ],
+            "functions": {
+                "Tilt": {
+                    "attribute": "Tilt",
+                    "name": "Tilt",
+                    "default": "32768",
+                    "dmx_range": [
+                        0,
+                        65535
+                    ],
+                    "sets": [
+                        {
+                            "from": "0/2",
+                            "name": ""
+                        },
+                        {
+                            "from": "32768/2",
+                            "name": "Center"
+                        },
+                        {
+                            "from": "32769/2",
+                            "name": ""
+                        }
+                    ]
+                }
+            }
+        },
+        "Color1": {
+            "attribute": "Color1",
+            "offset": [
+                7
+            ],
+            "functions": {
+                "Color1": {
+                    "attribute": "Color1",
+                    "name": "Color1",
+                    "default": "0",
+                    "dmx_range": [
+                        0,
+                        189
+                    ],
+                    "sets": [
+                        {
+                            "from": "0/1",
+                            "name": "Open/white - continual"
+                        },
+                        {
+                            "from": "9/1",
+                            "name": "Deep red - continual"
+                        },
+                        {
+                            "from": "28/1",
+                            "name": "Deep blue - continual"
+                        },
+                        {
+                            "from": "46/1",
+                            "name": "Orange - continual"
+                        },
+                        {
+                            "from": "64/1",
+                            "name": "Green - continual"
+                        },
+                        {
+                            "from": "82/1",
+                            "name": "6000K filter - continual"
+                        },
+                        {
+                            "from": "101/1",
+                            "name": "Congo blue (UV) - continual"
+                        },
+                        {
+                            "from": "119/1",
+                            "name": "White - continual"
+                        },
+                        {
+                            "from": "130/1",
+                            "name": "Deep red - step"
+                        },
+                        {
+                            "from": "140/1",
+                            "name": "Deep blue - step"
+                        },
+                        {
+                            "from": "150/1",
+                            "name": "Orange - step"
+                        },
+                        {
+                            "from": "160/1",
+                            "name": "Green - step"
+                        },
+                        {
+                            "from": "170/1",
+                            "name": "6000K filter - step"
+                        },
+                        {
+                            "from": "180/1",
+                            "name": "Congo blue - step"
+                        }
+                    ]
+                },
+                "Color1WheelSpin": {
+                    "attribute": "Color1WheelSpin",
+                    "name": "Color1WheelSpin",
+                    "default": "190",
+                    "dmx_range": [
+                        190,
+                        243
+                    ],
+                    "sets": [
+                        {
+                            "from": "190/1",
+                            "name": "Fast to slow - Fast"
+                        },
+                        {
+                            "from": "192/1",
+                            "name": ""
+                        },
+                        {
+                            "from": "212/1",
+                            "name": "Fast to slow - Slow"
+                        },
+                        {
+                            "from": "216/1",
+                            "name": "No rotation middle"
+                        },
+                        {
+                            "from": "218/1",
+                            "name": "Slow to fast - Slow"
+                        },
+                        {
+                            "from": "221/1",
+                            "name": ""
+                        },
+                        {
+                            "from": "241/1",
+                            "name": "Slow to fast - Fast"
+                        }
+                    ]
+                },
+                "Color1WheelAudio": {
+                    "attribute": "Color1WheelAudio",
+                    "name": "Color1WheelAudio",
+                    "default": "244",
+                    "dmx_range": [
+                        244,
+                        249
+                    ],
+                    "sets": [
+                        {
+                            "from": "244/1",
+                            "name": "Random colour selection by audio control"
+                        }
+                    ]
+                },
+                "Color1WheelRandom": {
+                    "attribute": "Color1WheelRandom",
+                    "name": "Color1WheelRandom",
+                    "default": "250",
+                    "dmx_range": [
+                        250,
+                        255
+                    ],
+                    "sets": [
+                        {
+                            "from": "250/1",
+                            "name": "Auto random color selection from fast to slow"
+                        }
+                    ]
+                }
+            }
+        },
+        "Color2": {
+            "attribute": "Color2",
+            "offset": [
+                8
+            ],
+            "functions": {
+                "Color2": {
+                    "attribute": "Color2",
+                    "name": "Color2",
+                    "default": "0",
+                    "dmx_range": [
+                        0,
+                        189
+                    ],
+                    "sets": [
+                        {
+                            "from": "0/1",
+                            "name": "Open/white - continual"
+                        },
+                        {
+                            "from": "9/1",
+                            "name": "Pink - continual"
+                        },
+                        {
+                            "from": "28/1",
+                            "name": "Lavender - continual"
+                        },
+                        {
+                            "from": "46/1",
+                            "name": "Laser green - continual"
+                        },
+                        {
+                            "from": "64/1",
+                            "name": "CTB - continual"
+                        },
+                        {
+                            "from": "82/1",
+                            "name": "Minus green - continual"
+                        },
+                        {
+                            "from": "101/1",
+                            "name": "Minus 1/2 green - continual"
+                        },
+                        {
+                            "from": "119/1",
+                            "name": "White - continual"
+                        },
+                        {
+                            "from": "130/1",
+                            "name": "Pink - step"
+                        },
+                        {
+                            "from": "140/1",
+                            "name": "Lavender - step"
+                        },
+                        {
+                            "from": "150/1",
+                            "name": "Laser green - step"
+                        },
+                        {
+                            "from": "160/1",
+                            "name": "CTB - step"
+                        },
+                        {
+                            "from": "170/1",
+                            "name": "Minus green - step"
+                        },
+                        {
+                            "from": "180/1",
+                            "name": "Minus 1/2 green - step"
+                        }
+                    ]
+                },
+                "Color2WheelSpin": {
+                    "attribute": "Color2WheelSpin",
+                    "name": "Color2WheelSpin",
+                    "default": "190",
+                    "dmx_range": [
+                        190,
+                        243
+                    ],
+                    "sets": [
+                        {
+                            "from": "190/1",
+                            "name": "Fast to slow - Fast"
+                        },
+                        {
+                            "from": "192/1",
+                            "name": ""
+                        },
+                        {
+                            "from": "212/1",
+                            "name": "Fast to slow - Slow"
+                        },
+                        {
+                            "from": "216/1",
+                            "name": "No rotation middle"
+                        },
+                        {
+                            "from": "218/1",
+                            "name": "Slow to fast - Slow"
+                        },
+                        {
+                            "from": "221/1",
+                            "name": ""
+                        },
+                        {
+                            "from": "241/1",
+                            "name": "Slow to fast - Fast"
+                        }
+                    ]
+                },
+                "Color2WheelAudio": {
+                    "attribute": "Color2WheelAudio",
+                    "name": "Color2WheelAudio",
+                    "default": "244",
+                    "dmx_range": [
+                        244,
+                        249
+                    ],
+                    "sets": [
+                        {
+                            "from": "244/1",
+                            "name": "Random colour selection by audio control"
+                        }
+                    ]
+                },
+                "Color2WheelRandom": {
+                    "attribute": "Color2WheelRandom",
+                    "name": "Color2WheelRandom",
+                    "default": "250",
+                    "dmx_range": [
+                        250,
+                        255
+                    ],
+                    "sets": [
+                        {
+                            "from": "250/1",
+                            "name": "Auto random color selection from fast to slow"
+                        }
+                    ]
+                }
+            }
+        },
+        "ColorSub_C": {
+            "attribute": "ColorSub_C",
+            "offset": [
+                9
+            ],
+            "functions": {
+                "ColorSub_C": {
+                    "attribute": "ColorSub_C",
+                    "name": "Cyan",
+                    "default": "0",
+                    "dmx_range": [
+                        0,
+                        255
+                    ],
+                    "sets": [
+                        {
+                            "from": "0/1",
+                            "name": "Min"
+                        },
+                        {
+                            "from": "1/1",
+                            "name": ""
+                        },
+                        {
+                            "from": "255/1",
+                            "name": "Max"
+                        }
+                    ]
+                }
+            }
+        },
+        "ColorSub_M": {
+            "attribute": "ColorSub_M",
+            "offset": [
+                10
+            ],
+            "functions": {
+                "ColorSub_M": {
+                    "attribute": "ColorSub_M",
+                    "name": "Magenta",
+                    "default": "0",
+                    "dmx_range": [
+                        0,
+                        255
+                    ],
+                    "sets": [
+                        {
+                            "from": "0/1",
+                            "name": "Min"
+                        },
+                        {
+                            "from": "1/1",
+                            "name": ""
+                        },
+                        {
+                            "from": "255/1",
+                            "name": "Max"
+                        }
+                    ]
+                }
+            }
+        },
+        "ColorSub_Y": {
+            "attribute": "ColorSub_Y",
+            "offset": [
+                11
+            ],
+            "functions": {
+                "ColorSub_Y": {
+                    "attribute": "ColorSub_Y",
+                    "name": "Yellow",
+                    "default": "0",
+                    "dmx_range": [
+                        0,
+                        255
+                    ],
+                    "sets": [
+                        {
+                            "from": "0/1",
+                            "name": "Min"
+                        },
+                        {
+                            "from": "1/1",
+                            "name": ""
+                        },
+                        {
+                            "from": "255/1",
+                            "name": "Max"
+                        }
+                    ]
+                }
+            }
+        },
+        "CTO": {
+            "attribute": "CTO",
+            "offset": [
+                12
+            ],
+            "functions": {
+                "CTO": {
+                    "attribute": "CTO",
+                    "name": "CTO filter",
+                    "default": "0",
+                    "dmx_range": [
+                        0,
+                        255
+                    ],
+                    "sets": [
+                        {
+                            "from": "0/1",
+                            "name": "CTO 5600K"
+                        },
+                        {
+                            "from": "1/1",
+                            "name": ""
+                        },
+                        {
+                            "from": "255/1",
+                            "name": "CTO 3200K"
+                        }
+                    ]
+                }
+            }
+        },
+        "Effects1Fade": {
+            "attribute": "Effects1Fade",
+            "offset": [
+                13
+            ],
+            "functions": {
+                "Effects1Fade": {
+                    "attribute": "Effects1Fade",
+                    "name": "Effect speed",
+                    "default": "0",
+                    "dmx_range": [
+                        0,
+                        255
+                    ],
+                    "sets": [
+                        {
+                            "from": "0/1",
+                            "name": "max"
+                        },
+                        {
+                            "from": "1/1",
+                            "name": ""
+                        },
+                        {
+                            "from": "255/1",
+                            "name": "min"
+                        }
+                    ]
+                }
+            }
+        },
+        "NoFeature": {
+            "attribute": "NoFeature",
+            "offset": [
+                14
+            ],
+            "functions": {
+                "NoFeature": {
+                    "attribute": "NoFeature",
+                    "name": "reserved",
+                    "default": "0",
+                    "dmx_range": [
+                        0,
+                        255
+                    ],
+                    "sets": []
+                }
+            }
+        },
+        "Zoom": {
+            "attribute": "Zoom",
+            "offset": [
+                15
+            ],
+            "functions": {
+                "Zoom": {
+                    "attribute": "Zoom",
+                    "name": "Zoom",
+                    "default": "128",
+                    "dmx_range": [
+                        0,
+                        255
+                    ],
+                    "sets": [
+                        {
+                            "from": "0/1",
+                            "name": "Zoom min"
+                        },
+                        {
+                            "from": "1/1",
+                            "name": ""
+                        },
+                        {
+                            "from": "255/1",
+                            "name": "Zoom max"
+                        }
+                    ]
+                }
+            }
+        },
+        "Shutter1": {
+            "attribute": "Shutter1",
+            "offset": [
+                16
+            ],
+            "functions": {
+                "Shutter1": {
+                    "attribute": "Shutter1",
+                    "name": "Shutter 1",
+                    "default": "32",
+                    "dmx_range": [
+                        0,
+                        63
+                    ],
+                    "sets": [
+                        {
+                            "from": "0/1",
+                            "name": "Closed 800W"
+                        },
+                        {
+                            "from": "32/1",
+                            "name": "Open Full power"
+                        }
+                    ]
+                },
+                "Shutter1Strobe": {
+                    "attribute": "Shutter1Strobe",
+                    "name": "Strobe ",
+                    "default": "64",
+                    "dmx_range": [
+                        64,
+                        95
+                    ],
+                    "sets": [
+                        {
+                            "from": "64/1",
+                            "name": "Slow"
+                        },
+                        {
+                            "from": "65/1",
+                            "name": ""
+                        },
+                        {
+                            "from": "95/1",
+                            "name": "Fast"
+                        }
+                    ]
+                },
+                "Shutter1_1": {
+                    "attribute": "Shutter1_1",
+                    "name": "Shutter open 800W",
+                    "default": "96",
+                    "dmx_range": [
+                        96,
+                        127
+                    ],
+                    "sets": [
+                        {
+                            "from": "96/1",
+                            "name": "Shutter open 800W"
+                        }
+                    ]
+                },
+                "Shutter1StrobePulseOpen": {
+                    "attribute": "Shutter1StrobePulseOpen",
+                    "name": "StrobePulseOpen",
+                    "default": "128",
+                    "dmx_range": [
+                        128,
+                        143
+                    ],
+                    "sets": [
+                        {
+                            "from": "128/1",
+                            "name": "Slow"
+                        },
+                        {
+                            "from": "129/1",
+                            "name": ""
+                        },
+                        {
+                            "from": "143/1",
+                            "name": "Fast"
+                        }
+                    ]
+                },
+                "Shutter1StrobePulseClose": {
+                    "attribute": "Shutter1StrobePulseClose",
+                    "name": "StrobePulseClose",
+                    "default": "144",
+                    "dmx_range": [
+                        144,
+                        159
+                    ],
+                    "sets": [
+                        {
+                            "from": "144/1",
+                            "name": "Fast"
+                        },
+                        {
+                            "from": "145/1",
+                            "name": ""
+                        },
+                        {
+                            "from": "159/1",
+                            "name": "Slow"
+                        }
+                    ]
+                },
+                "Shutter1Strobe_1": {
+                    "attribute": "Shutter1Strobe_1",
+                    "name": "Zapping",
+                    "default": "160",
+                    "dmx_range": [
+                        160,
+                        191
+                    ],
+                    "sets": [
+                        {
+                            "from": "160/1",
+                            "name": "zapping from slow to fast"
+                        }
+                    ]
+                },
+                "Shutter1StrobeRandom": {
+                    "attribute": "Shutter1StrobeRandom",
+                    "name": "StrobeRandom",
+                    "default": "192",
+                    "dmx_range": [
+                        192,
+                        223
+                    ],
+                    "sets": [
+                        {
+                            "from": "192/1",
+                            "name": "Random strobe from slow to fast"
+                        }
+                    ]
+                },
+                "Shutter1_2": {
+                    "attribute": "Shutter1_2",
+                    "name": "Shutter 4",
+                    "default": "224",
+                    "dmx_range": [
+                        224,
+                        255
+                    ],
+                    "sets": [
+                        {
+                            "from": "224/1",
+                            "name": "open"
+                        }
+                    ]
+                }
+            }
+        },
+        "Dimmer": {
+            "attribute": "Dimmer",
+            "offset": [
+                17
+            ],
+            "functions": {
+                "Dimmer": {
+                    "attribute": "Dimmer",
+                    "name": "Dimmer intensity",
+                    "default": "0",
+                    "dmx_range": [
+                        0,
+                        255
+                    ],
+                    "sets": [
+                        {
+                            "from": "0/1",
+                            "name": "min"
+                        },
+                        {
+                            "from": "1/1",
+                            "name": ""
+                        },
+                        {
+                            "from": "255/1",
+                            "name": "max"
+                        }
+                    ]
+                }
+            }
+        },
+        "PositionMSpeed": {
+            "attribute": "PositionMSpeed",
+            "offset": [
+                5
+            ],
+            "functions": {
+                "PositionMSpeed": {
+                    "attribute": "PositionMSpeed",
+                    "name": "PositionMSpeed",
+                    "default": "0",
+                    "dmx_range": [
+                        0,
+                        255
+                    ],
+                    "sets": [
+                        {
+                            "from": "0/1",
+                            "name": "Standard mode"
+                        },
+                        {
+                            "from": "1/1",
+                            "name": "Max Speed Mode"
+                        },
+                        {
+                            "from": "2/1",
+                            "name": "Speed/Time max to min"
+                        },
+                        {
+                            "from": "255/1",
+                            "name": "Min Speed Mode"
+                        }
+                    ]
+                }
+            }
+        },
+        "Control1": {
+            "attribute": "Control1",
+            "offset": [
+                6
+            ],
+            "functions": {
+                "Control1": {
+                    "attribute": "Control1",
+                    "name": "No function",
+                    "default": "0",
+                    "dmx_range": [
+                        0,
+                        49
+                    ],
+                    "sets": [
+                        {
+                            "from": "0/1",
+                            "name": "No function"
+                        },
+                        {
+                            "from": "10/1",
+                            "name": ""
+                        }
+                    ]
+                },
+                "PositionModes": {
+                    "attribute": "PositionModes",
+                    "name": "Pan/Tilt mode",
+                    "default": "50",
+                    "dmx_range": [
+                        50,
+                        69
+                    ],
+                    "sets": [
+                        {
+                            "from": "50/1",
+                            "name": "Pan/Tilt speed mode"
+                        },
+                        {
+                            "from": "60/1",
+                            "name": "Pan/Tilt time mode"
+                        }
+                    ]
+                },
+                "BlackoutMode": {
+                    "attribute": "BlackoutMode",
+                    "name": "Blackout mode",
+                    "default": "70",
+                    "dmx_range": [
+                        70,
+                        109
+                    ],
+                    "sets": [
+                        {
+                            "from": "70/1",
+                            "name": "Blackout while pan/tilt moving"
+                        },
+                        {
+                            "from": "80/1",
+                            "name": "Disabled blackout while pan/tilt moving"
+                        },
+                        {
+                            "from": "90/1",
+                            "name": "Blackout while colour wheels moving"
+                        },
+                        {
+                            "from": "100/1",
+                            "name": "Disabled blackout while colour wheels moving"
+                        }
+                    ]
+                },
+                "NoFeature": {
+                    "attribute": "NoFeature",
+                    "name": "NoFeature 1",
+                    "default": "120",
+                    "dmx_range": [
+                        110,
+                        129
+                    ],
+                    "sets": []
+                },
+                "LampControl": {
+                    "attribute": "LampControl",
+                    "name": "Lamp On total reset except pan/tilt",
+                    "default": "130",
+                    "dmx_range": [
+                        130,
+                        139
+                    ],
+                    "sets": [
+                        {
+                            "from": "130/1",
+                            "name": "Lamp On"
+                        }
+                    ]
+                },
+                "PositionReset": {
+                    "attribute": "PositionReset",
+                    "name": "Pan/Tilt reset",
+                    "default": "140",
+                    "dmx_range": [
+                        140,
+                        149
+                    ],
+                    "sets": [
+                        {
+                            "from": "140/1",
+                            "name": "Pan/Tilt reset"
+                        }
+                    ]
+                },
+                "ColorMixReset": {
+                    "attribute": "ColorMixReset",
+                    "name": "Colour system reset",
+                    "default": "150",
+                    "dmx_range": [
+                        150,
+                        159
+                    ],
+                    "sets": [
+                        {
+                            "from": "150/1",
+                            "name": "Colour system reset"
+                        }
+                    ]
+                },
+                "ZoomReset": {
+                    "attribute": "ZoomReset",
+                    "name": "Zoom/Fresnel reset",
+                    "default": "160",
+                    "dmx_range": [
+                        160,
+                        169
+                    ],
+                    "sets": [
+                        {
+                            "from": "160/1",
+                            "name": "Zoom/Fresnel reset"
+                        }
+                    ]
+                },
+                "ShutterReset": {
+                    "attribute": "ShutterReset",
+                    "name": "Dimmer/Strobe reset",
+                    "default": "170",
+                    "dmx_range": [
+                        170,
+                        179
+                    ],
+                    "sets": [
+                        {
+                            "from": "170/1",
+                            "name": "Dimmer/Shutter reset"
+                        }
+                    ]
+                },
+                "NoFeature_1": {
+                    "attribute": "NoFeature_1",
+                    "name": "NoFeature",
+                    "default": "190",
+                    "dmx_range": [
+                        180,
+                        199
+                    ],
+                    "sets": []
+                },
+                "FixtureGlobalReset": {
+                    "attribute": "FixtureGlobalReset",
+                    "name": "Total reset",
+                    "default": "200",
+                    "dmx_range": [
+                        200,
+                        209
+                    ],
+                    "sets": [
+                        {
+                            "from": "200/1",
+                            "name": "Total reset"
+                        }
+                    ]
+                },
+                "NoFeature_2": {
+                    "attribute": "NoFeature_2",
+                    "name": "NoFeature 2",
+                    "default": "210",
+                    "dmx_range": [
+                        210,
+                        229
+                    ],
+                    "sets": []
+                },
+                "LampControl_1": {
+                    "attribute": "LampControl_1",
+                    "name": "Lamp off",
+                    "default": "230",
+                    "dmx_range": [
+                        230,
+                        239
+                    ],
+                    "sets": [
+                        {
+                            "from": "230/1",
+                            "name": "Lamp Off"
+                        }
+                    ]
+                },
+                "NoFeature_3": {
+                    "attribute": "NoFeature_3",
+                    "name": "NoFeature 3",
+                    "default": "240",
+                    "dmx_range": [
+                        240,
+                        255
+                    ],
+                    "sets": []
+                }
+            }
+        }
+    }
+}

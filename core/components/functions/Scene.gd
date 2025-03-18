@@ -16,13 +16,10 @@ signal on_fade_out_speed_changed(fade_out_time: float)
 
 
 ## Fade in time in seconds, defaults to 2 seconds
-var fade_in_speed: float = 2 : set = set_fade_in_speed
-
+var _fade_in_speed: float = 2
 
 ## Fade out time in seconds, defaults to 2 seconds
-var fade_out_speed: float = 2 : set = set_fade_out_speed
-
-
+var _fade_out_speed: float = 2
 
 ## The current state of this scene
 var _enabled: bool = false
@@ -33,11 +30,11 @@ var _save_data: Dictionary = {}
 ## The Animator used for this scene
 var _animator: Animator = Core.create_animator()
 
-
 var _time_scale_befour_flash: float  = 0
 var _time_befour_flash: float = 0
 var _backwards_befour_flash: bool = false
 var _flash_active: bool = false
+
 
 ## Called when this EngineComponent is ready
 func _component_ready() -> void:
@@ -67,12 +64,12 @@ func set_enabled(p_enabled: bool, fade_time: float = -1) -> void:
 	# _animator.length always equals 1, so setting the time scale to 0.5 will cause the animation to run at half speed
 	# This is to work around the issue where if the length is 0, the animation wont play as it will stop immediately 
 	if _enabled:
-		fade_time = fade_in_speed if fade_time == -1 else fade_time
+		fade_time = _fade_in_speed if fade_time == -1 else fade_time
 
 		_animator.time_scale = _animator.length / fade_time
 
 	else:
-		fade_time = fade_out_speed if fade_time == -1 else fade_time
+		fade_time = _fade_out_speed if fade_time == -1 else fade_time
 
 		_animator.time_scale = _animator.length / fade_time
 
@@ -109,13 +106,14 @@ func set_intensity(intensity: float) -> void:
 	_animator.pause()
 	_animator.seek_to_percentage(intensity)
 
+
 ## Returnes the percentage step
 func get_intensity() -> float:
 	return _animator.elapsed_time / _animator.length
 
 
 ## Enables the scene in flash mode, this will force it to be held at 100%, and when released with flash_release, it will return to where it was befour the flash
-func flash_hold(fade_in: float = fade_in_speed) -> void:
+func flash_hold(fade_in: float = _fade_in_speed) -> void:
 	if not _flash_active:
 		_time_befour_flash = _animator.elapsed_time
 		_time_scale_befour_flash = _animator.time_scale
@@ -131,15 +129,8 @@ func flash_hold(fade_in: float = fade_in_speed) -> void:
 	_animator.play()
 
 
-
-func _animator_finished_flash_callback() -> void:
-	_animator.time_scale = _time_scale_befour_flash
-	_animator.play_backwards = _backwards_befour_flash
-
-	_flash_active = false
-
-
-func flash_release(fade_out: float = fade_out_speed) -> void:
+## Releases a flash
+func flash_release(fade_out: float = _fade_out_speed) -> void:
 	_animator.time_scale = _animator.length /  fade_out
 	_animator.play_backwards = true
 	_animator.play(_time_befour_flash)
@@ -148,7 +139,8 @@ func flash_release(fade_out: float = fade_out_speed) -> void:
 		_animator.finished.connect(_animator_finished_flash_callback, CONNECT_ONE_SHOT)
 
 
-func flash(fade_in: float = fade_in_speed, fade_out: float = fade_out_speed, hold: float = 0.2) -> void:
+## Creates a flash with pre-defined fade speeds
+func flash(fade_in: float = _fade_in_speed, fade_out: float = _fade_out_speed, hold: float = 0.2) -> void:
 	flash_hold(fade_in)
 
 	await Core.get_tree().create_timer(hold).timeout
@@ -156,29 +148,37 @@ func flash(fade_in: float = fade_in_speed, fade_out: float = fade_out_speed, hol
 	flash_release(fade_out)
 
 
+## Called when a flash is finished
+func _animator_finished_flash_callback() -> void:
+	_animator.time_scale = _time_scale_befour_flash
+	_animator.play_backwards = _backwards_befour_flash
+
+	_flash_active = false
+
+
 ## Add a method to this scene
-func _on_data_stored(fixture: Fixture, channel_key: String, value: Variant) -> void:
-	_animator.animate_method(fixture.get(channel_key).bind("scene_" + uuid), fixture.get_zero_from_channel_key(channel_key), value)
+func _on_data_stored(fixture: Fixture, parameter: String, function: String, value: Variant, zone: String, can_fade: bool, start: float, stop: float) -> void:
+	_animator.animate_parameter(fixture, parameter, function, zone, fixture.get_default(zone, parameter, function), value, can_fade, start, stop)
 
 
 ## Sets the fade in speed in seconds
 func set_fade_in_speed(speed: float) -> void:
-	fade_in_speed = speed
-	on_fade_in_speed_changed.emit(fade_in_speed)
+	_fade_in_speed = speed
+	on_fade_in_speed_changed.emit(_fade_in_speed)
 
 
 ## Sets the fade out speed in seconds
 func set_fade_out_speed(speed: float) -> void:
-	fade_out_speed = speed
-	on_fade_out_speed_changed.emit(fade_out_speed)
+	_fade_out_speed = speed
+	on_fade_out_speed_changed.emit(_fade_out_speed)
 
 
 ## Serializes this scene and returnes it in a dictionary
 func _on_serialize_request(mode: int) -> Dictionary:
 
 	var serialized_data: Dictionary = {
-		"fade_in_speed": fade_in_speed,
-		"fade_out_speed": fade_out_speed,
+		"fade_in_speed": _fade_in_speed,
+		"fade_out_speed": _fade_out_speed,
 		"save_data": _data_container.serialize()
 	}
 
@@ -190,10 +190,9 @@ func _on_serialize_request(mode: int) -> Dictionary:
 
 
 ## Called when this scene is to be loaded from serialized data
-func _on_load_request(serialized_data: Dictionary) -> void:
-		
-	fade_in_speed = serialized_data.get("fade_in_speed", fade_in_speed)
-	fade_out_speed = serialized_data.get("fade_out_speed", fade_out_speed)
+func _on_load_request(serialized_data: Dictionary) -> void:	
+	_fade_in_speed = type_convert(serialized_data.get("fade_in_speed", _fade_in_speed), TYPE_FLOAT)
+	_fade_out_speed = type_convert(serialized_data.get("fade_out_speed", _fade_out_speed), TYPE_FLOAT)
 	
 	Server.remove_networked_object(_data_container.uuid)
 	_data_container.load(serialized_data.get("save_data", {}))

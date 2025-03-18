@@ -30,6 +30,7 @@ var _global_class_tree: Dictionary = {
 		},
 		"EngineComponent": EngineComponent,
 		"FixtureGroupItem": FixtureGroupItem,
+		"FixtureManifest": FixtureManifest,
 		"Universe": Universe,
 	}
 }

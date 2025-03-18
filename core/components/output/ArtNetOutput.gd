@@ -2,13 +2,27 @@
 # This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
 
 class_name ArtNetOutput extends DMXOutput
+## Art-Net DMX Output
+
+
+## Emitted when the ip is changed
+signal on_ip_changed(ip: String)
+
+## Emitted when the broadcast state is changed
+signal on_broadcast_state_changed(use_broadcast: bool)
+
+## Emitted when the universe number is changed
+signal on_universe_number_changed(universe_number: int)
 
 
 ## IP address of node to connect to
-var _ip_address: String = "192.168.1.73"
+var _ip_address: String = "127.0.0.1"
 
 ## Art-Net _port number
 var _port: int = 6454
+
+## Broadcast state
+var _use_broadcast: bool = false
 
 ## Art-Net universe number
 var _universe_number: int = 0
@@ -22,31 +36,77 @@ func _component_ready():
 	set_name("Art-Net Output")
 	set_self_class("ArtNetOutput")
 
-	start()
+
+
+## Sets the ip address
+func set_ip(p_ip: String) -> void:
+	_ip_address = p_ip
+
+	on_ip_changed.emit(_ip_address)
+
+	if _connection_state:
+		start()
+
+
+## Gets the ip address
+func get_ip() -> String:
+	return _ip_address
+
+
+
+## Sets the broadcast state
+func set_use_broadcast(p_use_broadcast: bool) -> void:
+	_use_broadcast = p_use_broadcast
+	_udp_peer.set_broadcast_enabled(_use_broadcast)
+	
+	on_broadcast_state_changed.emit(_use_broadcast)
+
+	if _connection_state:
+		start()
+
+
+## Gets the broadcast state
+func get_use_broadcast() -> bool:
+	return _use_broadcast
+
+
+## Sets the universe number
+func set_universe_number(p_universe_number: int) -> void:
+	output({})
+	_universe_number = p_universe_number
+	on_universe_number_changed.emit()
+
+
+## Gets the universe number
+func get_universe_number() -> int:
+	return _universe_number
 
 
 ## Called when this output is started
 func start():
 	stop()
-	var err: Error = _udp_peer.connect_to_host(_ip_address, _port)
+	var err: Error = _udp_peer.set_dest_address(_ip_address, _port)
 
 	if err:
 		on_connection_state_changed.emit(false, error_string(err))
 
 	else:
+		_connection_state = true
 		on_connection_state_changed.emit(true, "Art-Net Connected")
 
 
 ## Called when this output is stoped
 func stop():
+	output({})
+	_connection_state = false
 	on_connection_state_changed.emit(false, "Art-Net Disconnected")
 	_udp_peer.close()
 
 
 ## Called when this output it told to output
-func output() -> void:
+func output(dmx: Dictionary = dmx_data) -> void:
 
-	if not _udp_peer.is_bound():
+	if not _connection_state:
 		return
 
 	var packet = PackedByteArray([65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, int(_universe_number) % 256, int(_universe_number) / 256, 02, 00])
@@ -76,7 +136,7 @@ func output() -> void:
 	# packet.append(00)
 	# DMX Channels
 	for channel in range(1, 513):
-		packet.append(clamp(dmx_data.get(channel, 0), 0, 255))
+		packet.append(clamp(dmx.get(channel, 0), 0, 255))
 	
 	# Send the packet
 	_udp_peer.put_packet(packet)
@@ -85,21 +145,33 @@ func output() -> void:
 
 ## Saves this component to a dictonary
 func _on_serialize_request(mode: int) -> Dictionary:
-	
-	return {
-		"_ip_address": _ip_address,
-		"_port": _port,
-		"_universe_number": _universe_number
+	var serialize_data: Dictionary = {
+		"ip_address": _ip_address,
+		"port": _port,
+		"use_broadcast": _use_broadcast,
+		"universe_number": _universe_number,
+		"auto_start": _auto_start
 	}
+
+	if mode == Core.SERIALIZE_MODE_NETWORK:
+		serialize_data.merge({
+			"connection_state": _connection_state,
+			"connection_note": _previous_note
+		})
+
+	return serialize_data
 
 
 ## Loads this component from a dictonary
 func _on_load_request(serialized_data: Dictionary) -> void:
-	_ip_address = str(serialized_data.get("_ip_address", _ip_address))
-	_port = int(serialized_data.get("_port", _port))
-	_universe_number = int(serialized_data.get("_universe_number", _universe_number))
+	_ip_address = type_convert(serialized_data.get("ip_address", _ip_address), TYPE_STRING)
+	_port = type_convert(serialized_data.get("port", _port), TYPE_INT)
+	_use_broadcast = type_convert(serialized_data.get("use_broadcast"), TYPE_BOOL)
+	_universe_number = type_convert(serialized_data.get("universe_number", _universe_number), TYPE_INT)
+	_auto_start = type_convert(serialized_data.get("auto_start", _auto_start), TYPE_BOOL)
 
-	start()
+	if _auto_start:
+		start()	
 
 
 ## Called when this object is requested to be deleted

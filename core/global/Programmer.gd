@@ -5,165 +5,134 @@ class_name CoreProgrammer extends Node
 ## Engine class for programming lights, colors, positions, etc.
 
 
-## Current data in the programmer, {Fixture: {"channel_key": value...}...}
-var save_data: Dictionary = {}
-
-## Fixture layer IDs to use
-var fixture_set_layer_id: String = "Fixture.OVERRIDE"
-var fixture_reset_layer_id: String = "Fixture.REMOVE_OVERRIDE"
-
-## List of all the channel keys which set_random is allowed to change. set_color is not in this list, as colors are handled differntly to other channels
-var random_allowed_channel_keys: Array = [
-	"ColorIntensityWhite",
-	"ColorIntensityAmber",
-	"ColorIntensityUV",
-	"Dimmer"
-]
-
-## Max length in seconds for the fixture locate mode
-var locate_max_length: float = 5
+## Emitted when the programmer is cleared
+signal on_cleared()
 
 
 ## Save Modes
-enum SAVE_MODE {
+enum SaveMode {
 	MODIFIED,		## Only save fixtures that have been changed in the programmer
 	ALL,			## Save all values of the fixtures
 	ALL_NONE_ZERO	## Save all values of the fixtures, as long as they are not the zero value for that channel
 }
 
-
-func set_locate(fixtures: Array, enabled: bool) -> void:
-	for fixture in fixtures:
-		if fixture is Fixture:
-			fixture.set_locate(enabled)
-
-
-## Imports all the none zero values from the selected fixtures into the programmer
-func import(fixtures: Array) -> void:
-	for fixture in fixtures:
-		if fixture is Fixture:
-			for channel_key in fixture.current_values.keys():
-				var value: Variant = fixture.current_values[channel_key]
-
-				_set_individual_fixture_data(fixture, value, channel_key, fixture_set_layer_id)
+## Random parameter modes
+enum RandomMode {
+	All,			## Sets all fixture's parameter to the same random value
+	Individual		## Uses a differnt random value for each fixture
+}
 
 
-## Clears all values in the programmer
+## Current data in the programmer, {Fixture: {"channel_key": value...}...}
+var _container: DataContainer = DataContainer.new()
+
+## Temp layer id
+var _layer_id: String = "Programmer"
+
+
+# Clears all values in the programmer
 func clear() -> void:
-	for fixture: Fixture in save_data.keys():
-		for channel_key in save_data[fixture].duplicate():
-			_set_individual_fixture_data(fixture, fixture.get_zero_from_channel_key(channel_key), channel_key, fixture_reset_layer_id)
+	for fixture: Fixture in _container.get_stored_fixtures():
+		fixture.erase_all_overrides()
+	
+	_container = DataContainer.new()
+	on_cleared.emit()
 
-
-## Sets random data for mutiple fixtures
-func set_random(fixtures: Array, min: int, max: int, channel_key: String) -> void:
-	if channel_key in random_allowed_channel_keys:
-		for fixture in fixtures:
-			if fixture is Fixture:
-				_set_individual_fixture_data(fixture, randi_range(min, max), channel_key, fixture_set_layer_id)
-
-
-## Random function for the color channel
-func set_color_random(fixtures: Array, min: int, max: int, color_key: String) -> void:
-	for fixture in fixtures:
-		if fixture is Fixture:
-			var new_color: Color = fixture.get_value_from_layer_id(fixture_set_layer_id, "set_color")
-			match color_key:
-				"r": new_color.r8 = randi_range(min, max)
-				"g": new_color.g8 = randi_range(min, max)
-				"b": new_color.b8 = randi_range(min, max)
-				"h": new_color.h = remap(randi_range(min, max), 0, 360, 0.0, 1.0)
-				"s": new_color.s = remap(randi_range(min, max), 0, 255, 0.0, 1.0)
-				"v": new_color.v = remap(randi_range(min, max), 0, 255, 0.0, 1.0)
-
-			_set_individual_fixture_data(fixture, new_color, "set_color", fixture_set_layer_id)
-
-
-## Sets values
-func set_color(fixtures: Array, color: Color) -> void: 			_set_fixture_data(fixtures, color, "set_color", 			fixture_set_layer_id)
-func ColorIntensityWhite(fixtures: Array, value: int) -> void: 	_set_fixture_data(fixtures, value, "ColorIntensityWhite", 	fixture_set_layer_id)
-func ColorIntensityAmber(fixtures: Array, value: int) -> void: 	_set_fixture_data(fixtures, value, "ColorIntensityAmber", 	fixture_set_layer_id)
-func ColorIntensityUV(fixtures: Array, value: int) -> void: 	_set_fixture_data(fixtures, value, "ColorIntensityUV", 		fixture_set_layer_id)
-func Dimmer(fixtures: Array, value: int) -> void: 				_set_fixture_data(fixtures, value, "Dimmer", 				fixture_set_layer_id)
-
-
-## Resets values
-func reset_color(fixtures: Array) -> void: 						_set_fixture_data(fixtures, Color.BLACK, "set_color", 		fixture_reset_layer_id)
-func reset_ColorIntensityWhite(fixtures: Array) -> void:		_set_fixture_data(fixtures, 0, "ColorIntensityWhite", 		fixture_reset_layer_id)
-func reset_ColorIntensityAmber(fixtures: Array) -> void: 		_set_fixture_data(fixtures, 0, "ColorIntensityAmber",		fixture_reset_layer_id)
-func reset_ColorIntensityUV(fixtures: Array) -> void:			_set_fixture_data(fixtures, 0, "ColorIntensityUV", 			fixture_reset_layer_id)
-func reset_Dimmer(fixtures: Array) -> void: 					_set_fixture_data(fixtures, 0, "Dimmer", 					fixture_reset_layer_id)
 
 
 ## Function to set the fixture data at the given chanel key
-func _set_fixture_data(fixtures: Array, value: Variant, channel_key: String, layer_id: String) -> void:
-	for fixture in fixtures:
+func set_parameter(p_fixtures: Array, p_parameter: String, p_function: String, p_value: float, p_zone: String) -> void:
+	for fixture in p_fixtures:
 		if fixture is Fixture:
-			_set_individual_fixture_data(fixture, value, channel_key, layer_id)
+			_set_individual_fixture_data(fixture, p_parameter, p_function, p_value, p_zone)
+
+
+## Sets a fixture parameter to a random value
+func set_parameter_random(p_fixtures: Array, p_parameter: String, p_function: String, p_zone: String, p_mode: RandomMode) -> void:
+	var value: float = randf_range(0, 1)
+	for fixture in p_fixtures:
+		if fixture is Fixture:
+			_set_individual_fixture_data(fixture, p_parameter, p_function, value, p_zone)
+
+			if p_mode == RandomMode.Individual:
+				value = randf_range(0, 1)
+
+## Erases a parameter
+func erase_parameter(p_fixtures: Array, p_parameter: String, p_zone: String) -> void:
+	for fixture in p_fixtures:
+		if fixture is Fixture:
+			_erase_individual_fixture_data(fixture, p_parameter, p_zone)
 
 
 ## Sets the data on a single fixture at a time
-func _set_individual_fixture_data(fixture: Fixture, value: Variant, channel_key: String, layer_id: String) -> void:
-	fixture.get(channel_key).call(value, layer_id)
-	# Check to see if the value is 0, if so remove it from save_data
-	if value or layer_id == "Fixture.OVERRIDE":
-		if fixture not in save_data:
-			save_data[fixture] = {}
+func _set_individual_fixture_data(p_fixture: Fixture, p_parameter: String, p_function: String, p_value: float, p_zone: String) -> void:
+	if p_fixture.has_parameter(p_zone, p_parameter):
+		p_fixture.set_override(p_parameter, p_function, p_value, p_zone)
+		_container.store_data(p_fixture, p_parameter, p_function, p_value, p_zone, p_fixture.function_can_fade(p_zone, p_parameter, p_function))
 
-		save_data[fixture][channel_key] = value
 
-	elif fixture in save_data:
-		save_data[fixture].erase(channel_key)
+## Eraces the data on a single fixture at a time
+func _erase_individual_fixture_data(p_fixture: Fixture, p_parameter: String, p_zone: String) -> void:
+	if p_fixture.has_parameter(p_zone, p_parameter):
+		p_fixture.erase_override(p_parameter, p_zone)
+		_container.erase_data(p_fixture, p_parameter, p_zone)
 
 
 ## Stores data into a function
-func store_data_to_container(container: DataContainer, mode: SAVE_MODE, fixtures: Array = []) -> void:
+func store_data_to_container(container: DataContainer, mode: SaveMode, fixtures: Array = []) -> void:
 	match mode:
-		SAVE_MODE.MODIFIED:
+		SaveMode.MODIFIED:
 			for fixture: Fixture in fixtures:
-				if fixture in save_data:
-					for channel_key: String in save_data[fixture]:
-						container.store_data(fixture, channel_key, save_data[fixture][channel_key])
+				var current_data: Dictionary = _container.get_fixture_data()
 
-		SAVE_MODE.ALL:
-			for fixture in fixtures:
-				if fixture is Fixture:
-					for channel_key: String in fixture.current_values:
-						container.store_data(fixture, channel_key, fixture.current_values[channel_key])
+				if fixture in current_data:
+					for zone: String in current_data[fixture]:
+						for parameter: String in current_data[fixture][zone]:
+							var stored_data: Dictionary = current_data[fixture][zone][parameter]
+							container.store_data(fixture, parameter, stored_data.function, stored_data.value, zone, stored_data.can_fade)
 
-		SAVE_MODE.ALL_NONE_ZERO:
-			for fixture in fixtures:
-				if fixture is Fixture:
-					for channel_key: String in fixture.current_values:
-						if fixture.current_values[channel_key]:
-							container.store_data(fixture, channel_key, fixture.current_values[channel_key])
+		# SaveMode.ALL:
+		# 	for fixture in fixtures:
+		# 		if fixture is Fixture:
+		# 			for channel_key: String in fixture.current_values:
+		# 				container.store_data(fixture, channel_key, fixture.current_values[channel_key])
+
+		# SaveMode.ALL_NONE_ZERO:
+		# 	for fixture in fixtures:
+		# 		if fixture is Fixture:
+		# 			for channel_key: String in fixture.current_values:
+		# 				if fixture.current_values[channel_key]:
+		# 					container.store_data(fixture, channel_key, fixture.current_values[channel_key])
 
 
 ## erases data into a function
-func erase_data_from_container(container: DataContainer, mode: SAVE_MODE, fixtures: Array = []) -> void:
+func erase_data_from_container(container: DataContainer, mode: SaveMode, fixtures: Array = []) -> void:
 	match mode:
-		SAVE_MODE.MODIFIED:
+		SaveMode.MODIFIED:
 			for fixture: Fixture in fixtures:
-				if fixture in save_data:
-					for channel_key: String in save_data[fixture]:
-						container.erase_data(fixture, channel_key)
+				var current_data: Dictionary = _container.get_fixture_data()
 
-		SAVE_MODE.ALL:
-			for fixture in fixtures:
-				if fixture is Fixture:
-					for channel_key: String in fixture.current_values:
-						container.erase_data(fixture, channel_key)
+				if fixture in current_data:
+					for zone: String in current_data[fixture]:
+						for parameter: String in current_data[fixture][zone]:
+							container.erase_data(fixture, parameter, zone)
 
-		SAVE_MODE.ALL_NONE_ZERO:
-			for fixture in fixtures:
-				if fixture is Fixture:
-					for channel_key: String in fixture.current_values:
-						if fixture.current_values[channel_key]:
-							container.erase_data(fixture, channel_key)
+		# SaveMode.ALL:
+		# 	for fixture in fixtures:
+		# 		if fixture is Fixture:
+		# 			for channel_key: String in fixture.current_values:
+		# 				container.erase_data(fixture, channel_key)
+
+		# SaveMode.ALL_NONE_ZERO:
+		# 	for fixture in fixtures:
+		# 		if fixture is Fixture:
+		# 			for channel_key: String in fixture.current_values:
+		# 				if fixture.current_values[channel_key]:
+		# 					container.erase_data(fixture, channel_key)
 
 
 ## Saves the current state of this programmer to a scene
-func save_to_scene(fixtures: Array, mode: SAVE_MODE = SAVE_MODE.MODIFIED) -> Scene:
+func save_to_scene(fixtures: Array, mode: SaveMode = SaveMode.MODIFIED) -> Scene:
 	var new_scene: Scene = Scene.new()
 	store_data_to_container(new_scene.get_data_container(), mode, fixtures)
 
@@ -171,54 +140,54 @@ func save_to_scene(fixtures: Array, mode: SAVE_MODE = SAVE_MODE.MODIFIED) -> Sce
 	return new_scene
 
 
-## Saves the selected fixtures to a new cue, using SAVE_MODE
-func save_to_new_cue(fixtures: Array, cue_list: CueList, mode: SAVE_MODE) -> void:
-	if not fixtures:
-		return
+# ## Saves the selected fixtures to a new cue, using SaveMode
+# func save_to_new_cue(fixtures: Array, cue_list: CueList, mode: SaveMode) -> void:
+# 	if not fixtures:
+# 		return
 
-	var new_cue: Cue = Cue.new()
+# 	var new_cue: Cue = Cue.new()
 
-	store_data_to_container(new_cue, mode, fixtures)
+# 	store_data_to_container(new_cue, mode, fixtures)
 
-	cue_list.add_cue(new_cue, 0, true)
-	cue_list.seek_to(new_cue.number)
-
-
-## Merges data into a cue by its number in a cue list
-func merge_into_cue(fixtures: Array, cue_list: CueList, cue_number: float, mode: SAVE_MODE) -> void:
-	var cue: Cue = cue_list.get_cue(cue_number)
-
-	if cue:
-		store_data_to_container(cue, mode, fixtures)
-		cue_list.force_reload = true
+# 	cue_list.add_cue(new_cue, 0, true)
+# 	cue_list.seek_to(new_cue.number)
 
 
-## erases data into a cue by its number in a cue list
-func erase_from_cue(fixtures: Array, cue_list: CueList, cue_number: float, mode: SAVE_MODE) -> void:
-	var cue: Cue = cue_list.get_cue(cue_number)
+# ## Merges data into a cue by its number in a cue list
+# func merge_into_cue(fixtures: Array, cue_list: CueList, cue_number: float, mode: SaveMode) -> void:
+# 	var cue: Cue = cue_list.get_cue(cue_number)
 
-	if cue:
-		erase_data_from_container(cue, mode, fixtures)
-		cue_list.force_reload = true
+# 	if cue:
+# 		store_data_to_container(cue, mode, fixtures)
+# 		cue_list.force_reload = true
 
 
-## Saves the current state of fixtures to a new cue list
-func save_to_new_cue_list(fixtures: Array) -> void:
+# ## erases data into a cue by its number in a cue list
+# func erase_from_cue(fixtures: Array, cue_list: CueList, cue_number: float, mode: SaveMode) -> void:
+# 	var cue: Cue = cue_list.get_cue(cue_number)
 
-	var new_cue_list: CueList = CueList.new()
+# 	if cue:
+# 		erase_data_from_container(cue, mode, fixtures)
+# 		cue_list.force_reload = true
 
-	var blackout_cue: Cue = Cue.new()
-	blackout_cue.name = "Blackout"
 
-	var new_cue: Cue = Cue.new()
+# ## Saves the current state of fixtures to a new cue list
+# func save_to_new_cue_list(fixtures: Array) -> void:
 
-	store_data_to_container(new_cue, SAVE_MODE.MODIFIED, fixtures)
+# 	var new_cue_list: CueList = CueList.new()
 
-	for fixture: Fixture in save_data:
-		for channel_key: String in save_data[fixture]:
-			new_cue.store_data(fixture, channel_key, save_data[fixture][channel_key])
+# 	var blackout_cue: Cue = Cue.new()
+# 	blackout_cue.name = "Blackout"
 
-	new_cue_list.add_cue(blackout_cue, 0.5)
-	new_cue_list.add_cue(new_cue, 1, true)
+# 	var new_cue: Cue = Cue.new()
 
-	Core.add_component(new_cue_list)
+# 	store_data_to_container(new_cue, SaveMode.MODIFIED, fixtures)
+
+# 	for fixture: Fixture in save_data:
+# 		for channel_key: String in save_data[fixture]:
+# 			new_cue.store_data(fixture, channel_key, save_data[fixture][channel_key])
+
+# 	new_cue_list.add_cue(blackout_cue, 0.5)
+# 	new_cue_list.add_cue(new_cue, 1, true)
+
+# 	Core.add_component(new_cue_list)

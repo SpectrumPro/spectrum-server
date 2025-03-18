@@ -53,7 +53,7 @@ var EngineConfig = {
 		},
 		{
 			"object": (Programmer),
-			"name": "programmer"
+			"name": "Programmer"
 		},
 		{
 			"object": Debug.new(),
@@ -97,12 +97,14 @@ func _ready() -> void:
 	var cli_args: PackedStringArray = OS.get_cmdline_args()
 
 	if "--load" in cli_args:
-		var name_index: int = cli_args.find("--load") + 1
-		var save_name: String = cli_args[name_index]
+		(func ():
+			var name_index: int = cli_args.find("--load") + 1
+			var save_name: String = cli_args[name_index]
 
-		print(TF.auto_format(0, "Loading save file: ", save_name))
+			print(TF.auto_format(0, "Loading save file: ", save_name))
 
-		load_from_file(save_name)
+			load_from_file(save_name)
+		).call_deferred()
 
 
 	if "--tests" in cli_args:

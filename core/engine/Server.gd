@@ -245,7 +245,7 @@ func _on_web_socket_server_message_received(peer_id, message):
 		# Search through all the values in the command and see if there is any object refernces, if so try and find the object
 		var command: Dictionary = Utils.uuids_to_objects(message, _networked_objects)
 
-		if "args" in command:
+		if "args" in command:			
 			for index in len(command.args):
 				# Check if the type of the arg passed by the client matches the arg expected by the function, if not stop now to avoid a crash, ignore if the expected type is null, as this could also be Variant
 				if not typeof(command.args[index]) == method.args.values()[index] and not method.args.values()[index] == 0:
