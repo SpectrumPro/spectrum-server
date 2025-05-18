@@ -28,17 +28,18 @@ def process_json_file(filename):
         print(f"{GREEN}Explanation: {RESET}{item.get('explanation', 'No explanation provided')}\n")
         print(f"{RED}Remaining items: {len(keys) - index - 1}{RESET}\n")
         
-        # Prompt user for input
-        user_input = input(f"{RED}Should this item be able to fade? (Y/n): {RESET}").strip().lower()
-        
+               # Prompt user for input
+        user_input = input(f"{RED}Should this item be able to vdim? (y/N): {RESET}").strip().lower()
+
         if user_input == 'e':
             break
         elif user_input == 'b':
             index = max(0, index - 1)  # Go back one item, but not before the first
             continue
-        
-        # Assign can_fade based on input (default to 'y')
-        item["can_fade"] = user_input != 'n'
+
+        # Assign vdim_effected based on input (default to 'n')
+        item["vdim_effected"] = user_input == 'y'
+
         
         index += 1
     

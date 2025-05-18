@@ -107,7 +107,8 @@ static func load_from_file(file_path: String) -> FixtureManifest:
 						parser.get_named_attribute_value_safe("Name"),
 						int(parser.get_named_attribute_value_safe("Default").split("/")[0]),
 						dmx_range,
-						parameter_infomation.get(remove_number_regex.sub(attribute, "", true), {}).get("can_fade", false)
+						parameter_infomation.get(remove_number_regex.sub(attribute, "", true), {}).get("can_fade", false),
+						parameter_infomation.get(remove_number_regex.sub(attribute, "", true), {}).get("vdim_effected", false)
 					)
 				
 				"ChannelSet":

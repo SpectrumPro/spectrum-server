@@ -91,7 +91,7 @@ func get_current_dmx() -> Dictionary:
 # Shutter1.Shutter1Strobe, 1.0, effect_uuid, root
 
 ## Sets a parameter to a float value
-func set_parameter(p_parameter: String, p_function: String, p_value: float, p_layer_id: String, p_zone: String = "root", p_disable_output: bool = false) -> void:
+func set_parameter(p_parameter: String, p_function: String, p_value: float, p_layer_id: String, p_zone: String = "root", p_disable_output: bool = false) -> bool:
 	if _parameters.has(p_zone) and _parameters[p_zone].has(p_parameter) and _parameters[p_zone][p_parameter].functions.has(p_function):
 		var offsets: Array = _parameters[p_zone][p_parameter].offsets
 		_raw_layers.get_or_add(p_zone, {}).get_or_add(p_parameter, {})[p_layer_id] = {"value": p_value, "function": p_function}
@@ -119,6 +119,10 @@ func set_parameter(p_parameter: String, p_function: String, p_value: float, p_la
 			
 			on_parameter_changed.emit(p_parameter, p_function, p_value, p_zone)
 			_compile_output()
+		
+		return true
+	
+	return false
 
 
 ## Erases the parameter on the given layer
@@ -155,7 +159,7 @@ func erase_parameter(p_parameter: String, p_layer_id: String, p_zone: String = "
 
 
 ## Sets a parameter override to a float value
-func set_override(p_parameter: String, p_function: String, p_value: float, p_zone: String = "root", p_disable_output: bool = false) -> void:
+func set_override(p_parameter: String, p_function: String, p_value: float, p_zone: String = "root", p_disable_output: bool = false) -> bool:
 	if _parameters.has(p_zone) and _parameters[p_zone].has(p_parameter) and _parameters[p_zone][p_parameter].functions.has(p_function):
 		var offsets: Array = _parameters[p_zone][p_parameter].offsets
 		_raw_override_layers.get_or_add(p_zone, {})[p_parameter] = {"value": p_value, "function": p_function}
@@ -187,6 +191,9 @@ func set_override(p_parameter: String, p_function: String, p_value: float, p_zon
 			on_override_changed.emit(p_parameter, p_function, p_value, p_zone)
 			_compile_output()
 		
+		return true
+	
+	return false
 
 
 ## Erases the parameter override 
@@ -259,6 +266,11 @@ func get_default(p_zone: String, p_parameter: String, p_function: String) -> flo
 	var range: Array = _parameters[p_zone][p_parameter].functions[p_function].dmx_range
 
 	return remap(dmx_value, range[0], range[1], 0.0, 1.0)
+
+
+## Gets a value from the given layer id, parameter, and zone
+func get_current_value(p_zone: String, p_parameter: String, p_layer_id: String, p_function: String = "", p_allow_default: bool = true) -> float:
+	return _raw_layers.get(p_zone, {}).get(p_parameter, {}).get(p_layer_id, {}).get("value", get_default(p_zone, p_parameter, p_function) if p_allow_default else 0.0)
 
 
 ## Sets the manifest for this fixture

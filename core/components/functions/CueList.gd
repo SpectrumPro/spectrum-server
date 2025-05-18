@@ -39,7 +39,7 @@ enum MODE {NORMAL, LOOP}
 var _mode: int = MODE.NORMAL
 
 ## Stores all fixtures that are currently being animated
-## str(fixture.uuid + method_name):{
+## str(fixture.uuid + zone + parameter):{
 ##      "current_value": Variant,
 ##      "animator": Animator
 ##    }
@@ -80,6 +80,7 @@ func _component_ready() -> void:
 
 	_intensity = 1
 	TC.frames_changed.connect(_find_keyframes)
+
 
 ## Adds a pre-existing cue to this CueList
 ## Returns false if the cue already exists in this list, or if the index is already in use
@@ -154,7 +155,6 @@ func _on_cue_timecode_trigger_changed(timecode_trigger: int, cue: Cue) -> void:
 		_add_cue_keyframe(cue)
 
 
-
 func _add_cue_keyframe(cue: Cue) -> void:
 	if not cue.timecode_trigger in _keyframes.keys():
 		_keyframes[cue.timecode_trigger] = []
@@ -165,8 +165,6 @@ func _add_cue_keyframe(cue: Cue) -> void:
 	_sorted_keyframes.sort()
 
 	cue.local_data[uuid+"old_timecode_trigger"] = cue.timecode_trigger
-
-
 
 
 func _on_cue_timecode_enabled_stage_changed(timecode_enabled: bool, cue: Cue) -> void:
@@ -184,7 +182,6 @@ func _on_cue_timecode_enabled_stage_changed(timecode_enabled: bool, cue: Cue) ->
 		_sorted_keyframes.sort()
 	
 	print(_keyframes)
-
 
 
 func _find_keyframes(frame: int) -> void:
@@ -311,8 +308,8 @@ func _seek_to_next_cue_after(seconds: float) -> void:
 func _reset_animated_fixtures(animator: Animator, accumulated_animated_data: Dictionary) -> void:
 	for animation_id in _current_animated_fixtures.keys():
 		var animating_fixture = _current_animated_fixtures[animation_id]
-		var from_value: Variant = animating_fixture.fixture.get_value_from_layer_id(uuid, animating_fixture.method_name) 
-		var to_value: Variant = animating_fixture.fixture.get_zero_from_channel_key(animating_fixture.method_name)
+		var from_value: float = animating_fixture.fixture.get_current_value(animating_fixture.zone, animating_fixture.parameter, uuid, animating_fixture.function) 
+		var to_value: float = animating_fixture.fixture.get_default(animating_fixture.zone, animating_fixture.parameter, animating_fixture.function)
 
 		if is_instance_valid(animating_fixture.animator):
 			animating_fixture.animator.remove_track_from_id(animation_id, false)
@@ -320,15 +317,29 @@ func _reset_animated_fixtures(animator: Animator, accumulated_animated_data: Dic
 		accumulated_animated_data[animation_id] = {
 			"method": func (new_value: Variant) -> void: 
 					_current_animated_fixtures[animation_id].current_value = new_value
-					animating_fixture.fixture.get(animating_fixture.method_name).call(new_value, uuid),
+					animating_fixture.fixture.set_parameter(
+						animating_fixture.parameter, 
+						animating_fixture.function, 
+						new_value * _intensity, 
+						uuid, 
+						animating_fixture.zone
+					),
 			"from": from_value,
 			"to": to_value,
-			"current": from_value
+			"current": from_value,
+			"can_fade": animating_fixture.can_fade,
+			"start": animating_fixture.start,
+			"stop": animating_fixture.stop,
 		}
 
 		_current_animated_fixtures[animation_id] = {
-			"method_name": animating_fixture.method_name,
+			"zone": animating_fixture.zone,
+			"parameter": animating_fixture.parameter,
+			"function": animating_fixture.function,
 			"fixture": animating_fixture.fixture,
+			"can_fade": animating_fixture.can_fade,
+			"start": animating_fixture.start,
+			"stop": animating_fixture.stop,
 			"animator": animator,
 			# "current_value": to_value
 		}
@@ -339,39 +350,62 @@ func _remove_all_animators() -> void:
 		_remove_animator(old_cue_number)
 
 
+## Builds animation data from the cue and updates current animations.
 func _accumulate_state(cue: Cue, accumulated_animated_data: Dictionary, animator: Animator) -> void:
-	for fixture: Fixture in cue.get_fixture_data().keys():
-		for method_name: String in cue.get_fixture_data()[fixture]:
-			var stored_value: Dictionary = cue.get_fixture_data()[fixture][method_name]
-			var from_value: Variant = fixture.get_value_from_layer_id(uuid, method_name)
-			var to_value: Variant = stored_value.value
-			print(stored_value)
-			var animation_id: String = fixture.uuid + method_name
-			accumulated_animated_data[animation_id] = {
-				"method": func (new_value: Variant) -> void: 
-					_current_animated_fixtures[animation_id].current_value = new_value
-					fixture.get(method_name).call(new_value * _intensity, uuid)
-					,
-				"from": from_value * (2 - _intensity),
-				"to": to_value,
-				"current": from_value * (2 - _intensity),
-			}
+	var fixture_data: Dictionary = cue.get_fixture_data()
 
-			if animation_id in _current_animated_fixtures:
-				if _current_animated_fixtures[animation_id].has("current_value"):
-					accumulated_animated_data[animation_id].from = _current_animated_fixtures[animation_id].current_value
+	for fixture: Fixture in fixture_data:
+		for zone: String in fixture_data[fixture]:
+			for parameter: String in fixture_data[fixture][zone]:
+				var value_config: Dictionary = fixture_data[fixture][zone][parameter]
+				var from_value: float = fixture.get_current_value(zone, parameter, uuid, value_config.function)
+				var to_value: Variant = value_config.value
+				if parameter == "Zoom":
+					print(from_value)
+					print(to_value)
+					print()
+				
+				var animation_id: String = fixture.uuid + zone + parameter
+				accumulated_animated_data[animation_id] = {
+					"method": func (new_value: Variant) -> void: 
+						_current_animated_fixtures[animation_id].current_value = new_value
+						if parameter == "Zoom":
+							print(new_value * _intensity)
+						fixture.set_parameter(
+							parameter, 
+							value_config.function, 
+							new_value * _intensity, 
+							uuid, 
+							zone
+						),
+					"from": from_value * (2 - _intensity),
+					"to": to_value,
+					"current": from_value * (2 - _intensity),
+					"can_fade": value_config.can_fade,
+					"start": value_config.start,
+					"stop": value_config.stop,
+				}
 
-				var _animator = _current_animated_fixtures[animation_id].animator
-				if is_instance_valid(_animator) and _animator != animator:
-					_animator.remove_track_from_id(animation_id, false)
+				if animation_id in _current_animated_fixtures:
+					if _current_animated_fixtures[animation_id].has("current_value"):
+						accumulated_animated_data[animation_id].from = _current_animated_fixtures[animation_id].current_value
+
+					var _animator = _current_animated_fixtures[animation_id].animator
+					if is_instance_valid(_animator) and _animator != animator:
+						_animator.remove_track_from_id(animation_id, false)
 
 
-			_current_animated_fixtures[animation_id] = {
-				"method_name": method_name,
-				"fixture": fixture,
-				"animator": animator,
-				"current_value": from_value
-			}
+				_current_animated_fixtures[animation_id] = {
+					"zone": zone,
+					"parameter": parameter,
+					"function": value_config.function,
+					"can_fade": value_config.can_fade,
+					"start": value_config.start,
+					"stop": value_config.stop,
+					"fixture": fixture,
+					"animator": animator,
+					"current_value": from_value
+				}
 
 
 func _handle_animator_finished(animator: Animator, cue_number: float, fade_time: float) -> void:
@@ -518,7 +552,16 @@ func set_intensity(p_intensity: float) -> void:
 	if _index != -1:
 		for animated_fixture: Dictionary in _current_animated_fixtures.values():
 			if not is_instance_valid(animated_fixture.animator) and animated_fixture.has("current_value"):
-				animated_fixture.fixture.get(animated_fixture.method_name).call(animated_fixture.current_value * _intensity, uuid)
+				var fixture: Fixture = animated_fixture.fixture
+
+				if fixture.function_can_fade(animated_fixture.zone, animated_fixture.parameter, animated_fixture.function):
+					fixture.set_parameter(
+						animated_fixture.parameter, 
+						animated_fixture.function,
+						animated_fixture.current_value * _intensity,
+						uuid,
+						animated_fixture.zone
+					)
 
 
 ## Sets the fade time for all cues

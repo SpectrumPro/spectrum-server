@@ -53,6 +53,9 @@ var _animation_data: Dictionary = {}
 ## Time to stop the animation at
 var _stop_at: float = length
 
+## Previous time for the animation step
+var _previous_time: float = 0
+
 
 func _ready() -> void:
 	set_process(false)
@@ -77,6 +80,7 @@ func _process(delta: float) -> void:
 
 		if elapsed_time >= _stop_at:
 			finish()
+			is_playing = false
 
 
 ## Plays this animation
@@ -148,17 +152,24 @@ func _seek_to(time: float) -> void:
 				Tween.EASE_IN_OUT
 			)
 		
-		elif play_backwards and time <= animation_track.stop:
+		elif _previous_time > time and time <= animation_track.stop:
 			new_data = animation_track.from
 		
-		elif not play_backwards and time >= animation_track.start:
+		elif time > _previous_time and time >= animation_track.start:
 			new_data = animation_track.to
+
 
 		if new_data != - 1 and animation_track.current != new_data:
 			animation_track.current = new_data
-			var fixture: Fixture = animation_track.fixture
-			fixture.set_parameter(animation_track.parameter, animation_track.function, new_data, layer_id, animation_track.zone)
 
+			if animation_track.has("fixture"):
+				var fixture: Fixture = animation_track.fixture
+				fixture.set_parameter(animation_track.parameter, animation_track.function, new_data, layer_id, animation_track.zone)
+			
+			elif animation_track.has("method"):
+				animation_track.method.call(new_data)
+
+	_previous_time = time
 	steped.emit(time)
 
 

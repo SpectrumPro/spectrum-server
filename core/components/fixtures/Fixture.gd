@@ -29,8 +29,8 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = name) -> void:
 
 
 ## Sets a parameter to a float value
-func set_parameter(p_parameter: String, p_function: String, p_value: float, p_layer_id: String, p_zone: String = "root") -> void:
-	pass
+func set_parameter(p_parameter: String, p_function: String, p_value: float, p_layer_id: String, p_zone: String = "root") -> bool:
+	return false
 
 
 ## Erases the parameter on the given layer
@@ -39,8 +39,8 @@ func erase_parameter(p_parameter: String, p_layer_id: String, p_zone: String = "
 
 
 ## Sets a parameter override to a float value
-func set_override(p_parameter: String, p_function: String, p_value: float, p_zone: String = "root") -> void:
-	pass
+func set_override(p_parameter: String, p_function: String, p_value: float, p_zone: String = "root") -> bool:
+	return false
 
 
 ## Erases the parameter override 
@@ -74,7 +74,7 @@ func get_parameter_functions(p_zone: String, p_parameter: String) -> Array:
 
 
 ## Checks if this fixture has a parameter
-func has_parameter(p_zone: String, p_parameter: String) -> bool:
+func has_parameter(p_zone: String, p_parameter: String, p_function: String = "") -> bool:
 	return false
 
 
@@ -85,4 +85,9 @@ func function_can_fade(p_zone: String, p_parameter: String, p_function: String) 
 
 ## Gets the default value of a parameter
 func get_default(p_zone: String, p_parameter: String, p_function: String) -> float:
+	return 0.0
+
+
+## Gets a value from the given layer id, parameter, and zone
+func get_current_value(p_zone: String, p_parameter: String, p_layer_id: String, p_function: String = "", p_allow_default: bool = true) -> float:
 	return 0.0

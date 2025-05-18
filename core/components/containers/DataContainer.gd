@@ -199,7 +199,7 @@ func _load_stored_global_data(p_serialized_stored_global_data: Dictionary) -> vo
 		)
 
 
-## Serializes this scene and returnes it in a dictionary
+## Serializes this DataContainer and returnes it in a dictionary
 func _serialize() -> Dictionary:
 	return {
 		"fixture_data": _serialize_stored_data(),
@@ -207,7 +207,7 @@ func _serialize() -> Dictionary:
 	}
 
 
-## Called when this scene is to be loaded from serialized data
+## Called when this DataContainer is to be loaded from serialized data
 func _load(serialized_data: Dictionary) -> void:
 	_load_stored_data(serialized_data.get("fixture_data", {}))
 	_load_stored_global_data(serialized_data.get("global_data", {}))

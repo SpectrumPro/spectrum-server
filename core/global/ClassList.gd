@@ -145,6 +145,11 @@ func is_class_custom(classname: String) -> bool:
 	return _custom_classes.has(classname)
 
 
+## Checks if a class inherits from another class
+func does_class_inherit(base_class: String, inheritance: String) -> bool:
+	return _inheritance_trees[base_class].has(inheritance)
+
+
 ## Adds a new class to the class list
 func register_custom_class(class_tree: Array[String], script: Script) -> void:
 	var branch: Dictionary = _global_class_tree

@@ -23,6 +23,13 @@ enum RandomMode {
 }
 
 
+## Mix Mode 
+enum MixMode {
+	Additive,		## Uses Additive Mixing
+	Subtractive		## Uses Subtractive Mixing
+}
+
+
 ## Current data in the programmer, {Fixture: {"channel_key": value...}...}
 var _container: DataContainer = DataContainer.new()
 
@@ -66,7 +73,7 @@ func erase_parameter(p_fixtures: Array, p_parameter: String, p_zone: String) -> 
 
 ## Sets the data on a single fixture at a time
 func _set_individual_fixture_data(p_fixture: Fixture, p_parameter: String, p_function: String, p_value: float, p_zone: String) -> void:
-	if p_fixture.has_parameter(p_zone, p_parameter):
+	if p_fixture.has_parameter(p_zone, p_parameter, p_function):
 		p_fixture.set_override(p_parameter, p_function, p_value, p_zone)
 		_container.store_data(p_fixture, p_parameter, p_function, p_value, p_zone, p_fixture.function_can_fade(p_zone, p_parameter, p_function))
 
@@ -131,8 +138,33 @@ func erase_data_from_container(container: DataContainer, mode: SaveMode, fixture
 		# 					container.erase_data(fixture, channel_key)
 
 
+## Stores into an new component of the given type
+func store_into_new(classname: String, fixtures: Array) -> EngineComponent:
+	if not fixtures:
+		return
+	
+	match classname:
+		"Scene":
+			return save_to_new_scene(fixtures)
+		
+		"CueList":
+			return save_to_new_cue_list(fixtures)
+	
+	return null
+
+
+## Stores into a pre-existing component
+func store_into(component: EngineComponent, fixtures: Array) -> void:
+	if not fixtures:
+		return
+	
+	match component.self_class_name:		
+		"CueList":
+			save_to_new_cue(fixtures, component)
+
+
 ## Saves the current state of this programmer to a scene
-func save_to_scene(fixtures: Array, mode: SaveMode = SaveMode.MODIFIED) -> Scene:
+func save_to_new_scene(fixtures: Array, mode: SaveMode = SaveMode.MODIFIED) -> Scene:
 	var new_scene: Scene = Scene.new()
 	store_data_to_container(new_scene.get_data_container(), mode, fixtures)
 
@@ -140,17 +172,31 @@ func save_to_scene(fixtures: Array, mode: SaveMode = SaveMode.MODIFIED) -> Scene
 	return new_scene
 
 
-# ## Saves the selected fixtures to a new cue, using SaveMode
-# func save_to_new_cue(fixtures: Array, cue_list: CueList, mode: SaveMode) -> void:
-# 	if not fixtures:
-# 		return
+## Saves the current state of fixtures to a new cue list
+func save_to_new_cue_list(fixtures: Array) -> CueList:
+	var new_cue_list: CueList = CueList.new()
 
-# 	var new_cue: Cue = Cue.new()
+	var blackout_cue: Cue = Cue.new()
+	var new_cue: Cue = Cue.new()
 
-# 	store_data_to_container(new_cue, mode, fixtures)
+	blackout_cue.name = "Blackout"
+	store_data_to_container(new_cue, SaveMode.MODIFIED, fixtures)
 
-# 	cue_list.add_cue(new_cue, 0, true)
-# 	cue_list.seek_to(new_cue.number)
+	new_cue_list.add_cue(blackout_cue, 0.5)
+	new_cue_list.add_cue(new_cue, 1, true)
+
+	Core.add_component(new_cue_list)
+	return new_cue_list
+
+
+## Saves the selected fixtures to a new cue, using SaveMode
+func save_to_new_cue(fixtures: Array, cue_list: CueList, mode: SaveMode = SaveMode.MODIFIED) -> void:
+	var new_cue: Cue = Cue.new()
+
+	store_data_to_container(new_cue, mode, fixtures)
+
+	cue_list.add_cue(new_cue, 0, true)
+	cue_list.seek_to(new_cue.number)
 
 
 # ## Merges data into a cue by its number in a cue list
@@ -171,23 +217,24 @@ func save_to_scene(fixtures: Array, mode: SaveMode = SaveMode.MODIFIED) -> Scene
 # 		cue_list.force_reload = true
 
 
-# ## Saves the current state of fixtures to a new cue list
-# func save_to_new_cue_list(fixtures: Array) -> void:
+## Shortcut to set the color of fixtures
+func shortcut_set_color(p_fixtures: Array, p_color: Color, p_mix_mode: MixMode) -> void:
+	if not p_fixtures:
+		return
+	
+	match p_mix_mode:
+		MixMode.Additive:
+			for fixture: Variant in p_fixtures:
+				if fixture is Fixture:
+					_set_individual_fixture_data(fixture, "ColorAdd_R", "ColorAdd_R", p_color.r, "root")
+					_set_individual_fixture_data(fixture, "ColorAdd_G", "ColorAdd_G", p_color.g, "root")
+					_set_individual_fixture_data(fixture, "ColorAdd_B", "ColorAdd_B", p_color.b, "root")
+		
+		MixMode.Subtractive:
+			for fixture: Variant in p_fixtures:
+				if fixture is Fixture:
+					_set_individual_fixture_data(fixture, "ColorSub_C", "ColorSub_C", 1 - p_color.r, "root")
+					_set_individual_fixture_data(fixture, "ColorSub_M", "ColorSub_M", 1 - p_color.g, "root")
+					_set_individual_fixture_data(fixture, "ColorSub_Y", "ColorSub_Y", 1 - p_color.b, "root")
+		
 
-# 	var new_cue_list: CueList = CueList.new()
-
-# 	var blackout_cue: Cue = Cue.new()
-# 	blackout_cue.name = "Blackout"
-
-# 	var new_cue: Cue = Cue.new()
-
-# 	store_data_to_container(new_cue, SaveMode.MODIFIED, fixtures)
-
-# 	for fixture: Fixture in save_data:
-# 		for channel_key: String in save_data[fixture]:
-# 			new_cue.store_data(fixture, channel_key, save_data[fixture][channel_key])
-
-# 	new_cue_list.add_cue(blackout_cue, 0.5)
-# 	new_cue_list.add_cue(new_cue, 1, true)
-
-# 	Core.add_component(new_cue_list)

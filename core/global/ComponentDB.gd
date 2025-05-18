@@ -80,6 +80,8 @@ func deregister_component(component: EngineComponent) -> bool:
 	_check_class_callbacks(component)
 	
 	Server.remove_networked_object(component.uuid)
+	components.erase(component.uuid)
+	
 	component_removed.emit(component)
 	return true
 
