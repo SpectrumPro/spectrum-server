@@ -34,6 +34,10 @@ var current_cue: Cue = null
 var last_cue: Cue = null
 var next_cue: Cue = null
 
+
+## Allowed parameters to changed when setting function intencity
+const _allowed_intensity_parameters: Array[String] = ["Dimmer"]
+
 ## The current mode of this cuelist. When in loop mode the cuelist will not reset fixtures to 0-value when looping back to the start
 enum MODE {NORMAL, LOOP}
 var _mode: int = MODE.NORMAL
@@ -71,6 +75,7 @@ var last_triggered_keyframe: int = -1
 ## Used to determin if a force reload from the start should happen, used when a cue is added, removed, moved, or edited
 var force_reload: bool = false
 
+## Autoplay state
 var _autoplay: bool = false
 
 
@@ -320,7 +325,7 @@ func _reset_animated_fixtures(animator: Animator, accumulated_animated_data: Dic
 					animating_fixture.fixture.set_parameter(
 						animating_fixture.parameter, 
 						animating_fixture.function, 
-						new_value * _intensity, 
+						new_value * (_intensity if animating_fixture.parameter in _allowed_intensity_parameters else 1.0), 
 						uuid, 
 						animating_fixture.zone
 					),
@@ -360,27 +365,22 @@ func _accumulate_state(cue: Cue, accumulated_animated_data: Dictionary, animator
 				var value_config: Dictionary = fixture_data[fixture][zone][parameter]
 				var from_value: float = fixture.get_current_value(zone, parameter, uuid, value_config.function)
 				var to_value: Variant = value_config.value
-				if parameter == "Zoom":
-					print(from_value)
-					print(to_value)
-					print()
 				
 				var animation_id: String = fixture.uuid + zone + parameter
 				accumulated_animated_data[animation_id] = {
 					"method": func (new_value: Variant) -> void: 
 						_current_animated_fixtures[animation_id].current_value = new_value
-						if parameter == "Zoom":
-							print(new_value * _intensity)
+				
 						fixture.set_parameter(
 							parameter, 
 							value_config.function, 
-							new_value * _intensity, 
+							new_value * (_intensity if parameter in _allowed_intensity_parameters else 1.0), 
 							uuid, 
 							zone
 						),
-					"from": from_value * (2 - _intensity),
+					"from": from_value * (2 - (_intensity if parameter in _allowed_intensity_parameters else 1.0)),
 					"to": to_value,
-					"current": from_value * (2 - _intensity),
+					"current": from_value * (2 - (_intensity if parameter in _allowed_intensity_parameters else 1.0)),
 					"can_fade": value_config.can_fade,
 					"start": value_config.start,
 					"stop": value_config.stop,
@@ -551,7 +551,7 @@ func set_intensity(p_intensity: float) -> void:
 
 	if _index != -1:
 		for animated_fixture: Dictionary in _current_animated_fixtures.values():
-			if not is_instance_valid(animated_fixture.animator) and animated_fixture.has("current_value"):
+			if not is_instance_valid(animated_fixture.animator) and animated_fixture.has("current_value") and animated_fixture.parameter in _allowed_intensity_parameters:
 				var fixture: Fixture = animated_fixture.fixture
 
 				if fixture.function_can_fade(animated_fixture.zone, animated_fixture.parameter, animated_fixture.function):

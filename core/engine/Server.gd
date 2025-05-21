@@ -17,6 +17,9 @@ var udp_frequency: float = 1.0 / 45.0  # 1 second divided by 45
 ## Disables signal emissions to clients
 var disable_signals: bool = false
 
+## Dissables the use of the high frequency UDP socket
+var dissable_high_frequency: bool = true
+
 
 ## Used as an internal refernce for timing call_interval correctly
 var _accumulated_time: float = 0.0 
@@ -140,7 +143,7 @@ func add_networked_object(object_name: String, object: Object, delete_signal: Si
 		
 		var object_signal: Signal = object.get(object_signal_dict.name)
 
-		if object_signal in object_network_config.high_frequency_signals:
+		if object_signal in object_network_config.high_frequency_signals and not dissable_high_frequency:
 			_networked_object_callbacks[object_name].signals[object_signal] = func (arg1: Variant = null, arg2: Variant = null, arg3: Variant = null, arg4: Variant = null, arg5: Variant = null, arg6: Variant = null, arg7: Variant = null, arg8: Variant = null):
 					if disable_signals:
 						return
