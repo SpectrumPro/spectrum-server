@@ -24,6 +24,8 @@ signal on_timecode_trigger_changed(timecode_trigger: int)
 ## The number of this cue, do not modify this when it is a part of a cuelist
 var number: float = 0
 
+## The CueList this cue is apart of
+var cue_list: CueList
 
 ## Fade in time in seconds
 var fade_time: float = 2.0 : set = set_fade_time
@@ -40,7 +42,7 @@ var trigger_mode: TRIGGER_MODE = TRIGGER_MODE.MANUAL
 var tracking: bool = true
 
 ## Stores all the timecode frame counters that will trigger this cue
-var timecode_trigger: int = 0 
+var timecode_trigger: int = 0
 
 ## Enables timecode triggers on this cue
 var timecode_enabled: bool = false
@@ -78,7 +80,7 @@ func set_trigger_mode(p_trigger_mode: TRIGGER_MODE) -> void:
 func set_timecode_enabled(p_timecode_enabled: bool) -> void:
 	if timecode_enabled == p_timecode_enabled:
 		return
-	
+
 	timecode_enabled = p_timecode_enabled
 	on_timecode_enabled_state_changed.emit(timecode_enabled)
 
@@ -87,7 +89,7 @@ func set_timecode_enabled(p_timecode_enabled: bool) -> void:
 func set_timecode_trigger(frame: int) -> void:
 	if frame == timecode_trigger:
 		return
-	
+
 	timecode_trigger = frame
 	on_timecode_trigger_changed.emit(timecode_trigger)
 
@@ -133,4 +135,3 @@ func _on_load_request(serialized_data: Dictionary) -> void:
 	timecode_trigger = serialized_data.get("timecode_trigger", timecode_trigger)
 
 	_load(serialized_data.get("stored_data", {}))
-		
