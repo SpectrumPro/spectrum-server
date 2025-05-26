@@ -159,8 +159,9 @@ func _seek_to(time: float) -> void:
 			new_data = animation_track.to
 
 
-		if new_data != - 1 and animation_track.current != new_data:
+		if new_data != - 1 and (animation_track.current != new_data or animation_track.first_time):
 			animation_track.current = new_data
+			animation_track.first_time = false
 
 			if animation_track.has("fixture"):
 				var fixture: Fixture = animation_track.fixture
@@ -186,7 +187,8 @@ func animate_parameter(fixture: Fixture, parameter: String, function: String, zo
 		"current": from,
 		"can_fade": can_fade,
 		"start": start,
-		"stop": stop
+		"stop": stop,
+		"first_time": true
 	}
 
 	return id

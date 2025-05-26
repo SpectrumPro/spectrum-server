@@ -335,6 +335,7 @@ func _reset_animated_fixtures(animator: Animator, accumulated_animated_data: Dic
 			"can_fade": animating_fixture.can_fade,
 			"start": animating_fixture.start,
 			"stop": animating_fixture.stop,
+			"first_time": true
 		}
 
 		_current_animated_fixtures[animation_id] = {
@@ -366,11 +367,12 @@ func _accumulate_state(cue: Cue, accumulated_animated_data: Dictionary, animator
 				var from_value: float = fixture.get_current_value(zone, parameter, uuid, value_config.function)
 				var to_value: Variant = value_config.value
 				
+				print("Accumulating: ", parameter, " To: ", to_value)
+
 				var animation_id: String = fixture.uuid + zone + parameter
 				accumulated_animated_data[animation_id] = {
 					"method": func (new_value: Variant) -> void: 
 						_current_animated_fixtures[animation_id].current_value = new_value
-				
 						fixture.set_parameter(
 							parameter, 
 							value_config.function, 
@@ -384,6 +386,7 @@ func _accumulate_state(cue: Cue, accumulated_animated_data: Dictionary, animator
 					"can_fade": value_config.can_fade,
 					"start": value_config.start,
 					"stop": value_config.stop,
+					"first_time": true
 				}
 
 				if animation_id in _current_animated_fixtures:

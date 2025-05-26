@@ -17,6 +17,9 @@ signal on_resetting()
 ## Emited when the file name is changed
 signal on_file_name_changed(file_name: String)
 
+## Emitted every frame
+signal _process_frame(delta: float)
+
  ## Emited [member CoreEngine.call_interval] number of times per second.
 signal _output_timer()
 
@@ -71,7 +74,8 @@ var EngineConfig = {
 	## Root classes are the primary classes that will be seralized and loaded 
 	"root_classes": [
 		"Universe",
-		"Function"
+		"Function",
+		"FixtureGroup"
 	]
 }
 
@@ -156,6 +160,8 @@ func _process(delta: float) -> void:
 		
 		# Subtract the interval from the accumulated time
 		_accumulated_time -= call_interval
+	
+	_process_frame.emit(delta)
 
 
 ## Serializes all elements of this engine, used for file saving, and network synchronization
@@ -448,6 +454,15 @@ func create_animator() -> Animator:
 
 	return animator
 
+
+## Enables process frame on a component
+func set_component_process(component: EngineComponent, process: bool) -> void:
+	if process and _process_frame.is_connected(component._process):
+		_process_frame.connect(component._process)
+
+	elif not process and not _process_frame.is_connected(component._process):
+		_process_frame.disconnect(component._process)
+		
 
 func _notification(what: int) -> void:
 	# Uh Oh

@@ -92,7 +92,13 @@ func get_current_dmx() -> Dictionary:
 
 ## Sets a parameter to a float value
 func set_parameter(p_parameter: String, p_function: String, p_value: float, p_layer_id: String, p_zone: String = "root", p_disable_output: bool = false) -> bool:
+	# print(p_parameter, ": ", p_value)
+
 	if _parameters.has(p_zone) and _parameters[p_zone].has(p_parameter) and _parameters[p_zone][p_parameter].functions.has(p_function):
+		if p_value == get_default(p_zone, p_parameter, p_function):
+			erase_parameter(p_parameter, p_layer_id, p_zone)
+			return true
+		
 		var offsets: Array = _parameters[p_zone][p_parameter].offsets
 		_raw_layers.get_or_add(p_zone, {}).get_or_add(p_parameter, {})[p_layer_id] = {"value": p_value, "function": p_function}
 

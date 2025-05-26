@@ -5,9 +5,6 @@ class_name Scene extends Function
 ## Function for creating and recalling saved data
 
 
-## Emitted when this scene is _enabled or dissabled
-signal on_state_changed(is_enabled: bool)
-
 ## Emitted when the fade in time has changed
 signal on_fade_in_speed_changed(fade_in_time: float)
 
@@ -21,19 +18,8 @@ var _fade_in_speed: float = 2
 ## Fade out time in seconds, defaults to 2 seconds
 var _fade_out_speed: float = 2
 
-## The current state of this scene
-var _enabled: bool = false
-
-## Saved data for this scene
-var _save_data: Dictionary = {}
-
 ## The Animator used for this scene
-var _animator: Animator = Core.create_animator()
-
-var _time_scale_befour_flash: float  = 0
-var _time_befour_flash: float = 0
-var _backwards_befour_flash: bool = false
-var _flash_active: bool = false
+var _animator: DataContainerAnimator = DataContainerAnimator.new()
 
 
 ## Called when this EngineComponent is ready
@@ -41,158 +27,99 @@ func _component_ready() -> void:
 	set_name("New Scene")
 	set_self_class("Scene")
 
-	_data_container.set_allow_store_zero_data(false)
-	_data_container.on_data_stored.connect(_on_data_stored)
+	_auto_start = false
+	_auto_stop = false
 
-	_animator.steped.connect(func (step: float): 
-		var value
+	_data_container.set_allow_store_zero_data(true)
+	_animator.set_container(_data_container)
 
-		if _animator.length == 0:
-			value = step
-		else:
-			value = remap(step, 0, _animator.length, 0.0, 1.0)
-
-		on_intensity_changed.emit(snapped(value, 0.001))
-	)
+	_animator.set_layer_id(uuid)
+	_animator.steped.connect(_on_animator_stepped)
+	_animator.finished.connect(_on_animator_finished)
+	Core.add_child(_animator)
 
 
-## Sets the state of this scene
-func set_enabled(p_enabled: bool, fade_time: float = -1) -> void:
-	_enabled = p_enabled
+## Handles ActiveState changes
+func _handle_active_state_change(p_active_state: ActiveState) -> void:
+	if (_intensity == 0 and p_active_state == ActiveState.DISABLED ) or (_intensity == 1 and p_active_state == ActiveState.ENABLED):
+		if get_transport_state() != TransportState.PAUSED:
+			set_transport_state(TransportState.PAUSED)
+		
+		return
+	
+	var fade_speed: float = (_fade_in_speed if p_active_state else -_fade_out_speed)
 
-	# Workout wheather we are enabling or dissabling this scene, then adust the animation time scale to be fade_time * length
-	# _animator.length always equals 1, so setting the time scale to 0.5 will cause the animation to run at half speed
-	# This is to work around the issue where if the length is 0, the animation wont play as it will stop immediately 
-	if _enabled:
-		fade_time = _fade_in_speed if fade_time == -1 else fade_time
-
-		_animator.time_scale = _animator.length / fade_time
+	if fade_speed:
+		_animator.set_time_scale(1 / fade_speed)
+		_animator.play()
 
 	else:
-		fade_time = _fade_out_speed if fade_time == -1 else fade_time
-
-		_animator.time_scale = _animator.length / fade_time
-
-
-	_animator.play_backwards = not _enabled
-	_animator.play(0 if _animator.play_backwards else 1)
-
-	on_state_changed.emit(_enabled)
-
-
-## Returnes the state of this scene
-func is_enabled() -> bool:
-	return _enabled
-
-
-## Resumes playback of this scene after calling pause()
-func play() -> void:
-	_animator.play()
-
-
-## Pauses this scene
-func pause() -> void:
-	_animator.pause()
-
-
-## Set the step percentage of this scene, value ranges from 0.0 to 1.0, and is used as a percentage to control the underlaying animation
-func set_intensity(intensity: float) -> void:
-	var new_enabled_state: bool = bool(intensity)
+		_animator.seek_to(1 if p_active_state else 0)
 	
-	if new_enabled_state != _enabled:
-		_enabled = new_enabled_state
-		on_state_changed.emit(_enabled)
-
-	_animator.pause()
-	_animator.seek_to_percentage(intensity)
+	_set_transport_state(TransportState.FORWARDS if p_active_state else TransportState.BACKWARDS)
 
 
-## Returnes the percentage step
-func get_intensity() -> float:
-	return _animator.elapsed_time / _animator.length
+## Handles TransportState changes
+func _handle_transport_state_change(p_transport_state: TransportState) -> void:
+	match p_transport_state:
+		TransportState.FORWARDS:
+			set_active_state(ActiveState.ENABLED)
+		
+		TransportState.PAUSED:
+			_animator.pause()
+		
+		TransportState.BACKWARDS:
+			set_active_state(ActiveState.DISABLED)
 
 
-## Enables the scene in flash mode, this will force it to be held at 100%, and when released with flash_release, it will return to where it was befour the flash
-func flash_hold(fade_in: float = _fade_in_speed) -> void:
-	if not _flash_active:
-		_time_befour_flash = _animator.elapsed_time
-		_time_scale_befour_flash = _animator.time_scale
-		_backwards_befour_flash = _animator.play_backwards
+## Handles intensity changes, this is only called when intensity is changed externaly
+func _handle_intensity_change(p_intensity: float) -> void:
+	if get_transport_state() != TransportState.PAUSED:
+		set_transport_state(TransportState.PAUSED)
+
+	if p_intensity and get_active_state() != ActiveState.ENABLED:
+		_set_active_state(ActiveState.ENABLED)
 	
-	_flash_active = true
-
-	if _animator.finished.is_connected(_animator_finished_flash_callback):
-		_animator.finished.disconnect(_animator_finished_flash_callback)
-
-	_animator.time_scale = _animator.length /  fade_in
-	_animator.play_backwards = false
-	_animator.play()
-
-
-## Releases a flash
-func flash_release(fade_out: float = _fade_out_speed) -> void:
-	_animator.time_scale = _animator.length /  fade_out
-	_animator.play_backwards = true
-	_animator.play(_time_befour_flash)
-
-	if not _flash_active:
-		_animator.finished.connect(_animator_finished_flash_callback, CONNECT_ONE_SHOT)
-
-
-## Creates a flash with pre-defined fade speeds
-func flash(fade_in: float = _fade_in_speed, fade_out: float = _fade_out_speed, hold: float = 0.2) -> void:
-	flash_hold(fade_in)
-
-	await Core.get_tree().create_timer(hold).timeout
-
-	flash_release(fade_out)
-
-
-## Called when a flash is finished
-func _animator_finished_flash_callback() -> void:
-	_animator.time_scale = _time_scale_befour_flash
-	_animator.play_backwards = _backwards_befour_flash
-
-	_flash_active = false
-
-
-## Add a method to this scene
-func _on_data_stored(fixture: Fixture, parameter: String, function: String, value: Variant, zone: String, can_fade: bool, start: float, stop: float) -> void:
-	_animator.animate_parameter(fixture, parameter, function, zone, fixture.get_default(zone, parameter, function), value, can_fade, start, stop)
+	_animator.seek_to(p_intensity)
 
 
 ## Sets the fade in speed in seconds
 func set_fade_in_speed(speed: float) -> void:
-	_fade_in_speed = speed
+	_fade_in_speed = abs(speed)
 	on_fade_in_speed_changed.emit(_fade_in_speed)
 
 
 ## Sets the fade out speed in seconds
 func set_fade_out_speed(speed: float) -> void:
-	_fade_out_speed = speed
+	_fade_out_speed = abs(speed)
 	on_fade_out_speed_changed.emit(_fade_out_speed)
+
+
+## Called when the animator steps
+func _on_animator_stepped(step: float) -> void:
+	_set_intensity(step)
+
+
+## Called when the animator is finished
+func _on_animator_finished() -> void:
+	_set_transport_state(TransportState.PAUSED)
 
 
 ## Serializes this scene and returnes it in a dictionary
 func _on_serialize_request(mode: int) -> Dictionary:
-
 	var serialized_data: Dictionary = {
 		"fade_in_speed": _fade_in_speed,
 		"fade_out_speed": _fade_out_speed,
 		"save_data": _data_container.serialize()
 	}
 
-	if mode == CoreEngine.SERIALIZE_MODE_NETWORK:
-		serialized_data["enabled"] = is_enabled()
-		serialized_data["intensity"] = get_intensity()
-
 	return serialized_data
 
 
 ## Called when this scene is to be loaded from serialized data
 func _on_load_request(serialized_data: Dictionary) -> void:	
-	_fade_in_speed = type_convert(serialized_data.get("fade_in_speed", _fade_in_speed), TYPE_FLOAT)
-	_fade_out_speed = type_convert(serialized_data.get("fade_out_speed", _fade_out_speed), TYPE_FLOAT)
+	_fade_in_speed = abs(type_convert(serialized_data.get("fade_in_speed", _fade_in_speed), TYPE_FLOAT))
+	_fade_out_speed = abs(type_convert(serialized_data.get("fade_out_speed", _fade_out_speed), TYPE_FLOAT))
 	
 	Server.remove_networked_object(_data_container.uuid)
 	_data_container.load(serialized_data.get("save_data", {}))

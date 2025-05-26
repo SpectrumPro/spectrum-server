@@ -1,9 +1,8 @@
 # Copyright (c) 2024 Liam Sherwin, All rights reserved.
 # This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
 
-class_name FixtureGroup extends Function
+class_name FixtureGroup extends EngineComponent
 ## Stores a group of fixtures, using FixtureGroupItem
-
 
 
 ## Emitted when fixtures are added to this FixtureGroup
@@ -13,10 +12,8 @@ signal on_fixtures_added(group_items: Array[FixtureGroupItem])
 signal on_fixtures_removed(fixtures: Array[Fixture])
 
 
-
 ## Stores all the fixtures and there positions. Stored as {Fixture: FixtureGroupItem}
 var _fixtures: Dictionary = {}
-
 
 
 ## Called when this EngineComponent is ready

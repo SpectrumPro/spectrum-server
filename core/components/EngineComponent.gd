@@ -103,6 +103,16 @@ func delete_user_meta(p_key: String, p_no_signal: bool = false) -> bool:
 	return state
 
 
+## Sets self process state
+func set_process(process: bool) -> void:
+	Core.set_component_process(self, process)
+
+
+## This function is called every frame
+func _process(delta: float) -> void:
+	pass
+
+
 ## Always call this function when you want to delete this component. 
 ## As godot uses reference counting, this object will not truly be deleted untill no other script holds a refernce to it.
 func delete() -> void:

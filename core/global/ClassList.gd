@@ -20,7 +20,6 @@ var _global_class_tree: Dictionary = {
 		"Function": {
 			"CueList": CueList,
 			"DataPalette": DataPalette,
-			"FixtureGroup": FixtureGroup,
 			"Function": Function,
 			"Scene": Scene,
 		},
@@ -29,6 +28,7 @@ var _global_class_tree: Dictionary = {
 			"DMXOutput": DMXOutput,
 		},
 		"EngineComponent": EngineComponent,
+		"FixtureGroup": FixtureGroup,
 		"FixtureGroupItem": FixtureGroupItem,
 		"FixtureManifest": FixtureManifest,
 		"Universe": Universe,

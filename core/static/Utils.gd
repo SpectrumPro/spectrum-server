@@ -95,3 +95,19 @@ static func uuids_to_objects(data: Variant, networked_objects: Dictionary):
 				return str_to_var(data)
 	
 	return data
+
+
+## Connects all the callables to the signals in the dictionary. Stored as {"SignalName": Callable}
+static func connect_signals(signals: Dictionary, object: Object) -> void:
+	if is_instance_valid(object):
+		for signal_name: String in signals:
+			if object.has_signal(signal_name) and not (object.get(signal_name) as Signal).is_connected(signals[signal_name]):
+				(object.get(signal_name) as Signal).connect(signals[signal_name])
+
+
+## Disconnects all the callables from the signals in the dictionary. Stored as {"SignalName": Callable}
+static func disconnect_signals(signals: Dictionary, object: Object) -> void:
+	if is_instance_valid(object):
+		for signal_name: String in signals:
+			if object.has_signal(signal_name) and (object.get(signal_name) as Signal).is_connected(signals[signal_name]):
+				(object.get(signal_name) as Signal).disconnect(signals[signal_name])
