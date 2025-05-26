@@ -23,7 +23,7 @@ enum RandomMode {
 }
 
 
-## Mix Mode 
+## Mix Mode
 enum MixMode {
 	Additive,		## Uses Additive Mixing
 	Subtractive		## Uses Subtractive Mixing
@@ -41,7 +41,7 @@ var _layer_id: String = "Programmer"
 func clear() -> void:
 	for fixture: Fixture in _container.get_stored_fixtures():
 		fixture.erase_all_overrides()
-	
+
 	_container = DataContainer.new()
 	on_cleared.emit()
 
@@ -142,14 +142,14 @@ func erase_data_from_container(container: DataContainer, mode: SaveMode, fixture
 func store_into_new(classname: String, fixtures: Array) -> EngineComponent:
 	if not fixtures:
 		return
-	
+
 	match classname:
 		"Scene":
 			return save_to_new_scene(fixtures)
-		
+
 		"CueList":
 			return save_to_new_cue_list(fixtures)
-	
+
 	return null
 
 
@@ -157,10 +157,13 @@ func store_into_new(classname: String, fixtures: Array) -> EngineComponent:
 func store_into(component: EngineComponent, fixtures: Array) -> void:
 	if not fixtures:
 		return
-	
-	match component.self_class_name:		
+
+	match component.self_class_name:
 		"CueList":
 			save_to_new_cue(fixtures, component)
+		"Cue":
+			merge_into_cue(fixtures, component)
+
 
 
 ## Saves the current state of this programmer to a scene
@@ -199,13 +202,10 @@ func save_to_new_cue(fixtures: Array, cue_list: CueList, mode: SaveMode = SaveMo
 	cue_list.seek_to(new_cue.number)
 
 
-# ## Merges data into a cue by its number in a cue list
-# func merge_into_cue(fixtures: Array, cue_list: CueList, cue_number: float, mode: SaveMode) -> void:
-# 	var cue: Cue = cue_list.get_cue(cue_number)
-
-# 	if cue:
-# 		store_data_to_container(cue, mode, fixtures)
-# 		cue_list.force_reload = true
+## Merges data into a cue by its number in a cue list
+func merge_into_cue(fixtures: Array, cue: Cue, mode: SaveMode = SaveMode.MODIFIED) -> void:
+		store_data_to_container(cue, mode, fixtures)
+		cue.cue_list.force_reload = true
 
 
 # ## erases data into a cue by its number in a cue list
@@ -221,7 +221,7 @@ func save_to_new_cue(fixtures: Array, cue_list: CueList, mode: SaveMode = SaveMo
 func shortcut_set_color(p_fixtures: Array, p_color: Color, p_mix_mode: MixMode) -> void:
 	if not p_fixtures:
 		return
-	
+
 	match p_mix_mode:
 		MixMode.Additive:
 			for fixture: Variant in p_fixtures:
@@ -229,12 +229,10 @@ func shortcut_set_color(p_fixtures: Array, p_color: Color, p_mix_mode: MixMode) 
 					_set_individual_fixture_data(fixture, "ColorAdd_R", "ColorAdd_R", p_color.r, "root")
 					_set_individual_fixture_data(fixture, "ColorAdd_G", "ColorAdd_G", p_color.g, "root")
 					_set_individual_fixture_data(fixture, "ColorAdd_B", "ColorAdd_B", p_color.b, "root")
-		
+
 		MixMode.Subtractive:
 			for fixture: Variant in p_fixtures:
 				if fixture is Fixture:
 					_set_individual_fixture_data(fixture, "ColorSub_C", "ColorSub_C", 1 - p_color.r, "root")
 					_set_individual_fixture_data(fixture, "ColorSub_M", "ColorSub_M", 1 - p_color.g, "root")
 					_set_individual_fixture_data(fixture, "ColorSub_Y", "ColorSub_Y", 1 - p_color.b, "root")
-		
-

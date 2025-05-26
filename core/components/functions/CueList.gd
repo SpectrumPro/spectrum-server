@@ -92,10 +92,10 @@ func _component_ready() -> void:
 func add_cue(cue: Cue, number: float = 0, rename: bool = false) -> bool:
 	if number == 0:
 		number = cue.number
-	
+
 	if number <= 0:
 		number = round(_index_list[-1] + 1) if _index_list else 1
-	
+
 	if cue in _cues.values() or number in _index_list:
 		return false
 
@@ -103,10 +103,11 @@ func add_cue(cue: Cue, number: float = 0, rename: bool = false) -> bool:
 		cue.name = "Un-named Cue: " + str(number)
 
 	cue.number = number
+	cue.cue_list = self
 	_cues[number] = cue
 	_index_list.append(number)
 	_index_list.sort()
-	
+
 	cue.on_delete_requested.connect(remove_cue.bind(cue), CONNECT_ONE_SHOT)
 
 	cue.local_data[uuid+"on_timecode_trigger_changed"] = _on_cue_timecode_trigger_changed.bind(cue)
@@ -156,14 +157,14 @@ func _on_cue_timecode_trigger_changed(timecode_trigger: int, cue: Cue) -> void:
 
 			if not _keyframes[old_trigger]:
 				_keyframes.erase(old_trigger)
-		
+
 		_add_cue_keyframe(cue)
 
 
 func _add_cue_keyframe(cue: Cue) -> void:
 	if not cue.timecode_trigger in _keyframes.keys():
 		_keyframes[cue.timecode_trigger] = []
-		
+
 	_keyframes[cue.timecode_trigger].append(cue.number)
 
 	_sorted_keyframes = _keyframes.keys()
@@ -182,19 +183,19 @@ func _on_cue_timecode_enabled_stage_changed(timecode_enabled: bool, cue: Cue) ->
 
 		if not _keyframes[cue.timecode_trigger]:
 			_keyframes.erase(cue.timecode_trigger)
-		
+
 		_sorted_keyframes = _keyframes.keys()
 		_sorted_keyframes.sort()
-	
+
 	print(_keyframes)
 
 
 func _find_keyframes(frame: int) -> void:
-	# Use binary search to find the closest frame <= frame 
-	
+	# Use binary search to find the closest frame <= frame
+
 	var left = 0
 	var right = len(_sorted_keyframes) - 1
-	
+
 	# Binary search for closest keyframe <= frame
 	while left <= right:
 		var mid = int((left + right) / 2)
@@ -206,7 +207,7 @@ func _find_keyframes(frame: int) -> void:
 			left = mid + 1
 		else:
 			right = mid - 1
-	
+
 	# If we didn't find an exact match, trigger the closest valid keyframe
 	if right >= 0:
 		if _sorted_keyframes[right] <= frame and _sorted_keyframes[right] != last_triggered_keyframe:
@@ -238,7 +239,7 @@ func go_previous() -> void:
 func seek_to(cue_number: float, p_fade_time: float = -1) -> void:
 	if not cue_number in _index_list and cue_number != -1 or _index == _index_list.find(cue_number):
 		return
-	
+
 	var reset: bool = cue_number == -1
 	var fade_time: float = 1
 
@@ -287,10 +288,10 @@ func seek_to(cue_number: float, p_fade_time: float = -1) -> void:
 		match next_cue.trigger_mode:
 			Cue.TRIGGER_MODE.AFTER_LAST:
 				_seek_to_next_cue_after(next_cue.pre_wait + fade_time)
-			
+
 			Cue.TRIGGER_MODE.WITH_LAST:
 				_seek_to_next_cue_after(next_cue.pre_wait)
-			
+
 			Cue.TRIGGER_MODE.MANUAL:
 				if _autoplay:
 					_seek_to_next_cue_after(next_cue.pre_wait + fade_time)
@@ -313,20 +314,20 @@ func _seek_to_next_cue_after(seconds: float) -> void:
 func _reset_animated_fixtures(animator: Animator, accumulated_animated_data: Dictionary) -> void:
 	for animation_id in _current_animated_fixtures.keys():
 		var animating_fixture = _current_animated_fixtures[animation_id]
-		var from_value: float = animating_fixture.fixture.get_current_value(animating_fixture.zone, animating_fixture.parameter, uuid, animating_fixture.function) 
+		var from_value: float = animating_fixture.fixture.get_current_value(animating_fixture.zone, animating_fixture.parameter, uuid, animating_fixture.function)
 		var to_value: float = animating_fixture.fixture.get_default(animating_fixture.zone, animating_fixture.parameter, animating_fixture.function)
 
 		if is_instance_valid(animating_fixture.animator):
 			animating_fixture.animator.remove_track_from_id(animation_id, false)
 
 		accumulated_animated_data[animation_id] = {
-			"method": func (new_value: Variant) -> void: 
+			"method": func (new_value: Variant) -> void:
 					_current_animated_fixtures[animation_id].current_value = new_value
 					animating_fixture.fixture.set_parameter(
-						animating_fixture.parameter, 
-						animating_fixture.function, 
-						new_value * (_intensity if animating_fixture.parameter in _allowed_intensity_parameters else 1.0), 
-						uuid, 
+						animating_fixture.parameter,
+						animating_fixture.function,
+						new_value * (_intensity if animating_fixture.parameter in _allowed_intensity_parameters else 1.0),
+						uuid,
 						animating_fixture.zone
 					),
 			"from": from_value,
@@ -366,18 +367,17 @@ func _accumulate_state(cue: Cue, accumulated_animated_data: Dictionary, animator
 				var value_config: Dictionary = fixture_data[fixture][zone][parameter]
 				var from_value: float = fixture.get_current_value(zone, parameter, uuid, value_config.function)
 				var to_value: Variant = value_config.value
-				
-				print("Accumulating: ", parameter, " To: ", to_value)
 
 				var animation_id: String = fixture.uuid + zone + parameter
 				accumulated_animated_data[animation_id] = {
-					"method": func (new_value: Variant) -> void: 
+					"method": func (new_value: Variant) -> void:
 						_current_animated_fixtures[animation_id].current_value = new_value
+
 						fixture.set_parameter(
-							parameter, 
-							value_config.function, 
-							new_value * (_intensity if parameter in _allowed_intensity_parameters else 1.0), 
-							uuid, 
+							parameter,
+							value_config.function,
+							new_value * (_intensity if parameter in _allowed_intensity_parameters else 1.0),
+							uuid,
 							zone
 						),
 					"from": from_value * (2 - (_intensity if parameter in _allowed_intensity_parameters else 1.0)),
@@ -462,7 +462,7 @@ func move_cue_up(cue_number: float) -> void:
 	if cue_number in _index_list:
 		var main_cue: Cue = _cues[cue_number]
 		var next_cue: Cue = _cues[_index_list[_index_list.find(main_cue.number) - 1]]
-		
+
 		var main_cue_old_number: float = main_cue.number
 		main_cue.number = next_cue.number
 		next_cue.number = main_cue_old_number
@@ -483,7 +483,7 @@ func move_cue_down(cue_number: float) -> void:
 	if cue_number in _index_list:
 		var main_cue: Cue = _cues[cue_number]
 		var previous_cue: Cue = _cues[_index_list[wrapi(_index_list.find(main_cue.number) + 1, 0, len(_index_list))]]
-		
+
 		var main_cue_old_number: float = main_cue.number
 		main_cue.number = previous_cue.number
 		previous_cue.number = main_cue_old_number
@@ -493,7 +493,7 @@ func move_cue_down(cue_number: float) -> void:
 
 		force_reload = true
 		_index = _index_list.find(main_cue.number)
-		
+
 		on_cue_numbers_changed.emit({
 			main_cue.number: main_cue,
 			previous_cue.number: previous_cue
@@ -559,7 +559,7 @@ func set_intensity(p_intensity: float) -> void:
 
 				if fixture.function_can_fade(animated_fixture.zone, animated_fixture.parameter, animated_fixture.function):
 					fixture.set_parameter(
-						animated_fixture.parameter, 
+						animated_fixture.parameter,
 						animated_fixture.function,
 						animated_fixture.current_value * _intensity,
 						uuid,
