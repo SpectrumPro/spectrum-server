@@ -77,6 +77,16 @@ func _process(delta: float) -> void:
 		_accumulated_time -= udp_frequency
 
 
+## Registers a component as a network object
+func register_component(p_component: EngineComponent) -> void:
+	add_networked_object(p_component.uuid, p_component, p_component.on_delete_requested)
+
+
+## Deregisters a component as a network object
+func deregister_component(p_component) -> void:
+	remove_networked_object(p_component.uuid)
+
+
 ## Adds an object to the networked_objects dictnary, allowing for networked functions for the object
 func add_networked_object(object_name: String, object: Object, delete_signal: Signal = Signal()) -> bool:
 
