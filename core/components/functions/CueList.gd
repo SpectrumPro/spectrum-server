@@ -2,19 +2,26 @@
 # This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
 
 class_name CueList extends Function
-## Stores a list of Cues, that can be moved to at any point.
+## A list of cues
 
-## Emitted when the current cue number is changed
-signal on_cue_changed(cue_number: float)
 
-## Emitted when this CueList starts playing
-signal on_played()
+## Emitted when the active cue is changed
+signal on_active_cue_changed(cue: Cue)
 
-## Emitted when this CueList is paused
-signal on_paused()
+## Emitted when a cues crossfade is finished
+signal on_cue_crossfade_finished(cue: Cue)
 
-## Emitted when this CueList is stopped
-signal on_stopped
+## Emitted when the global fade state is changed
+signal on_global_fade_state_changed(use_global_fade: bool)
+
+## Emitted when the global pre_wait state is changed
+signal on_global_pre_wait_state_changed(use_global_pre_wait: bool)
+
+## Emitted when the global fade is changed
+signal on_global_fade_changed(global_fade: float)
+
+## Emitted when the global pre_wait is changed
+signal on_global_pre_wait_changed(global_pre_wait: float)
 
 ## Emitted when a cue is added to this CueList
 signal on_cues_added(cues: Array)
@@ -22,597 +29,318 @@ signal on_cues_added(cues: Array)
 ## Emitted when a cue is removed from this CueList
 signal on_cues_removed(cues: Array)
 
-## Emitted when cue numbers are changed, stored as {Cue:new_number, ...}
-signal on_cue_numbers_changed(new_numbers: Dictionary)
+## Emitted when a cue's position has changed
+signal on_cue_order_changed(cue: Cue, position: int)
 
-## Emitted when the mode is changed
-signal on_mode_changed(mode: MODE)
+## Emitted when the loop mode is changed
+signal on_loop_mode_changed(loop_mode: LoopMode)
 
 
-## The current active, and previous active cue
-var current_cue: Cue = null
-var last_cue: Cue = null
-var next_cue: Cue = null
-
+## Loop mode, Reset: Reset all track and go to a default state, Track: Track changes while looping the cue list
+enum LoopMode {RESET, TRACK}
 
 ## Allowed parameters to changed when setting function intencity
 const _allowed_intensity_parameters: Array[String] = ["Dimmer"]
 
-## The current mode of this cuelist. When in loop mode the cuelist will not reset fixtures to 0-value when looping back to the start
-enum MODE {NORMAL, LOOP}
-var _mode: int = MODE.NORMAL
 
-## Stores all fixtures that are currently being animated
-## str(fixture.uuid + zone + parameter):{
-##      "current_value": Variant,
-##      "animator": Animator
-##    }
-var _current_animated_fixtures: Dictionary = {}
+## All the cues in the list
+var _cues: Array[Cue]
 
-## Stores all the current animators, stored at {cue_number: Animator}
-var _current_animators: Dictionary = {}
+## Current active cue
+var _active_cue: Cue
 
-## Stores all the cues, these are stored unordered
-var _cues: Dictionary = {}
+## The previous active cue
+var _previous_cue: Cue
 
-## Stores an ordered list of all the cue indexes
-var _index_list: Array = []
+## Global fade state
+var _use_global_fade: bool = false
 
-## The current index in the _index_list array
-var _index: int = -1
+## Global pre wait state
+var _use_global_pre_wait: bool = false
 
+## Global fade time
+var _global_fade: float = 1
 
-## Contains all the keyframes for timecode, stored as {frame: [cue_number, cue_number...]}
-var _keyframes: Dictionary = {}
+## Global pre wait
+var _global_pre_wait: float = 1
 
-## Contains a sorted version of the keyframes
-var _sorted_keyframes: Array = []
+## Has this cuelist paused during a crossfade between two or more cues
+var _has_paused_during_crossfade: bool
 
-## The last leyframe that was triggred
-var last_triggered_keyframe: int = -1
-
-
-## Used to determin if a force reload from the start should happen, used when a cue is added, removed, moved, or edited
-var force_reload: bool = false
-
-## Autoplay state
-var _autoplay: bool = false
+## All active animators
+var _active_animators: Array[CueAnimator]
 
 
 func _component_ready() -> void:
 	set_name("CueList")
 	set_self_class("CueList")
 
-	_intensity = 1
-	TC.frames_changed.connect(_find_keyframes)
 
-
-## Adds a pre-existing cue to this CueList
-## Returns false if the cue already exists in this list, or if the index is already in use
-func add_cue(cue: Cue, number: float = 0, rename: bool = false) -> bool:
-	if number == 0:
-		number = cue.number
-
-	if number <= 0:
-		number = round(_index_list[-1] + 1) if _index_list else 1
-
-	if cue in _cues.values() or number in _index_list:
+## Adds a cue to the list
+func add_cue(p_cue: Cue, p_no_signal: bool = false) -> bool:
+	if p_cue in _cues:
 		return false
+	
+	_cues.append(p_cue)
+	p_cue.on_delete_requested.connect(remove_cue.bind(p_cue))
+	Server.register_component(p_cue)
 
-	if rename:
-		cue.name = "Un-named Cue: " + str(number)
+	if not p_no_signal:
+		on_cues_added.emit([p_cue])
+	
+	return true
 
-	cue.number = number
-	cue.cue_list = self
-	_cues[number] = cue
-	_index_list.append(number)
-	_index_list.sort()
 
-	cue.on_delete_requested.connect(remove_cue.bind(cue), CONNECT_ONE_SHOT)
+## Adds mutiple cues
+func add_cues(p_cues: Array) -> void:
+	var just_added_cues: Array[Cue]
 
-	cue.local_data[uuid+"on_timecode_trigger_changed"] = _on_cue_timecode_trigger_changed.bind(cue)
-	cue.local_data[uuid+"on_timecode_enabled_state_changed"] = _on_cue_timecode_enabled_stage_changed.bind(cue)
+	for cue: Variant in p_cues:
+		if cue is Cue and add_cue(cue, true):
+			just_added_cues.append(cue)
+	
+	if just_added_cues:
+		on_cues_added.emit(just_added_cues)
 
-	if cue.timecode_enabled:
-		_add_cue_keyframe(cue)
 
-	cue.on_timecode_trigger_changed.connect(cue.local_data[uuid+"on_timecode_trigger_changed"])
-	cue.on_timecode_enabled_state_changed.connect(cue.local_data[uuid+"on_timecode_enabled_state_changed"])
+## Removes a cue from the list
+func remove_cue(p_cue: Cue, p_no_signal: bool = false) -> bool:
+	if p_cue not in _cues:
+		return false
+	 
+	_cues.erase(p_cue)
+	Server.deregister_component(p_cue)
 
-	Server.add_networked_object(cue.uuid, cue, cue.on_delete_requested)
-
-	force_reload = true
-
-	on_cues_added.emit([cue])
+	if not p_no_signal:
+		on_cues_removed.emit([p_cue])
 
 	return true
 
 
-## Removes a cue from this CueList
-func remove_cue(cue: Cue) -> void:
-	if cue.number in _cues:
-		_index_list.erase(cue.number)
-		_cues.erase(cue.number)
+## Removes mutiple cues
+func remove_cues(p_cues: Array) -> void:
+	var just_removed_cues: Array[Cue]
 
-		_index = _index - 1
-		force_reload = true
-
-		cue.on_timecode_trigger_changed.disconnect(cue.local_data[uuid+"on_timecode_trigger_changed"])
-		cue.on_timecode_enabled_state_changed.disconnect(cue.local_data[uuid+"on_timecode_enabled_state_changed"])
-		cue.local_data.erase(uuid+"on_timecode_trigger_changed")
-		cue.local_data.erase(uuid+"on_timecode_enabled_state_changed")
-		cue.local_data.erase(uuid+"old_timecode_trigger")
-
-		Server.remove_networked_object(cue.uuid)
-		cue.delete()
-		on_cues_removed.emit([cue])
+	for cue: Variant in p_cues:
+		if cue is Cue and remove_cue(cue, true):
+			just_removed_cues.append(cue)
+	
+	if just_removed_cues:
+		on_cues_removed.emit(just_removed_cues)
 
 
-func _on_cue_timecode_trigger_changed(timecode_trigger: int, cue: Cue) -> void:
-	if cue.timecode_enabled:
-		var old_trigger: int = cue.local_data.get(uuid+"old_timecode_trigger", -1)
-
-		if old_trigger != -1 and old_trigger in _keyframes.keys():
-			_keyframes[old_trigger].erase(cue.number)
-
-			if not _keyframes[old_trigger]:
-				_keyframes.erase(old_trigger)
-
-		_add_cue_keyframe(cue)
+## Returns an ordored list of cues
+func get_cues() -> Array[Cue]:
+	return _cues.duplicate()
 
 
-func _add_cue_keyframe(cue: Cue) -> void:
-	if not cue.timecode_trigger in _keyframes.keys():
-		_keyframes[cue.timecode_trigger] = []
-
-	_keyframes[cue.timecode_trigger].append(cue.number)
-
-	_sorted_keyframes = _keyframes.keys()
-	_sorted_keyframes.sort()
-
-	cue.local_data[uuid+"old_timecode_trigger"] = cue.timecode_trigger
-
-
-func _on_cue_timecode_enabled_stage_changed(timecode_enabled: bool, cue: Cue) -> void:
-	if timecode_enabled:
-		_add_cue_keyframe(cue)
-
-	else:
-		if cue.timecode_trigger in _keyframes.keys():
-			_keyframes[cue.timecode_trigger].erase(cue.number)
-
-		if not _keyframes[cue.timecode_trigger]:
-			_keyframes.erase(cue.timecode_trigger)
-
-		_sorted_keyframes = _keyframes.keys()
-		_sorted_keyframes.sort()
-
-	print(_keyframes)
-
-
-func _find_keyframes(frame: int) -> void:
-	# Use binary search to find the closest frame <= frame
-
-	var left = 0
-	var right = len(_sorted_keyframes) - 1
-
-	# Binary search for closest keyframe <= frame
-	while left <= right:
-		var mid = int((left + right) / 2)
-		if _sorted_keyframes[mid] == frame and _sorted_keyframes[mid] != last_triggered_keyframe :
-			last_triggered_keyframe = _sorted_keyframes[mid]
-			_trigger_keyframe(_sorted_keyframes[mid])
-			return
-		elif _sorted_keyframes[mid] < frame:
-			left = mid + 1
-		else:
-			right = mid - 1
-
-	# If we didn't find an exact match, trigger the closest valid keyframe
-	if right >= 0:
-		if _sorted_keyframes[right] <= frame and _sorted_keyframes[right] != last_triggered_keyframe:
-			last_triggered_keyframe = _sorted_keyframes[right]
-			_trigger_keyframe(_sorted_keyframes[right])
+## Sets the posititon of a cue in the list
+func set_cue_position(cue: Cue, position: int) -> void:
+	if cue not in _cues:
 		return
+	
+	var old_index: int = _cues.find(cue)
+	_cues.insert(position, cue)
+	_cues.remove_at(old_index)
+
+	on_cue_order_changed.emit(cue, position)
 
 
-func _trigger_keyframe(keyframe: int) -> void:
-	for cue_number: float in _keyframes[keyframe]:
-		seek_to(cue_number)
+## Sets the global fade state
+func set_global_fade_state(use_global_fade: bool) -> void:
+	if _use_global_fade == use_global_fade:
+		return
+	
+	_use_global_fade = use_global_fade
+	on_global_fade_state_changed.emit(_use_global_fade)
 
 
-## Advances to the next cue in the list
+## Sets the global pre wait state
+func set_global_pre_wait_state(use_global_pre_wait: bool) -> void:
+	if _use_global_pre_wait == use_global_pre_wait:
+		return
+	
+	_use_global_pre_wait = use_global_pre_wait
+	on_global_fade_state_changed.emit(_use_global_pre_wait)
+
+
+## Sets the global fade speed
+func set_global_fade_speed(global_fade_speed: float) -> void:
+	if _global_fade == global_fade_speed:
+		return
+	
+	_global_fade = global_fade_speed
+	on_global_fade_changed.emit(_global_fade)
+
+
+## Sets the global pre wait speed
+func set_global_pre_wait_speed(global_pre_wait_speed: float) -> void:
+	if _global_pre_wait == global_pre_wait_speed:
+		return
+	
+	_global_pre_wait = global_pre_wait_speed
+	on_global_fade_changed.emit(_global_pre_wait)
+
+
+## Gets the global fade state
+func get_global_fade_state() -> bool:
+	return _use_global_fade
+
+
+## Gets the global pre wait state
+func get_global_pre_wait_state() -> bool:
+	return _use_global_pre_wait
+
+
+## Gets the global fade speed
+func get_global_fade_speed() -> float:
+	return _global_fade
+
+
+## Gets the global pre wait speed
+func get_global_pre_wait_speed() -> float:
+	return _global_pre_wait
+
+
+## Seeks to the next cue in the list
 func go_next() -> void:
-	if _cues:
-		seek_to(_index_list[wrapi(_index + 1, 0, len(_cues))])
-	else: stop()
+	if not _cues:
+		return
+	
+	seek_to(_cues[wrapi(_cues.find(_active_cue) + 1, 0, _cues.size())])
 
 
-## Returns to the previous cue in the list
+## Seeks to the previous cue in the list
 func go_previous() -> void:
-	if _cues:
-		seek_to(_index_list[wrapi(_index - 1, 0, len(_cues)) if _index != -1 else -1])
-	else: stop()
+	if not _cues:
+		return
+	
+	seek_to(_cues[wrapi(_cues.find(_active_cue) - 1, 0, _cues.size())])
 
 
-## Skips to the cue index
-func seek_to(cue_number: float, p_fade_time: float = -1) -> void:
-	if not cue_number in _index_list and cue_number != -1 or _index == _index_list.find(cue_number):
+## Seeks to a cue
+func seek_to(cue: Cue) -> void:
+	if cue not in _cues or cue == _active_cue:
 		return
 
-	var reset: bool = cue_number == -1
-	var fade_time: float = 1
+	_previous_cue = _active_cue
+	_active_cue = cue
 
-	_index = _index_list.find(cue_number)
+	var tracking_range: Array[Cue] = _cues.slice(
+		clamp(_cues.find(_previous_cue), 0, INF), 
+		clamp(_cues.find(_active_cue), 0, INF) + 1
+	)
+	var animator: CueAnimator = _create_animator()
 
-	if reset:
-		fade_time = current_cue.fade_time if current_cue else 0.0
-		current_cue = null
-		next_cue = _cues[_index_list[0]]
-	else:
-		current_cue = _cues[cue_number]
-		fade_time = current_cue.fade_time
-		next_cue = _cues[_index_list[(_index + 1) % len(_index_list)]]
+	for cue_to_track: Cue in tracking_range:
+		animator.track(cue_to_track)
 
-	if p_fade_time != -1 : fade_time = p_fade_time
+	animator.set_time_scale(1 / _global_fade if _use_global_fade else cue.fade_time)
+	animator.finished.connect(_on_animator_finished.bind(animator))
 
-	var current_cue_index: int = _index_list.find(current_cue.number) if current_cue else -1
+	_active_animators.append(animator)
+	_play()
 
-	var animator = Core.create_animator()
-	animator.kill_on_finish = true
 
-	var accumulated_animated_data: Dictionary = {}
-	var going_backwards: bool = (last_cue and (_index_list.find(last_cue.number) > current_cue_index)) if not reset else true
+## Creates and returns a new CueAnimator
+func _create_animator() -> CueAnimator:
+	var animator: CueAnimator = CueAnimator.new()
 
-	if (going_backwards and _mode != MODE.LOOP) or force_reload or reset:
-		_reset_animated_fixtures(animator, accumulated_animated_data)
-		_remove_all_animators()
+	animator.set_layer_id(uuid)
+	animator.set_allowed_intensity_parameters(_allowed_intensity_parameters)
 
-	var cue_range: Array = range(0, current_cue_index + 1)
-	if not going_backwards and not force_reload:
-		var last_cue_index: int = _index_list.find(last_cue.number) if last_cue else -1
-		cue_range = [current_cue_index] if (last_cue_index + 1) == current_cue_index else range(last_cue_index + 1, current_cue_index + 1)
+	Core.add_child(animator)
+	return animator
 
-	if not reset:
-		for index in cue_range:
-			var cue: Cue = _cues[_index_list[index]]
-			_accumulate_state(cue, accumulated_animated_data, animator)
-
-	animator.set_animated_data(accumulated_animated_data)
-	_handle_animator_finished(animator, cue_number, fade_time)
-
-	force_reload = false
-
-
-	if (not going_backwards or _mode == MODE.LOOP) and not reset:
-		match next_cue.trigger_mode:
-			Cue.TRIGGER_MODE.AFTER_LAST:
-				_seek_to_next_cue_after(next_cue.pre_wait + fade_time)
-
-			Cue.TRIGGER_MODE.WITH_LAST:
-				_seek_to_next_cue_after(next_cue.pre_wait)
-
-			Cue.TRIGGER_MODE.MANUAL:
-				if _autoplay:
-					_seek_to_next_cue_after(next_cue.pre_wait + fade_time)
-
-
-	last_cue = current_cue
-	on_cue_changed.emit(_index_list[_index] if not reset else -1.0)
-
-
-
-func _seek_to_next_cue_after(seconds: float) -> void:
-	var orignal_index: int = _index
-
-	await Core.get_tree().create_timer(seconds).timeout
-
-	if _index == orignal_index:
-		go_next()
-
-
-func _reset_animated_fixtures(animator: Animator, accumulated_animated_data: Dictionary) -> void:
-	for animation_id in _current_animated_fixtures.keys():
-		var animating_fixture = _current_animated_fixtures[animation_id]
-		var from_value: float = animating_fixture.fixture.get_current_value(animating_fixture.zone, animating_fixture.parameter, uuid, animating_fixture.function)
-		var to_value: float = animating_fixture.fixture.get_default(animating_fixture.zone, animating_fixture.parameter, animating_fixture.function)
-
-		if is_instance_valid(animating_fixture.animator):
-			animating_fixture.animator.remove_track_from_id(animation_id, false)
-
-		accumulated_animated_data[animation_id] = {
-			"method": func (new_value: Variant) -> void:
-					_current_animated_fixtures[animation_id].current_value = new_value
-					animating_fixture.fixture.set_parameter(
-						animating_fixture.parameter,
-						animating_fixture.function,
-						new_value * (_intensity if animating_fixture.parameter in _allowed_intensity_parameters else 1.0),
-						uuid,
-						animating_fixture.zone
-					),
-			"from": from_value,
-			"to": to_value,
-			"current": from_value,
-			"can_fade": animating_fixture.can_fade,
-			"start": animating_fixture.start,
-			"stop": animating_fixture.stop,
-			"first_time": true
-		}
-
-		_current_animated_fixtures[animation_id] = {
-			"zone": animating_fixture.zone,
-			"parameter": animating_fixture.parameter,
-			"function": animating_fixture.function,
-			"fixture": animating_fixture.fixture,
-			"can_fade": animating_fixture.can_fade,
-			"start": animating_fixture.start,
-			"stop": animating_fixture.stop,
-			"animator": animator,
-			# "current_value": to_value
-		}
-
-
-func _remove_all_animators() -> void:
-	for old_cue_number: float in _current_animators:
-		_remove_animator(old_cue_number)
-
-
-## Builds animation data from the cue and updates current animations.
-func _accumulate_state(cue: Cue, accumulated_animated_data: Dictionary, animator: Animator) -> void:
-	var fixture_data: Dictionary = cue.get_fixture_data()
-
-	for fixture: Fixture in fixture_data:
-		for zone: String in fixture_data[fixture]:
-			for parameter: String in fixture_data[fixture][zone]:
-				var value_config: Dictionary = fixture_data[fixture][zone][parameter]
-				var from_value: float = fixture.get_current_value(zone, parameter, uuid, value_config.function)
-				var to_value: Variant = value_config.value
-
-				var animation_id: String = fixture.uuid + zone + parameter
-				accumulated_animated_data[animation_id] = {
-					"method": func (new_value: Variant) -> void:
-						_current_animated_fixtures[animation_id].current_value = new_value
-
-						fixture.set_parameter(
-							parameter,
-							value_config.function,
-							new_value * (_intensity if parameter in _allowed_intensity_parameters else 1.0),
-							uuid,
-							zone
-						),
-					"from": from_value * (2 - (_intensity if parameter in _allowed_intensity_parameters else 1.0)),
-					"to": to_value,
-					"current": from_value * (2 - (_intensity if parameter in _allowed_intensity_parameters else 1.0)),
-					"can_fade": value_config.can_fade,
-					"start": value_config.start,
-					"stop": value_config.stop,
-					"first_time": true
-				}
-
-				if animation_id in _current_animated_fixtures:
-					if _current_animated_fixtures[animation_id].has("current_value"):
-						accumulated_animated_data[animation_id].from = _current_animated_fixtures[animation_id].current_value
-
-					var _animator = _current_animated_fixtures[animation_id].animator
-					if is_instance_valid(_animator) and _animator != animator:
-						_animator.remove_track_from_id(animation_id, false)
-
-
-				_current_animated_fixtures[animation_id] = {
-					"zone": zone,
-					"parameter": parameter,
-					"function": value_config.function,
-					"can_fade": value_config.can_fade,
-					"start": value_config.start,
-					"stop": value_config.stop,
-					"fixture": fixture,
-					"animator": animator,
-					"current_value": from_value
-				}
-
-
-func _handle_animator_finished(animator: Animator, cue_number: float, fade_time: float) -> void:
-	animator.finished.connect((func (current_cue_number: float):
-		_current_animators[current_cue_number].pause()
-		_current_animators[current_cue_number].queue_free()
-		_current_animators.erase(current_cue_number)
-	).bind(cue_number), CONNECT_ONE_SHOT)
-
-	var subtract_time: float = 0
-	if cue_number in _current_animators:
-		subtract_time = remap(_current_animators[cue_number].elapsed_time, 0, 1, 0, fade_time)
-		_current_animators[cue_number].pause()
-		_current_animators[cue_number].queue_free()
-		_current_animators.erase(cue_number)
-
-	animator.time_scale = 1 / (fade_time)
-	_current_animators[cue_number] = animator
-	animator.play()
-
-
-func _remove_animator(cue_number: float, erase: bool = true) -> void:
-	_current_animators[cue_number].pause()
-	_current_animators[cue_number].queue_free()
-	if erase:
-		_current_animators.erase(cue_number)
-
 
-## Stops this cue list, fades all fixtures down to 0, using the fade time provided, otherwise will use the fade time of the current cue
-func stop() -> void:
-	_autoplay = false
-	seek_to(-1)
-	on_stopped.emit()
+## Called when an animator is finished
+func _on_animator_finished(animator: CueAnimator) -> void:
+	_active_animators.erase(animator)
 
 
-## Start auto play
-func play() -> void:
-	_autoplay = true
-	go_next()
-	on_played.emit()
+## Plays the cuelist, when paused during a crossfade
+func _play() -> void:
+	for animator: CueAnimator in _active_animators:
+		animator.play()
 
 
-## Stop auto play
-func pause() -> void:
-	_autoplay = false
-	on_paused.emit()
+## Stops the cuelist
+func _stop() -> void:
+	for animator: CueAnimator in _active_animators:
+		animator.stop()
+	
+	_active_cue = null
+	_previous_cue = null
 
 
-## Moves the cue at cue_number up. By swapping the number with the next cue in the list
-func move_cue_up(cue_number: float) -> void:
-	if cue_number in _index_list:
-		var main_cue: Cue = _cues[cue_number]
-		var next_cue: Cue = _cues[_index_list[_index_list.find(main_cue.number) - 1]]
-
-		var main_cue_old_number: float = main_cue.number
-		main_cue.number = next_cue.number
-		next_cue.number = main_cue_old_number
-
-		_cues[main_cue.number] = main_cue
-		_cues[next_cue.number] = next_cue
-
-		force_reload = true
-		_index = _index_list.find(main_cue.number)
+## Pauses the cuelist, during a crossfade
+func _pause() -> void:
+	for animator: CueAnimator in _active_animators:
+		animator.pause()
 
-		on_cue_numbers_changed.emit({
-			main_cue.number: main_cue,
-			next_cue.number: next_cue
-		})
-
-## Moves the cue at cue_number down. By swapping the number with the previous cue in the list
-func move_cue_down(cue_number: float) -> void:
-	if cue_number in _index_list:
-		var main_cue: Cue = _cues[cue_number]
-		var previous_cue: Cue = _cues[_index_list[wrapi(_index_list.find(main_cue.number) + 1, 0, len(_index_list))]]
 
-		var main_cue_old_number: float = main_cue.number
-		main_cue.number = previous_cue.number
-		previous_cue.number = main_cue_old_number
+## Override this function to handle ActiveState changes
+func _handle_active_state_change(active_state: ActiveState) -> void:
+	match active_state:
+		ActiveState.DISABLED:
+			if _active_cue:
+				_stop()
 
-		_cues[main_cue.number] = main_cue
-		_cues[previous_cue.number] = previous_cue
+		ActiveState.ENABLED:
+			if not  _active_cue:
+				go_next()
+				
 
-		force_reload = true
-		_index = _index_list.find(main_cue.number)
+## Override this function to handle TransportState changes
+func _handle_transport_state_change(transport_state: TransportState) -> void:
+	match transport_state:
+		TransportState.FORWARDS:
+			if _has_paused_during_crossfade:
+				_play()
+			else:
+				go_next()
 
-		on_cue_numbers_changed.emit({
-			main_cue.number: main_cue,
-			previous_cue.number: previous_cue
-		})
+		TransportState.PAUSED:
+			_pause()
 
+		TransportState.BACKWARDS:
+			if _has_paused_during_crossfade:
+				_play()
+			else:
+				go_previous()
 
-func set_cue_number(new_number: float, cue: Cue) -> bool:
-	if cue in _cues.values() and get_cue(new_number) == null:
 
-		_index_list.erase(cue.number)
-		_index_list.append(new_number)
-		_index_list.sort()
+## Override this function to handle intensity changes
+func _handle_intensity_change(p_intensity: float) -> void:
+	pass
 
-		_cues.erase(cue.number)
-		_cues[new_number] = cue
-
-		cue.number = new_number
-
-		_index = _index_list.find(cue.number)
-		force_reload = true
-
-		on_cue_numbers_changed.emit({
-			new_number: cue
-		})
-
-		return true
-
-	else:
-		return false
-
-
-##Duplicates a cue
-func duplicate_cue(cue_number: float) -> void:
-	if not cue_number in _cues.keys():
-		return
-
-	var new_cue: Cue = Cue.new()
-	new_cue.load(_cues[cue_number].serialize())
-
-	add_cue(new_cue, -1)
-
-
-## Returnes the cue at the given index, or null if none is found
-func get_cue(cue_number: float) -> Cue:
-	return _cues.get(cue_number, null)
-
-
-## Changes the current mode
-func set_mode(p_mode: MODE) -> void:
-	_mode = p_mode
-	on_mode_changed.emit(_mode)
-
-
-## Sets the intensity of this function, from 0.0 to 1.0
-func set_intensity(p_intensity: float) -> void:
-	_intensity = p_intensity
-	on_intensity_changed.emit(snapped(_intensity, 0.001))
-
-	if _index != -1:
-		for animated_fixture: Dictionary in _current_animated_fixtures.values():
-			if not is_instance_valid(animated_fixture.animator) and animated_fixture.has("current_value") and animated_fixture.parameter in _allowed_intensity_parameters:
-				var fixture: Fixture = animated_fixture.fixture
-
-				if fixture.function_can_fade(animated_fixture.zone, animated_fixture.parameter, animated_fixture.function):
-					fixture.set_parameter(
-						animated_fixture.parameter,
-						animated_fixture.function,
-						animated_fixture.current_value * _intensity,
-						uuid,
-						animated_fixture.zone
-					)
-
-
-## Sets the fade time for all cues
-func set_global_fade_time(fade_time: float) -> void:
-	for cue: Cue in _cues.values():
-		cue.set_fade_time(fade_time)
-
-
-## Sets the pre wait time for all cues
-func set_global_pre_wait(pre_wait: float) -> void:
-	for cue: Cue in _cues.values():
-		cue.set_pre_wait(pre_wait)
-
-
-## Called when this CueList is to be deleted
-func _on_delete_request() -> void:
-	seek_to(-1, 0)
-
-	for cue: Cue in _cues.values():
-		Server.remove_networked_object(cue.uuid)
-		cue.delete()
 
 
 ## Saves this cue list to a Dictionary
 func _on_serialize_request(p_mode: int) -> Dictionary:
-	var serialized_cues: Dictionary = {}
-	for cue_index: float in _index_list:
-		serialized_cues[str(cue_index)] = _cues[cue_index].serialize()
-
-	var serialized_data: Dictionary = {
-		"cues": serialized_cues,
-		"mode": _mode,
+	return {
+		"use_global_fade": _use_global_fade,
+		"use_global_pre_wait": _use_global_pre_wait,
+		"global_fade": _global_fade,
+		"global_pre_wait": _global_pre_wait,
+		"cues": Utils.seralise_component_array(_cues)
 	}
-
-	if p_mode == CoreEngine.SERIALIZE_MODE_NETWORK:
-		serialized_data.merge({
-			"index": _index,
-			"intensity": _intensity
-		})
-
-	return serialized_data
 
 
 ## Loads this cue list from a Dictionary
 func _on_load_request(serialized_data: Dictionary) -> void:
-	_mode = int(serialized_data.get("mode", MODE.NORMAL))
+	_use_global_fade = type_convert(serialized_data.get("use_global_fade", _use_global_fade), TYPE_BOOL)
+	_use_global_pre_wait = type_convert(serialized_data.get("use_global_pre_wait", _use_global_pre_wait), TYPE_BOOL)
+	_global_fade = type_convert(serialized_data.get("global_fade", _global_fade), TYPE_FLOAT)
+	_global_pre_wait = type_convert(serialized_data.get("global_pre_wait", _global_pre_wait), TYPE_FLOAT)
 
-	for cue_index: String in serialized_data.get("cues").keys():
-		var new_cue: Cue = Cue.new()
-		new_cue.load(serialized_data.cues[cue_index])
-		add_cue(new_cue, float(cue_index))
+	add_cues(Utils.deseralise_component_array(type_convert(serialized_data.get("cues", []), TYPE_ARRAY)))
+
+
+## Called when this CueList is to be deleted
+func _on_delete_request() -> void:
+	_stop()
+
+	for cue: Cue in _cues:
+		remove_cue(cue, true)
+		cue.delete()

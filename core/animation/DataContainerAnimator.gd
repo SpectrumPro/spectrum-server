@@ -94,7 +94,6 @@ func stop() -> void:
 	set_process(false)
 	_progress = 0
 
-	print("Stopping")
 	for track: Dictionary in _tracks.values():
 		(track.fixture as Fixture).erase_parameter(
 			track.parameter,

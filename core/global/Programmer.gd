@@ -185,8 +185,9 @@ func save_to_new_cue_list(fixtures: Array) -> CueList:
 	blackout_cue.name = "Blackout"
 	store_data_to_container(new_cue, SaveMode.MODIFIED, fixtures)
 
-	new_cue_list.add_cue(blackout_cue, 0.5)
-	new_cue_list.add_cue(new_cue, 1, true)
+	new_cue_list.add_cue(blackout_cue)
+	new_cue_list.add_cue(new_cue)
+	new_cue_list.seek_to(new_cue)
 
 	Core.add_component(new_cue_list)
 	return new_cue_list
@@ -198,8 +199,8 @@ func save_to_new_cue(fixtures: Array, cue_list: CueList, mode: SaveMode = SaveMo
 
 	store_data_to_container(new_cue, mode, fixtures)
 
-	cue_list.add_cue(new_cue, 0, true)
-	cue_list.seek_to(new_cue.number)
+	cue_list.add_cue(new_cue)
+	cue_list.seek_to(new_cue)
 
 
 ## Merges data into a cue by its number in a cue list

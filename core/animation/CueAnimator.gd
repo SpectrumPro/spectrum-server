@@ -18,6 +18,9 @@ var _time_scale: float = 1
 ## Elapsed time since this animation started
 var _progress: float = 0
 
+## Intensity of the CueList
+var _intensity: float = 1
+
 ## Layer Id for animating fixtures
 var _layer_id: String = ""
 
@@ -62,6 +65,10 @@ func set_time_scale(p_time_scale: float) -> void:
 	_time_scale = p_time_scale
 
 
+## Sets the intensity
+func set_intensity(p_intensity: float) -> void:
+	_intensity = p_intensity
+
 
 ## Plays this animation
 func play() -> void:		
@@ -84,6 +91,8 @@ func stop() -> void:
 			_layer_id,
 			track.zone
 		)
+	
+	finished.emit()
 
 
 ## Finishes the animation imdetaly 
@@ -129,6 +138,10 @@ func seek_to(time: float) -> void:
 			animation_track.first_time = false
 
 			var fixture: Fixture = animation_track.fixture
+
+			if animation_track.parameter in _allowed_intensity_parameters:
+				new_data *= _intensity
+			
 			fixture.set_parameter(animation_track.parameter, animation_track.function, new_data, _layer_id, animation_track.zone)
 	
 	_progress = time
@@ -163,9 +176,10 @@ func remove_track(id: String, reset: bool = true) -> void:
 
 
 ## Tracks a cues fixtures
-func track(cue: Cue) -> void:
+func track(cue: Cue) -> Array[String]:
+	var ids: Array[String]
 	var fixture_data: Dictionary = cue.get_fixture_data()
-
+	
 	for fixture: Fixture in fixture_data:
 		for zone: String in fixture_data[fixture]:
 			for parameter: String in fixture_data[fixture][zone]:
@@ -184,6 +198,10 @@ func track(cue: Cue) -> void:
 					data.start,
 					data.stop,
 				)
+
+				ids.append(id)
+	
+	return ids
 
 
 ## Gets an animated track from the given id
