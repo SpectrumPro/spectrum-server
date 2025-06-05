@@ -17,6 +17,9 @@ signal on_global_data_stored(parameter: String, function: String, value: Variant
 ## Emitted when global data is erased from this function
 signal on_global_data_erased(parameter: String)
 
+## Emitted when any data is modified
+signal data_modified()
+
 
 ## Allows this function to store zero data, ie storing the color of black, or a intensity of 0
 var _allow_store_zero_data: bool = true
@@ -72,6 +75,7 @@ func store_data(p_fixture: Fixture, p_parameter: String, p_function: String, p_v
 		}
 
 	on_data_stored.emit(p_fixture, p_parameter, p_function, p_value, p_zone, p_can_fade, p_start, p_stop)
+	data_modified.emit()
 
 	return true
 
@@ -86,6 +90,8 @@ func erase_data(p_fixture: Fixture, p_parameter: String, p_zone: String) -> bool
 			_fixture_data.erase(p_fixture)
 
 		on_data_erased.emit(p_fixture, p_parameter, p_zone)
+		data_modified.emit()
+
 		return true
 
 	return false
@@ -104,6 +110,7 @@ func store_global_data(p_parameter: String, p_function: String, p_value: Variant
 		"stop": p_stop
 	}
 	on_global_data_stored.emit(p_parameter, p_function, p_value, p_can_fade, p_start, p_stop)
+	data_modified.emit()
 
 	return true
 
@@ -114,6 +121,7 @@ func erase_global_data(p_parameter: String) -> bool:
 
 	if state:
 		on_global_data_erased.emit(p_parameter)
+		data_modified.emit()
 	
 	return state
 	

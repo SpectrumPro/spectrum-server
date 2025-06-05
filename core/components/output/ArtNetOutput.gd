@@ -85,6 +85,7 @@ func get_universe_number() -> int:
 ## Called when this output is started
 func start():
 	stop()
+	set_use_broadcast(_use_broadcast)
 	var err: Error = _udp_peer.set_dest_address(_ip_address, _port)
 
 	if err:

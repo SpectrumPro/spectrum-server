@@ -95,9 +95,6 @@ func set_parameter(p_parameter: String, p_function: String, p_value: float, p_la
 	# print(p_parameter, ": ", p_value)
 
 	if _parameters.has(p_zone) and _parameters[p_zone].has(p_parameter) and _parameters[p_zone][p_parameter].functions.has(p_function):
-		if p_value == get_default(p_zone, p_parameter, p_function):
-			erase_parameter(p_parameter, p_layer_id, p_zone)
-			return true
 		
 		var offsets: Array = _parameters[p_zone][p_parameter].offsets
 		_raw_layers.get_or_add(p_zone, {}).get_or_add(p_parameter, {})[p_layer_id] = {"value": p_value, "function": p_function}
@@ -147,11 +144,12 @@ func erase_parameter(p_parameter: String, p_layer_id: String, p_zone: String = "
 			if max and max != _current[p_zone][p_parameter]:
 				_current[p_zone][p_parameter] = max
 
-				if not p_disable_output:
-					on_parameter_erased.emit(p_parameter, p_zone)
-					_compile_output()
 			else:
 				_current[p_zone].erase(p_parameter)
+			
+			if not p_disable_output:
+				on_parameter_erased.emit(p_parameter, p_zone)
+				_compile_output()
 		
 		else:
 			var zones: Array = _parameters.keys()

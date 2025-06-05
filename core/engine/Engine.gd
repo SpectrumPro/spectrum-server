@@ -73,6 +73,7 @@ var EngineConfig = {
 	],
 	## Root classes are the primary classes that will be seralized and loaded 
 	"root_classes": [
+		"Fixture",
 		"Universe",
 		"Function",
 		"FixtureGroup"

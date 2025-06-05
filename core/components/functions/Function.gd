@@ -29,8 +29,8 @@ enum ActiveState {
 
 ## Transport Stae
 enum TransportState {
-	FORWARDS,
 	PAUSED,
+	FORWARDS,
 	BACKWARDS
 }
 
@@ -42,6 +42,9 @@ var _active_state: ActiveState = ActiveState.DISABLED
 
 ## Current TransportState of this function
 var _transport_state: TransportState = TransportState.PAUSED
+
+## The previous transport state before setting it to Paused
+var _previous_transport_state: TransportState = TransportState.PAUSED
 
 ## Should this Function set ActiveState to ENABLED when intensity is not 0
 var _auto_start: bool = true
@@ -101,6 +104,14 @@ func get_active_state() -> ActiveState:
 	return _active_state
 
 
+## Plays this Function, with the previous TransportState
+func play() -> void:
+	if _previous_transport_state:
+		set_transport_state(_previous_transport_state)
+	else:
+		play_forwards()
+
+
 ## Plays this Function with TransportState.FORWARDS
 func play_forwards() -> void:
 	set_transport_state(TransportState.FORWARDS)
@@ -127,6 +138,9 @@ func set_transport_state(transport_state: TransportState) -> void:
 
 ## Internal: Sets this Function TransportState
 func _set_transport_state(transport_state: TransportState) -> void:
+	if _transport_state:
+		_previous_transport_state = _transport_state
+	
 	_transport_state = transport_state
 	on_transport_state_changed.emit(_transport_state)
 

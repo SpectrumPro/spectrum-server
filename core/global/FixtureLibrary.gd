@@ -5,18 +5,16 @@ class_name CoreFixtureLibrary extends Node
 ## The main fixture library used to manage fixture manifests
 
 
-
 ## Emitted when the manifests are found
 signal manifests_found()
-
 
 
 ## File path for the built in fixture library
 const _built_in_library_path: String = "res://core/fixtures/"
 
+
 ## File path for the user fixture library. This needs to be loaded after Core is ready, otherwise Core.data_folder will be invalid
 var _user_fixture_library_path: String = ""
-
 
 ## All the current found manifests, { "manufacturer": { "name": FixtureManifest } }
 var _found_sorted_manifest_info: Dictionary = {}
@@ -32,7 +30,6 @@ var _manifest_requests: Dictionary
 
 ## Loaded state
 var _is_loaded: bool = false
-
 
 ## Contains all manifest importers keyed by the file extension 
 var _manifest_importers: Dictionary = {
@@ -59,22 +56,27 @@ func _ready() -> void:
 	manifests_found.emit()
 
 
-## Returnes the sorted manifest info of all manifests found
-func get_sorted_manifest_info() -> Dictionary:
-	return _found_sorted_manifest_info.duplicate(true)
-
-
-## Gets a manifest from a manifest uuid, return a promise 
-func request_manifest(p_manifest_uuid: String) -> Promise:
-	var promise: Promise = Promise.new()
+## Creates a new fixture from a manifest
+func create_fixture(p_manifest_uuid: String, p_universe: Universe, p_config: Dictionary) -> void:
+	var just_added_fixtures: Array[Fixture] = []
 	var manifest: FixtureManifest = get_manifest(p_manifest_uuid)
 
-	if manifest:
-		promise.auto_resolve([manifest])
-	else:
-		_manifest_requests.get_or_add(p_manifest_uuid, []).append(promise)
+	if manifest and manifest.has_mode(p_config.get("mode")):
+		var length: int = manifest.get_mode_length(p_config.mode)
 
-	return promise
+		for i: int in range(p_config.quantity):
+
+			var new_fixture: DMXFixture = DMXFixture.new()
+
+			new_fixture.set_channel(p_config.channel + (length * i) + (p_config.offset * i))
+			new_fixture.set_name(p_config.name + ((" " + str(i + 1)) if p_config.increment_name else ""))
+			new_fixture.set_manifest(manifest, p_config.mode)
+
+			just_added_fixtures.append(new_fixture)
+	
+	if just_added_fixtures:
+		Core.add_components(just_added_fixtures)
+		p_universe.add_fixtures(just_added_fixtures)
 
 
 ## Gets a manifest, imports it if its not already imported
@@ -94,31 +96,27 @@ func get_manifest(p_manifest_uuid: String) -> FixtureManifest:
 	return null
 
 
+## Returnes the sorted manifest info of all manifests found
+func get_sorted_manifest_info() -> Dictionary:
+	return _found_sorted_manifest_info.duplicate(true)
+
+
+## Gets a manifest from a manifest uuid, return a promise 
+func request_manifest(p_manifest_uuid: String) -> Promise:
+	var promise: Promise = Promise.new()
+	var manifest: FixtureManifest = get_manifest(p_manifest_uuid)
+
+	if manifest:
+		promise.auto_resolve([manifest])
+	else:
+		_manifest_requests.get_or_add(p_manifest_uuid, []).append(promise)
+
+	return promise
+
+
 ## Check loaded state
 func is_loaded() -> bool: 
 	return _is_loaded
-
-
-## Creates a new fixture from a manifest
-func create_fixture(p_manifest_uuid: String, p_universe: Universe, p_config: Dictionary) -> void:
-	var just_added_fixtures: Array[Fixture] = []
-	var manifest: FixtureManifest = get_manifest(p_manifest_uuid)
-
-	if manifest and manifest.has_mode(p_config.get("mode")):
-		var length: int = manifest.get_mode_length(p_config.mode)
-
-		for i: int in range(p_config.quantity):
-
-			var new_fixture: DMXFixture = DMXFixture.new()
-
-			new_fixture.set_channel(p_config.channel + (length * i) + (p_config.offset * i))
-			new_fixture.set_name(p_config.name)
-			new_fixture.set_manifest(manifest, p_config.mode)
-
-			just_added_fixtures.append(new_fixture)
-	
-	if just_added_fixtures:
-		p_universe.add_fixtures(just_added_fixtures)
 
 
 ## Finds all the fixture manifetsts in the folders
