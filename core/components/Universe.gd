@@ -261,7 +261,9 @@ func _on_serialize_request(p_mode: int = Core.SERIALIZE_MODE_NETWORK) -> Diction
 
 ## Called when this universe is to be deleted, see [method EngineComponent.delete]
 func _on_delete_request():
-	remove_outputs(_outputs.values())
+	for output: DMXOutput in _outputs.values():
+		output.delete(true)	
+
 	remove_fixtures(_fixtures.values())
 
 

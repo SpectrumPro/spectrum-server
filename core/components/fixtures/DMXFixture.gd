@@ -25,6 +25,10 @@ var _mode: String = ""
 ## { "zone": { "parameter": { config... } } }
 var _parameters: Dictionary = {}
 
+## Stores all active values per parameter
+## { "zone": { "parameter": { value: float, function: String } } }
+var _active_values: Dictionary[String, Dictionary]
+
 ## All the input value layers. Mapped to the DMX value used to calculate HTP
 ## { "zone": { "parameter": { "layer_id": mapped_value } } }
 var _mapped_layers: Dictionary[String, Dictionary] = {}
@@ -60,6 +64,9 @@ var _default: Dictionary = {}
 ## Current manifest
 var _manifest: FixtureManifest
 
+## Is compilation queued
+var _compilation_queued: bool = false
+
 
 func _component_ready() -> void:
 	set_name("DMXFixture")
@@ -81,6 +88,30 @@ func set_channel(p_channel: int) -> void:
 		zero_channels()
 
 	on_channel_changed.emit(_channel)
+
+
+## Gets the fixture manifest
+func get_manifest() -> FixtureManifest:
+	return _manifest
+
+
+## Sets the manifest for this fixture
+func set_manifest(p_manifest: FixtureManifest, p_mode: String) -> void:
+	_parameters = p_manifest.get_mode(p_mode).zones
+	_mode = p_mode
+	_manifest = p_manifest
+
+	_current.clear()
+	_default.clear()
+	zero_channels()
+
+	for zone: String in _parameters.keys():
+		for attribute: String in _parameters[zone].keys():
+			if len(_parameters[zone][attribute].offsets):
+				_default.get_or_add(zone, {})[attribute] = get_default(zone, attribute, "", true)
+
+
+	_compile_output()
 
 
 ## Gets the current dmx data
@@ -109,10 +140,14 @@ func set_parameter(p_parameter: String, p_function: String, p_value: float, p_la
 			
 			if max != _current.get(p_zone, {}).get(p_parameter, null):
 				_current.get_or_add(p_zone, {})[p_parameter] = mapped_value
+				_active_values.get_or_add(p_zone, {})[p_parameter] = {
+					"value": p_value,
+					"function": p_function
+				}
 
 				if not p_disable_output:
 					on_parameter_changed.emit(p_parameter, p_function, p_value, p_zone)
-					_compile_output()
+					_queue_compilation()
 		else:
 			var zones: Array = _parameters.keys()
 			zones.erase(p_zone)
@@ -121,7 +156,7 @@ func set_parameter(p_parameter: String, p_function: String, p_value: float, p_la
 				set_parameter(p_parameter, p_function, p_value, p_layer_id, zone, true)
 			
 			on_parameter_changed.emit(p_parameter, p_function, p_value, p_zone)
-			_compile_output()
+			_queue_compilation()
 		
 		return true
 	
@@ -139,17 +174,19 @@ func erase_parameter(p_parameter: String, p_layer_id: String, p_zone: String = "
 
 			mapped_layer.erase(p_layer_id)
 			raw_layer.erase(p_layer_id)
-			var max: Variant = mapped_layer.values().max()
-			
-			if max and max != _current[p_zone][p_parameter]:
+			var max: int = type_convert(mapped_layer.values().max(), TYPE_INT)
+
+			if mapped_layer:
 				_current[p_zone][p_parameter] = max
 
 			else:
 				_current[p_zone].erase(p_parameter)
-			
+				_active_values.get_or_add(p_zone, {}).erase(p_parameter)
+
 			if not p_disable_output:
 				on_parameter_erased.emit(p_parameter, p_zone)
-				_compile_output()
+				_find_and_output_parameter_function(p_parameter, p_zone, max)
+				_queue_compilation()
 		
 		else:
 			var zones: Array = _parameters.keys()
@@ -159,7 +196,29 @@ func erase_parameter(p_parameter: String, p_layer_id: String, p_zone: String = "
 				erase_parameter(p_parameter, p_layer_id, zone, true)
 			
 			on_parameter_erased.emit(p_parameter, p_zone)
-			_compile_output()
+			_find_and_output_parameter_function(p_parameter, p_zone, _current[p_zone][p_parameter])
+
+			_queue_compilation()
+
+
+## Findes a function from a parameter using the current dmx value. and outputs it via on_parameter_changed
+func _find_and_output_parameter_function(p_parameter: String, p_zone: String, p_dmx_value: int) -> void:
+	if not p_dmx_value:
+		return
+		
+	for function: String in _parameters[p_zone][p_parameter].functions:
+		var dmx_range: Array = _parameters[p_zone][p_parameter].functions[function].dmx_range
+
+		if p_dmx_value >= dmx_range[0] and p_dmx_value <= dmx_range[1]:
+			var remapped_value: float = remap(p_dmx_value, dmx_range[0], dmx_range[1], 0, 1)
+			on_parameter_changed.emit(p_parameter, function, remapped_value, p_zone)
+
+			_active_values.get_or_add(p_zone, {})[p_parameter] = {
+				"value": remapped_value,
+				"function": function
+			}
+
+			return
 
 
 ## Sets a parameter override to a float value
@@ -183,7 +242,7 @@ func set_override(p_parameter: String, p_function: String, p_value: float, p_zon
 
 				if not p_disable_output:
 					on_override_changed.emit(p_parameter, p_function, p_value, p_zone)
-					_compile_output()
+					_queue_compilation()
 		
 		else:
 			var zones: Array = _parameters.keys()
@@ -193,7 +252,7 @@ func set_override(p_parameter: String, p_function: String, p_value: float, p_zon
 				set_override(p_parameter, p_function, p_value, zone, true)
 			
 			on_override_changed.emit(p_parameter, p_function, p_value, p_zone)
-			_compile_output()
+			_queue_compilation()
 		
 		return true
 	
@@ -218,7 +277,7 @@ func erase_override(p_parameter: String, p_zone: String = "root", p_disable_outp
 			
 			if not p_disable_output:
 				on_override_erased.emit(p_parameter, p_zone)
-				_compile_output()
+				_queue_compilation()
 		
 		else:
 			var zones: Array = _parameters.keys()
@@ -228,7 +287,7 @@ func erase_override(p_parameter: String, p_zone: String = "root", p_disable_outp
 				erase_override(p_parameter, zone, true)
 			
 			on_override_erased.emit(p_parameter, p_zone)
-			_compile_output()
+			_queue_compilation()
 
 
 ## Erases all overrides
@@ -246,6 +305,92 @@ func get_all_override_values() -> Dictionary:
 	return _raw_override_layers.duplicate(true)
 
 
+## Gets all the values
+func get_all_values_layered() -> Dictionary:
+	return _raw_layers.duplicate(true)
+
+
+## Gets all the values
+func get_all_values() -> Dictionary:
+	return _active_values.duplicate(true)
+
+
+## Gets all the parameters and there category from a zone
+func get_parameter_categories(p_zone: String) -> Dictionary:
+	return _manifest.get_categorys(_mode, p_zone)
+
+
+## Gets all the parameter functions
+func get_parameter_functions(p_zone: String, p_parameter: String) -> Array:
+	return _manifest.get_parameter_functions(_mode, p_zone, p_parameter)
+
+
+## Gets the default value of a parameter
+func get_default(p_zone: String, p_parameter: String, p_function: String = "", p_raw_dmx: bool = false) -> float:
+	if p_function == "":
+		p_function = get_default_function(p_zone, p_parameter)
+	
+	var dmx_value: int = _parameters[p_zone][p_parameter].functions[p_function].default
+	var range: Array = _parameters[p_zone][p_parameter].functions[p_function].dmx_range
+
+	if p_raw_dmx:
+		return dmx_value
+	else:
+		return remap(dmx_value, range[0], range[1], 0.0, 1.0)
+
+
+## Gets the default function for a zone and parameter, or the first function if none can be found
+func get_default_function(p_zone: String, p_parameter: String) -> String:
+	var default_function: String = _parameters[p_zone][p_parameter].default_function
+	var functions: Dictionary = _parameters[p_zone][p_parameter].functions
+
+	if functions.has(default_function):
+		return default_function
+	else:
+		return functions.keys()[0]
+
+
+## Gets the current value, or the default
+func get_current_value(p_zone: String, p_parameter: String, p_allow_default: bool = true) -> float:
+	return _active_values.get(p_zone, {}).get(p_parameter, {}).get("value", get_default(p_zone, p_parameter) if p_allow_default else 0.0)
+
+
+## Gets the current value, or the default
+func get_current_value_or_force_default(p_zone: String, p_parameter: String) -> float:
+	var value: float = _active_values.get(p_zone, {}).get(p_parameter, {}).get("value", -1)
+	
+	if value == -1:
+		if has_force_default(p_parameter):
+			return get_default(p_zone, p_parameter)
+		else:
+			return 0.0
+	else:
+		return value
+
+
+## Gets a value from the given layer id, parameter, and zone
+func get_current_value_layered(p_zone: String, p_parameter: String, p_layer_id: String, p_function: String = "", p_allow_default: bool = true) -> float:
+	return _raw_layers.get(p_zone, {}).get(p_parameter, {}).get(p_layer_id, {}).get("value", get_default(p_zone, p_parameter, p_function) if p_allow_default else 0.0)
+
+
+## Gets the current value from a given layer ID, the default is none is present, or 0 if p_parameter is not a force default
+func get_current_value_layered_or_force_default(p_zone: String, p_parameter: String, p_layer_id: String, p_function: String = "") -> float:
+	var value: float = _raw_layers.get(p_zone, {}).get(p_parameter, {}).get(p_layer_id, {}).get("value", -1)
+
+	if value == -1:
+		if has_force_default(p_parameter):
+			return get_default(p_zone, p_parameter, p_function)
+		else:
+			return 0.0
+	else:
+		return value
+
+
+## Gets all the zones
+func get_zones() -> Array[String]:
+	return _manifest.get_zones(_mode)
+
+
 ## Checks if this DMXFixture has any overrides
 func has_overrides() -> bool:
 	return _raw_override_layers != {}
@@ -259,40 +404,14 @@ func has_parameter(p_zone: String, p_parameter: String, p_function: String = "")
 		return _manifest.has_parameter(_mode, p_zone, p_parameter)
 
 
+## Checks if a parameter is a force default
+func has_force_default(p_parameter: String) -> bool:
+	return _manifest.has_force_default(p_parameter)
+
+
 ## Checks if this DMXFixture has a function that can fade
 func function_can_fade(p_zone: String, p_parameter: String, p_function: String) -> bool:
 	return _manifest.function_can_fade(_mode, p_zone, p_parameter, p_function)
-
-
-## Gets the default value of a parameter
-func get_default(p_zone: String, p_parameter: String, p_function: String) -> float:
-	var dmx_value: int = _parameters[p_zone][p_parameter].functions[p_function].default
-	var range: Array = _parameters[p_zone][p_parameter].functions[p_function].dmx_range
-
-	return remap(dmx_value, range[0], range[1], 0.0, 1.0)
-
-
-## Gets a value from the given layer id, parameter, and zone
-func get_current_value(p_zone: String, p_parameter: String, p_layer_id: String, p_function: String = "", p_allow_default: bool = true) -> float:
-	return _raw_layers.get(p_zone, {}).get(p_parameter, {}).get(p_layer_id, {}).get("value", get_default(p_zone, p_parameter, p_function) if p_allow_default else 0.0)
-
-
-## Sets the manifest for this fixture
-func set_manifest(p_manifest: FixtureManifest, p_mode: String) -> void:
-	_parameters = p_manifest.get_mode(p_mode).zones
-	_mode = p_mode
-	_manifest = p_manifest
-
-	_current.clear()
-	_default.clear()
-	zero_channels()
-
-	for zone: String in _parameters.keys():
-		for attribute: String in _parameters[zone].keys():
-			if len(_parameters[zone][attribute].offsets):
-				_default.get_or_add(zone, {})[attribute] = _parameters[zone][attribute].functions.values()[0].default
-
-	_compile_output()
 
 
 ## Updates dmx data with all zeros
@@ -305,6 +424,17 @@ func zero_channels() -> void:
 	_current_dmx.clear()
 	_compile_output()
 	_current.clear()
+
+
+
+## Queues compilation for the end of the frame
+func _queue_compilation() -> void:
+	if _compilation_queued:
+		return
+	
+	_compilation_queued = true
+	_compile_output.call_deferred()
+
 
 
 ## Compiles the inputted data with internal data and overrides and outputs the result
@@ -322,6 +452,7 @@ func _compile_output() -> void:
 	
 	var final_dmx: Dictionary = _current_dmx.merged(_current_override_dmx, true)
 	dmx_data_updated.emit(final_dmx)
+	_compilation_queued = false
 
 
 ## Saves this DMXFixture to a dictonary
@@ -334,7 +465,8 @@ func _on_serialize_request(p_mode: int) -> Dictionary:
 
 	if p_mode == Core.SERIALIZE_MODE_NETWORK:
 		seralized_data.merge({
-			"raw_override_layers": get_all_override_values()
+			"raw_override_layers": get_all_override_values(),
+			"active_values": get_all_values()
 		})
 
 	return seralized_data

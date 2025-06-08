@@ -80,7 +80,10 @@ func _handle_intensity_change(p_intensity: float) -> void:
 	if p_intensity and get_active_state() != ActiveState.ENABLED:
 		_set_active_state(ActiveState.ENABLED)
 	
-	_animator.seek_to(p_intensity)
+	if p_intensity:
+		_animator.seek_to(p_intensity)
+	else:
+		_animator.stop()
 
 
 ## Sets the fade in speed in seconds

@@ -33,6 +33,7 @@ static func load_from_file(file_path: String) -> FixtureManifest:
 	var c_offset: Array[int] = []
 	var c_logical_attri: String = ""
 	var c_channel_attri: String = ""
+	var c_default_funciton: String = ""
 
 	var previous_dmx_range: Array = []
 
@@ -59,6 +60,7 @@ static func load_from_file(file_path: String) -> FixtureManifest:
 				
 				"DMXChannel":
 					c_geo = parser.get_named_attribute_value_safe("Geometry")
+					c_default_funciton = parser.get_named_attribute_value_safe("InitialFunction").split(".")[2]
 
 					c_offset = []
 					previous_dmx_range = []
@@ -73,8 +75,11 @@ static func load_from_file(file_path: String) -> FixtureManifest:
 					
 				"LogicalChannel":
 					c_logical_attri = parser.get_named_attribute_value_safe("Attribute")
-					manifest.add_parameter(c_mode, c_geo, c_logical_attri, c_offset)
+					manifest.add_parameter(c_mode, c_geo, c_logical_attri, c_offset, "", c_default_funciton)
 
+					if parameter_infomation.get(remove_number_regex.sub(c_logical_attri, "", true), {}).get("force_default", false):
+						manifest.add_force_default(c_logical_attri)
+					
 					if c_geo in geometry_references:
 						parameters_to_instance.append({
 							"mode": c_mode,

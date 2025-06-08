@@ -191,7 +191,7 @@ func track(cue: Cue, pre_existing_data: Dictionary[String, Dictionary]) -> Dicti
 			for parameter: String in fixture_data[fixture][zone]:
 				var data: Dictionary = fixture_data[fixture][zone][parameter]
 				var id: String = fixture.uuid + zone + parameter + data.function
-				var from: float = fixture.get_current_value(zone, parameter, _layer_id, data.function)
+				var from: float = fixture.get_current_value_layered_or_force_default(zone, parameter, _layer_id, data.function)
 
 				add_track(
 					id,

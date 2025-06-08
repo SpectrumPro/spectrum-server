@@ -33,6 +33,11 @@ var call_interval: float = 1.0 / 45.0 # 1 second divided by 45
 
 var _accumulated_time: float = 0.0 ## Used as an internal refernce for timing call_interval correctly
 
+## Should print fps per frame
+var _print_fps: bool = false
+
+## Previous fps
+var _previous_fps: int = 0
 
 ## Root data folder
 var data_folder := (OS.get_environment("USERPROFILE") if OS.has_feature("windows") else OS.get_environment("HOME")) + "/.spectrum"
@@ -130,6 +135,10 @@ func _ready() -> void:
 		if not "--test-keep-alive" in cli_args:
 			save.call_deferred("Global Test At: " + str(Time.get_datetime_string_from_system()), true)
 			get_tree().quit.call_deferred()
+	
+	
+	if "--fps" in cli_args:
+		_print_fps = true
 
 
 	# if "--relay-server" in cli_args:
@@ -163,6 +172,12 @@ func _process(delta: float) -> void:
 		_accumulated_time -= call_interval
 	
 	_process_frame.emit(delta)
+
+	var fps: int = Engine.get_frames_per_second()
+
+	if _print_fps and fps != _previous_fps:
+		_previous_fps = fps
+		print(fps)
 
 
 ## Serializes all elements of this engine, used for file saving, and network synchronization
@@ -198,7 +213,7 @@ func save(file_name: String = _current_file_name, autosave: bool = false) -> Err
 
 
 ## Get serialized data from a file, and load it into this engine
-func load_from_file(file_name: String) -> void:
+func load_from_file(file_name: String, no_signal: bool = false) -> void:
 	var saved_file = FileAccess.open(save_library_location + "/" + file_name, FileAccess.READ)
 
 	# Check for any open errors
@@ -219,11 +234,11 @@ func load_from_file(file_name: String) -> void:
 	
 
 	set_file_name(file_name)
-	self.load(serialized_data) # Use self.load as load() is a gdscript global function
+	self.load(serialized_data, no_signal) # Use self.load as load() is a gdscript global function
 
 
 ## Loads serialized data into this engine
-func load(serialized_data: Dictionary) -> void:
+func load(serialized_data: Dictionary, no_signal: bool = false) -> void:
 	# Array to keep track of all the components that have just been added, allowing them all to be networked to the client in the same message
 	var just_added_components: Array[EngineComponent] = []
 
@@ -241,7 +256,8 @@ func load(serialized_data: Dictionary) -> void:
 				just_added_components.append(new_component)
 
 	
-	on_components_added.emit.call_deferred(just_added_components)
+	if not no_signal:
+		on_components_added.emit.call_deferred(just_added_components)
 
 
 ## Returnes all the saves files from the save library
@@ -309,7 +325,7 @@ func delete_file(file_name: String) -> Error:
 ## Resets the engine, then loads from a save file:
 func reset_and_load(file_name: String) -> void:
 	reset()
-	load_from_file(file_name)
+	load_from_file(file_name, true)
 
 
 ## Resets the engine back to the default state

@@ -58,9 +58,14 @@ func get_all_override_values() -> Dictionary:
 	return {}
 
 
-## Checks if this Fixture has any overrides
-func has_overrides() -> bool:
-	return false
+## Gets all the values
+func get_all_values_layered() -> Dictionary:
+	return {}
+
+
+## Gets all the values
+func get_all_values() -> Dictionary:
+	return {}
 
 
 ## Gets all the parameters and there category from a zone
@@ -73,21 +78,56 @@ func get_parameter_functions(p_zone: String, p_parameter: String) -> Array:
 	return []
 
 
+## Gets the default value of a parameter
+func get_default(p_zone: String, p_parameter: String, p_function: String = "", p_raw_dmx: bool = false) -> float:
+	return 0.0
+
+
+## Gets the default function for a zone and parameter, or the first function if none can be found
+func get_default_function(p_zone: String, p_parameter: String) -> String:
+	return ""
+
+
+## Gets the current value, or the default
+func get_current_value(p_zone: String, p_parameter: String, p_allow_default: bool = true) -> float:
+	return 0.0
+
+
+## Gets the current value, or the default
+func get_current_value_or_force_default(p_zone: String, p_parameter: String) -> float:
+	return 0.0
+
+
+## Gets a value from the given layer id, parameter, and zone
+func get_current_value_layered(p_zone: String, p_parameter: String, p_layer_id: String, p_function: String = "", p_allow_default: bool = true) -> float:
+	return 0.0
+
+
+## Gets the current value from a given layer ID, the default is none is present, or 0 if p_parameter is not a force default
+func get_current_value_layered_or_force_default(p_zone: String, p_parameter: String, p_layer_id: String, p_function: String = "") -> float:
+	return 0.0
+
+
+## Gets all the zones
+func get_zones() -> Array[String]:
+	return []
+
+
+## Checks if this Fixture has any overrides
+func has_overrides() -> bool:
+	return false
+
+
 ## Checks if this fixture has a parameter
 func has_parameter(p_zone: String, p_parameter: String, p_function: String = "") -> bool:
+	return false
+
+
+## Checks if a parameter is a force default
+func has_force_default(p_parameter: String) -> bool:
 	return false
 
 
 ## Checks if this Fixture has a function that can fade
 func function_can_fade(p_zone: String, p_parameter: String, p_function: String) -> bool:
 	return false
-
-
-## Gets the default value of a parameter
-func get_default(p_zone: String, p_parameter: String, p_function: String) -> float:
-	return 0.0
-
-
-## Gets a value from the given layer id, parameter, and zone
-func get_current_value(p_zone: String, p_parameter: String, p_layer_id: String, p_function: String = "", p_allow_default: bool = true) -> float:
-	return 0.0

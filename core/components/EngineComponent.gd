@@ -115,7 +115,10 @@ func _process(delta: float) -> void:
 
 ## Always call this function when you want to delete this component. 
 ## As godot uses reference counting, this object will not truly be deleted untill no other script holds a refernce to it.
-func delete() -> void:
+func delete(p_local_only: bool = false) -> void:
+	if p_local_only:
+		ComponentDB.deregister_component(self)
+	
 	_on_delete_request()
 	on_delete_requested.emit()
 	print_verbose(uuid, " Has had a delete request send. Currently has:", str(get_reference_count()), " refernces")
