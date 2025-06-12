@@ -11,6 +11,9 @@ signal on_data_stored(fixture: Fixture, parameter: String, function: String, val
 ## Emitted when data is erased from this function
 signal on_data_erased(fixture: Fixture, parameter: String, zone: String)
 
+## Emitted when the value of a fixtures data is changed
+signal on_data_value_changed(fixture: Fixture, parameter: String, zone: String, value: float)
+
 ## Emitted when global data is stored in this function
 signal on_global_data_stored(parameter: String, function: String, value: Variant, can_fade: bool, start: float, stop: float)
 
@@ -85,7 +88,7 @@ func erase_data(p_fixture: Fixture, p_parameter: String, p_zone: String) -> bool
 	if _fixture_data.get(p_fixture, {}).get(p_zone, {}).erase(p_parameter):
 		if _fixture_data[p_fixture][p_zone] == {}:
 			_fixture_data[p_fixture].erase(p_zone)
-		
+
 		if _fixture_data[p_fixture] == {}:
 			_fixture_data.erase(p_fixture)
 
@@ -97,11 +100,26 @@ func erase_data(p_fixture: Fixture, p_parameter: String, p_zone: String) -> bool
 	return false
 
 
+## Sets a value
+func set_value(p_fixture: Fixture, p_parameter: String, p_zone: String, p_new_value: float) -> bool:
+	if not _fixture_data.get(p_fixture, {}).get(p_zone, {}).has(p_parameter):
+		return false
+
+	var config: Dictionary = _fixture_data[p_fixture][p_zone][p_parameter]
+	if config.value == p_new_value:
+		return false
+
+	config.value = p_new_value
+	on_data_value_changed.emit(p_fixture, p_parameter, p_zone, p_new_value)
+
+	return true
+
+
 ## Stores global data into this function
 func store_global_data(p_parameter: String, p_function: String, p_value: Variant, p_can_fade: bool = true, p_start: float = 0.0, p_stop: float = 0.0) -> bool:
 	if (not p_value and not _allow_store_zero_data) or _global_data.get(p_parameter) == p_value:
 		return false
-	
+
 	_global_data[p_parameter] = {
 		"value": p_value,
 		"function": p_function,
@@ -122,9 +140,9 @@ func erase_global_data(p_parameter: String) -> bool:
 	if state:
 		on_global_data_erased.emit(p_parameter)
 		data_modified.emit()
-	
+
 	return state
-	
+
 
 ## Serializes the stored data
 func _serialize_stored_data() -> Dictionary:
@@ -148,7 +166,7 @@ func _serialize_stored_data() -> Dictionary:
 					"start": stored_item.start,
 					"stop": stored_item.stop,
 				}
-	
+
 	return serialized_stored_data
 
 
@@ -161,13 +179,13 @@ func _load_stored_data(p_serialized_stored_data: Dictionary) -> void:
 			for zone: String in p_serialized_stored_data[fixture_uuid]:
 				for parameter: String in p_serialized_stored_data[fixture_uuid][zone]:
 					var stored_item: Dictionary = p_serialized_stored_data[fixture_uuid][zone][parameter]
-					
+
 					store_data(
-						fixture, 
-						parameter, 
-						type_convert(stored_item.get("function", ""), TYPE_STRING), 
-						type_convert(stored_item.get("value", 0), TYPE_FLOAT), 
-						zone, 
+						fixture,
+						parameter,
+						type_convert(stored_item.get("function", ""), TYPE_STRING),
+						type_convert(stored_item.get("value", 0), TYPE_FLOAT),
+						zone,
 						type_convert(stored_item.get("can_fade", true), TYPE_BOOL),
 						type_convert(stored_item.get("start", 0.0), TYPE_FLOAT),
 						type_convert(stored_item.get("stop", 1.0), TYPE_FLOAT)
@@ -188,7 +206,7 @@ func _serialize_stored_global_data() -> Dictionary:
 			"start": stored_item.start,
 			"stop": stored_item.stop,
 		}
-	
+
 	return serialized_stored_global_data
 
 
@@ -198,8 +216,8 @@ func _load_stored_global_data(p_serialized_stored_global_data: Dictionary) -> vo
 		var stored_item: Dictionary = p_serialized_stored_global_data[parameter]
 
 		store_global_data(
-			parameter, 
-			type_convert(stored_item.get("function", ""), TYPE_STRING), 
+			parameter,
+			type_convert(stored_item.get("function", ""), TYPE_STRING),
 			type_convert(stored_item.get("value", 0), TYPE_FLOAT),
 			type_convert(stored_item.get("can_fade", true), TYPE_BOOL),
 			type_convert(stored_item.get("start", 0.0), TYPE_FLOAT),

@@ -22,6 +22,7 @@ var _global_class_tree: Dictionary = {
 			"DataPalette": DataPalette,
 			"Function": Function,
 			"Scene": Scene,
+			"FunctionGroup": FunctionGroup
 		},
 		"DMXOutput": {
 			"ArtNetOutput": ArtNetOutput,
@@ -58,7 +59,7 @@ var _custom_classes: Dictionary = {
 
 func _ready() -> void:
 	rebuild_maps(_global_class_tree)
-	
+
 
 
 ## Builds both the inheritance map and the class script map from the class_tree.
@@ -66,10 +67,10 @@ func rebuild_maps(tree: Dictionary) -> void:
 	var inheritance_map: Dictionary = {}
 	var inheritance_trees: Dictionary = {}
 	var class_script_map: Dictionary = {}
-	
+
 	for key in tree.keys():
 		_process_node(key, tree[key], inheritance_map, inheritance_trees, class_script_map, [key])
-	
+
 	_inheritance_map = inheritance_map
 	_inheritance_trees = inheritance_trees
 	_script_map = class_script_map
@@ -81,17 +82,17 @@ func _process_node(key: String, node: Variant, inheritance_map: Dictionary, inhe
 		var leaves: Array = []
 		for subkey in node.keys():
 			var subnode = node[subkey]
-			
+
 			inheritance_map.get_or_add(key, []).append(subkey)
 			current_position.push_back(subkey)
-			
+
 			if subnode is Dictionary:
 				_process_node(subkey, subnode, inheritance_map, inheritance_trees, class_script_map, current_position)
 			else:
 				leaves.append(subkey)
 				class_script_map[subkey] = subnode
 				inheritance_trees[subkey] = current_position.duplicate()
-			
+
 			current_position.pop_back()
 	else:
 		class_script_map[key] = node
@@ -157,7 +158,7 @@ func register_custom_class(class_tree: Array[String], script: Script) -> void:
 
 	if script_class in _custom_classes:
 		return
-	
+
 	_custom_classes[script_class] = class_tree
 
 	for classname: String in class_tree:

@@ -33,6 +33,7 @@ driver/enable_input=true
 ClassList="*res://core/global/ClassList.gd"
 FixtureLibrary="*res://core/global/FixtureLibrary.gd"
 Programmer="*res://core/global/Programmer.gd"
+CIDManager="*res://core/global/CIDManager.gd"
 Core="*res://core/engine/Engine.gd"
 MainSocketServer="*res://networking/WebSocketServer.gd"
 MainUDPSocket="*res://networking/UDPSocket.gd"
