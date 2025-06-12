@@ -18,6 +18,9 @@ var _time_scale: float = 1
 ## Elapsed time since this animation started
 var _progress: float = 0
 
+## Playing state
+var _is_playing: bool = false
+
 ## Intensity of the CueList
 var _intensity: float = 1
 
@@ -70,28 +73,28 @@ func set_intensity(p_intensity: float) -> void:
 	_intensity = p_intensity
 
 
+## Checks is this CueAnimator is playing
+func is_playing() -> bool:
+	return _is_playing
+
+
 ## Plays this animation
 func play() -> void:		
 	set_process(true)
+	_is_playing = true
 
 
 ## Pauses this animation
 func pause() -> void:
 	set_process(false)
+	_is_playing = false
 
 
 ## Stops this scene, reset all values to default
 func stop() -> void:
-	set_process(false)
+	pause()
 	_progress = 0
 
-	for track: Dictionary in _tracks.values():
-		(track.fixture as Fixture).erase_parameter(
-			track.parameter,
-			_layer_id,
-			track.zone
-		)
-	
 	finished.emit()
 
 
@@ -161,7 +164,8 @@ func add_track(id: String, fixture: Fixture, parameter: String, function: String
 		"can_fade": can_fade,
 		"start": start,
 		"stop": stop,
-		"first_time": true
+		"first_time": true,
+		"animator": self
 	}
 
 
@@ -174,10 +178,12 @@ func remove_track(id: String, reset: bool = true) -> void:
 
 		_tracks.erase(id)
 
+		if not _tracks:
+			stop()
+
 
 ## Tracks a cues fixtures
-func track(cue: Cue) -> Array[String]:
-	var ids: Array[String]
+func track(cue: Cue, pre_existing_data: Dictionary[String, Dictionary]) -> Dictionary[String, Dictionary]:
 	var fixture_data: Dictionary = cue.get_fixture_data()
 	
 	for fixture: Fixture in fixture_data:
@@ -185,6 +191,7 @@ func track(cue: Cue) -> Array[String]:
 			for parameter: String in fixture_data[fixture][zone]:
 				var data: Dictionary = fixture_data[fixture][zone][parameter]
 				var id: String = fixture.uuid + zone + parameter + data.function
+				var from: float = fixture.get_current_value_layered_or_force_default(zone, parameter, _layer_id, data.function)
 
 				add_track(
 					id,
@@ -192,16 +199,19 @@ func track(cue: Cue) -> Array[String]:
 					parameter, 
 					data.function, 
 					zone,
-					fixture.get_current_value(zone, parameter, _layer_id, data.function), 
+					from * (2 - (_intensity if parameter in _allowed_intensity_parameters else 1.0)), 
 					data.value, 
 					data.can_fade, 
 					data.start,
 					data.stop,
 				)
 
-				ids.append(id)
-	
-	return ids
+				if id in pre_existing_data:
+					var animator: Variant = pre_existing_data[id].animator
+					if is_instance_valid(animator) and animator != self:
+						animator.remove_track(id, false)
+
+	return _tracks
 
 
 ## Gets an animated track from the given id
@@ -216,7 +226,8 @@ func get_animated_data(duplicate_data: bool = true) -> Dictionary:
 
 ## Sets the animated data
 func set_animated_data(animation_data: Dictionary) -> void:
-	_tracks = animation_data.duplicate()
+	_tracks = {}
+	_tracks.merge(animation_data, true)
 
 
 ## Deletes all the animated data

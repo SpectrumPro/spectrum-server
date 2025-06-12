@@ -205,17 +205,12 @@ func save_to_new_cue(fixtures: Array, cue_list: CueList, mode: SaveMode = SaveMo
 
 ## Merges data into a cue by its number in a cue list
 func merge_into_cue(fixtures: Array, cue: Cue, mode: SaveMode = SaveMode.MODIFIED) -> void:
-		store_data_to_container(cue, mode, fixtures)
-		cue.cue_list.force_reload = true
+	store_data_to_container(cue, mode, fixtures)
 
 
-# ## erases data into a cue by its number in a cue list
-# func erase_from_cue(fixtures: Array, cue_list: CueList, cue_number: float, mode: SaveMode) -> void:
-# 	var cue: Cue = cue_list.get_cue(cue_number)
-
-# 	if cue:
-# 		erase_data_from_container(cue, mode, fixtures)
-# 		cue_list.force_reload = true
+## erases data into a cue by its number in a cue list
+func erase_from_cue(fixtures: Array, cue: Cue, mode: SaveMode) -> void:
+	erase_data_from_container(cue, mode, fixtures)
 
 
 ## Shortcut to set the color of fixtures

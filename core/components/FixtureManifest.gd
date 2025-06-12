@@ -27,6 +27,9 @@ var _modes: Dictionary = {}
 ## Contains all the parameter categorys, sorted by mode
 var _categorys: Dictionary = {}
 
+## List of parameters whos default values should always be used
+var _force_defaults: Array[String]
+
 
 func _component_ready() -> void:
 	set_self_class("FixtureManifest")
@@ -58,13 +61,14 @@ func create_zone(p_mode: String, p_zone: String) -> bool:
 
 
 ## Creates a parameter in the given mode and zone
-func add_parameter(p_mode: String, p_zone: String, p_parameter: String, p_channels: Array[int], p_category: String = "") -> bool:
+func add_parameter(p_mode: String, p_zone: String, p_parameter: String, p_channels: Array[int], p_category: String = "", p_default_function: String = "") -> bool:
 	if not _modes.has(p_mode) or not _modes[p_mode].zones.has(p_zone):
 		return false
 	
 	_modes[p_mode].zones[p_zone][p_parameter] = {
 		"attribute": p_parameter,
 		"offsets": p_channels.duplicate(),
+		"default_function": p_default_function,
 		"functions": {}
 	}
 	
@@ -189,6 +193,34 @@ func get_parameter_functions(p_mode: String, p_zone: String, p_parameter: String
 	return _modes[p_mode].zones[p_zone][p_parameter].functions.keys()
 
 
+## Adds a force default
+func add_force_default(p_parameter: String) -> bool:
+	if p_parameter not in _force_defaults:
+		_force_defaults.append(p_parameter)
+		return true
+	else:
+		return false
+
+
+## Removes a force default
+func remove_force_default(p_parameter: String) -> bool:
+	if p_parameter in _force_defaults:
+		_force_defaults.erase(p_parameter)
+		return true
+	else:
+		return false
+
+
+## Gets all force defaults
+func get_force_defaults() -> Array[String]:
+	return _force_defaults.duplicate()
+
+
+## Checks if a parameter is a force_default
+func has_force_default(p_parameter) -> bool:
+	return _force_defaults.has(p_parameter)
+
+
 ## Overide this function to serialize your object
 func _on_serialize_request(p_mode: int) -> Dictionary:
 	return {
@@ -197,7 +229,8 @@ func _on_serialize_request(p_mode: int) -> Dictionary:
 		"importer": importer,
 		"file_path": file_path,
 		"modes": _modes,
-		"categorys": _categorys
+		"categorys": _categorys,
+		"force_defaults": _force_defaults
 	}
 
 
@@ -210,3 +243,4 @@ func _on_load_request(p_serialized_data: Dictionary) -> void:
 
 	_modes = type_convert(p_serialized_data.get("modes"), TYPE_DICTIONARY)
 	_categorys = type_convert(p_serialized_data.get("category"), TYPE_DICTIONARY)
+	_force_defaults = Array(type_convert(p_serialized_data.get("force_defaults"), TYPE_ARRAY), TYPE_STRING, "", null)

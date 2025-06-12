@@ -21,10 +21,10 @@ func map(left: Variant, right: Variant) -> void:
 ## Creates a new RefMap from a Dictionary
 static func from(dictionary: Dictionary) -> RefMap:
 	var map: RefMap = RefMap.new()
-	
+
 	for key: Variant in dictionary:
 		map.map(key, dictionary[key])
-		
+
 	return map
 
 
@@ -70,6 +70,11 @@ func has_left(variant: Variant) -> bool:
 ## Checks if the left side has a variant
 func has_right(variant: Variant) -> bool:
 	return _right.has(variant)
+
+
+## Gets this RefMap as a dictonary
+func get_as_dict() -> Dictionary:
+	return _left.duplicate()
 
 
 ## Clears the RefMap

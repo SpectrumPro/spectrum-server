@@ -132,7 +132,6 @@ func add_fixture(p_fixture: DMXFixture, p_channel: int = -1, p_no_signal: bool =
 	_fixture_channels[fixture_channel].append(p_fixture)
 	_fixtures[p_fixture.uuid] = p_fixture
 
-	ComponentDB.register_component(p_fixture)
 	p_fixture.on_delete_requested.connect(remove_fixture.bind(p_fixture), CONNECT_ONE_SHOT)
 	p_fixture.dmx_data_updated.connect(self.set_data)
 	set_data(p_fixture.get_current_dmx())
@@ -168,8 +167,6 @@ func remove_fixture(p_fixture: DMXFixture, p_no_signal: bool = false) -> bool:
 
 	if not _fixture_channels[p_fixture.get_channel()]:
 		_fixture_channels.erase(p_fixture.get_channel)
-
-	ComponentDB.deregister_component(p_fixture)	
 
 	if not p_no_signal:
 		on_fixtures_removed.emit([p_fixture])
@@ -209,7 +206,6 @@ func get_fixtures() -> Dictionary:
 	return _fixtures.duplicate()
 
 
-
 ## Set dmx data, data should be stored as channel:value
 func set_data(p_data: Dictionary):
 	_dmx_data.merge(p_data, true)
@@ -245,8 +241,8 @@ func _compile_and_send():
 
 ## Serializes this universe
 func _on_serialize_request(p_mode: int = Core.SERIALIZE_MODE_NETWORK) -> Dictionary:
-	var serialized_outputs: Dictionary = {}
-	var serialized_fixtures: Dictionary = {}
+	var serialized_outputs: Dictionary[String, Dictionary] = {}
+	var serialized_fixtures: Dictionary[String, Array] = {}
 
 	for output: DMXOutput in _outputs.values():
 		serialized_outputs[output.uuid] = output.serialize(p_mode)
@@ -255,7 +251,7 @@ func _on_serialize_request(p_mode: int = Core.SERIALIZE_MODE_NETWORK) -> Diction
 		serialized_fixtures[str(channel)] = []
 
 		for fixture: DMXFixture in _fixture_channels[channel]:
-			serialized_fixtures[str(channel)].append(fixture.serialize(p_mode))
+			serialized_fixtures[str(channel)].append(fixture.uuid)
 
 	return {
 		"outputs": serialized_outputs,
@@ -265,7 +261,9 @@ func _on_serialize_request(p_mode: int = Core.SERIALIZE_MODE_NETWORK) -> Diction
 
 ## Called when this universe is to be deleted, see [method EngineComponent.delete]
 func _on_delete_request():
-	remove_outputs(_outputs.values())
+	for output: DMXOutput in _outputs.values():
+		output.delete(true)	
+
 	remove_fixtures(_fixtures.values())
 
 
@@ -276,12 +274,12 @@ func _on_load_request(p_serialized_data: Dictionary) -> void:
 	var just_added_output: Array[DMXOutput] = []
 
 	for fixture_channel: String in p_serialized_data.get("fixtures", []):
-		for serialized_fixture: Dictionary in p_serialized_data.fixtures[fixture_channel]:
-			var new_fixture: DMXFixture = DMXFixture.new(serialized_fixture.get("uuid"))
-			new_fixture.load(serialized_fixture)
-			
-			add_fixture(new_fixture, -1, true)
-			just_added_fixtures.append(new_fixture)
+		for fixture_uuid: String in p_serialized_data.fixtures[fixture_channel]:
+			var fixture: EngineComponent = ComponentDB.get_component(fixture_uuid)
+
+			if fixture is DMXFixture:
+				add_fixture(fixture, -1, true)
+				just_added_fixtures.append(fixture)
 			
 	
 	for output_uuid: String in p_serialized_data.get("outputs", {}).keys():

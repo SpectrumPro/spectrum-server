@@ -100,6 +100,7 @@ func stop() -> void:
 			_layer_id,
 			track.zone
 		)
+		track.first_time = true
 
 
 ## Finishes the animation imdetaly 
@@ -152,11 +153,12 @@ func seek_to(time: float) -> void:
 
 
 ## Adds a method animation, method animation will call a method for each step in the animation, with the interpolated Variant as the argument
-func add_track(fixture: Fixture, parameter: String, function: String, zone: String, from: float, to: float, can_fade: bool = true, start: float = 0.0, stop: float = 1.0) -> int:
+func add_track(fixture: Fixture, parameter: String, function: String, zone: String, to: float, can_fade: bool = true, start: float = 0.0, stop: float = 1.0) -> int:
 	var ids: Array = _tracks.keys()
 	ids.sort()	
 	var id: int = type_convert(ids.max(), TYPE_INT) + 1
-
+	var from: float = fixture.get_current_value_layered_or_force_default(zone, parameter, _layer_id, function)
+	
 	_tracks[id] = {
 		"fixture": fixture,
 		"parameter": parameter,
@@ -201,7 +203,17 @@ func set_animated_data(animation_data: Dictionary) -> void:
 
 ## Called when data is stored to the container
 func _on_data_stored(fixture: Fixture, parameter: String, function: String, value: Variant, zone: String, can_fade: bool, start: float, stop: float) -> void:
-	var id: int = add_track(fixture, parameter, function, zone, fixture.get_default(zone, parameter, function), value, can_fade, start, stop)	
+	var id: int = add_track(
+		fixture, 
+		parameter, 
+		function, 
+		zone, 
+		value, 
+		can_fade, 
+		start, 
+		stop
+	)
+
 	_container_track_ids.get_or_add(fixture, {}).get_or_add(zone, {})[parameter] = id
 
 

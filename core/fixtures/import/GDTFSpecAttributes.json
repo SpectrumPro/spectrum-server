@@ -2687,7 +2687,8 @@
         "explanation": "PAN is one part of the movement that usually controls the horizontal movement. In regards to the fixture the Attribute of PAN will control the overall rotation around the basement of the fixture. If the fixture is mounted hanging it usually moves around the Z-axis. But PAN can also be used for virtual control of media server layers or other objects in virtual 3D environments. Usually PAN is used in relation with TILT.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "force_default": true
     },
     "PanMode": {
         "_feature": "Control.Control",
@@ -3459,7 +3460,8 @@
         "explanation": "TILT is one part of the movement that usually controls the vertical movement .In regards to the fixture the Attribute of TILT will control the overall rotation around the yoke-axis of the fixture. If the fixture is mounted hanging it usually moves around the x-axis or y-axis, depending on the PAN. TILT can also be used for virtual control of media server layers or other objects in virtual 3D environments. Usually TILT is used in relation with PAN.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "force_default": true
     },
     "TiltMode": {
         "_feature": "Control.Control",
@@ -3768,7 +3770,8 @@
         "explanation": "Devices that can move straight in X-direction in space (opposite to pan or tilt circular movement) describe the movement with this attribute. A typical usage is left/right movement of a video-layer in space.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "force_default": true
     },
     "XYZ_Y": {
         "_ActivationGroup": "XYZ",
@@ -3781,7 +3784,8 @@
         "explanation": "Devices that can move straight in Y-direction in space (opposite to pan or tilt circular movement) describe the movement with this attribute. A typical usage is forward/backward movement of a video-layer in space.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "force_default": true
     },
     "XYZ_Z": {
         "_ActivationGroup": "XYZ",
@@ -3794,7 +3798,8 @@
         "explanation": "Devices that can move straight in Z-direction in space (opposite to distance of a pan/tilt device) describe the movement with this attribute. A typical usage is up/down movement of a video-layer in space.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "force_default": true
     },
     "YellowMode": {
         "_feature": "Control.Control",

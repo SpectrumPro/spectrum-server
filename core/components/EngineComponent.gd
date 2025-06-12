@@ -17,12 +17,15 @@ signal on_user_meta_changed(key: String, value: Variant)
 ## Emitted when an item is deleted from user_meta
 signal on_user_meta_deleted(key: String)
 
+## Emitted when the CID is changed
+signal cid_changed(cid: int)
+
 
 ## The name of this object
 var name: String = "Unnamed EngineComponent": set = set_name
 
 ## Infomation that can be stored by other scripts / clients, this data will get saved to disk and send to all clients
-var user_meta: Dictionary 
+var user_meta: Dictionary
 
 ## Infomation that can be stored by other scripts, this is not saved to disk, and will not be send to clients
 var local_data: Dictionary
@@ -36,16 +39,19 @@ var self_class_name: String = "EngineComponent": set = set_self_class
 ## Stores all the classes this component inherits from
 var class_tree: Array[String] = ["EngineComponent"]
 
+## ComponentID
+var _cid: int = -1
+
 ## Network Config:
-## high_frequency_signals: Contains all the signals that should be send over the udp stream, instead of the tcp websocket 
+## high_frequency_signals: Contains all the signals that should be send over the udp stream, instead of the tcp websocket
 var network_config: Dictionary = {
 	"high_frequency_signals": [
-		
+
 	]
 }
 
 
-## Disables signal emmition during loading 
+## Disables signal emmition during loading
 var _disable_signals: bool = false
 
 
@@ -55,7 +61,7 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = name) -> void:
 	_component_ready()
 
 	print_verbose("I am: ", name, " | ", uuid)
-	
+
 
 ## Override this function to provide a _ready function for your script
 func _component_ready() -> void:
@@ -73,7 +79,7 @@ func set_name(p_name: String) -> void:
 func set_self_class(p_self_class_name: String) -> void:
 	if p_self_class_name == self_class_name or p_self_class_name in class_tree:
 		return
-	
+
 	class_tree.append(p_self_class_name)
 	self_class_name = p_self_class_name
 
@@ -84,13 +90,18 @@ func register_high_frequency_signals(p_high_frequency_signals: Array) -> void:
 
 
 ## Returns the value from user meta at the given key, if the key is not found, default is returned
-func get_user_meta(p_key: String, p_default = null) -> Variant: 
+func get_user_meta(p_key: String, p_default = null) -> Variant:
 	return user_meta.get(p_key, p_default)
 
 
 ## Returns all user meta
 func get_all_user_meta() -> Dictionary:
 	return user_meta
+
+
+## Gets the cid
+func cid() -> int:
+	return _cid
 
 
 ## Delets an item from user meta, returning true if item was found and deleted, and false if not
@@ -113,9 +124,12 @@ func _process(delta: float) -> void:
 	pass
 
 
-## Always call this function when you want to delete this component. 
+## Always call this function when you want to delete this component.
 ## As godot uses reference counting, this object will not truly be deleted untill no other script holds a refernce to it.
-func delete() -> void:
+func delete(p_local_only: bool = false) -> void:
+	if p_local_only:
+		ComponentDB.deregister_component(self)
+
 	_on_delete_request()
 	on_delete_requested.emit()
 	print_verbose(uuid, " Has had a delete request send. Currently has:", str(get_reference_count()), " refernces")
@@ -130,14 +144,15 @@ func _on_delete_request() -> void:
 func serialize(p_mode: int = CoreEngine.SERIALIZE_MODE_NETWORK) -> Dictionary:
 	var serialized_data: Dictionary = {}
 	serialized_data = _on_serialize_request(p_mode)
-	
+
 	serialized_data.merge({
 		"uuid": uuid,
 		"name": name,
 		"class_name": self_class_name,
+		"cid": _cid,
 		"user_meta": get_all_user_meta()
 	}, true)
-	
+
 	return serialized_data
 
 
@@ -152,7 +167,11 @@ func load(p_serialized_data: Dictionary) -> void:
 	name = p_serialized_data.get("name", name)
 	self_class_name = p_serialized_data.get("class_name", self_class_name)
 	user_meta = p_serialized_data.get("user_meta", {})
-	
+
+	var cid: int = type_convert(p_serialized_data.get("cid", -1), TYPE_INT)
+	if CIDManager.set_component_id(cid, self, true):
+		_cid = cid
+
 	_on_load_request(p_serialized_data)
 	_disable_signals = false
 
