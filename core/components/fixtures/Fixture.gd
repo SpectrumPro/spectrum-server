@@ -83,6 +83,11 @@ func get_default(p_zone: String, p_parameter: String, p_function: String = "", p
 	return 0.0
 
 
+## Gets the force default value of a parameter
+func get_force_default(p_zone: String, p_parameter: String, p_function: String = "", p_raw_dmx: bool = false) -> float:
+	return 0.0
+
+
 ## Gets the default function for a zone and parameter, or the first function if none can be found
 func get_default_function(p_zone: String, p_parameter: String) -> String:
 	return ""

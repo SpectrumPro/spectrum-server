@@ -22,7 +22,7 @@ var _progress: float = 0
 var _layer_id: String = ""
 
 ## Contains all the infomation for this animation
-var _tracks: Dictionary[int, Dictionary] = {}
+var _tracks: Dictionary[ContainerItem, Dictionary] = {}
 
 ## Previous time for the animation step
 var _previous_time: float = 0
@@ -33,10 +33,13 @@ var _container: DataContainer
 ## Stores all track ids for containers
 var _container_track_ids: Dictionary[Fixture, Dictionary]
 
+## Seek to queued state
+var _seek_queued: bool = false
+
 ## Signals to connect to the container
 var _container_signals: Dictionary[String, Callable] = {
-	"on_data_stored": _on_data_stored,
-	"on_data_erased": _on_data_erased
+	"on_items_stored": _on_items_stored,
+	"on_items_erased": _on_items_erased,
 }
 
 
@@ -54,7 +57,6 @@ func _process(delta: float) -> void:
 
 	seek_to(_progress)
 	steped.emit(_progress)
-
 
 
 ## Sets the data container to use for storage
@@ -94,13 +96,9 @@ func stop() -> void:
 	set_process(false)
 	_progress = 0
 
-	for track: Dictionary in _tracks.values():
-		(track.fixture as Fixture).erase_parameter(
-			track.parameter,
-			_layer_id,
-			track.zone
-		)
-		track.first_time = true
+	for item: ContainerItem in _tracks.keys():
+		item.get_fixture().erase_parameter(item.get_parameter(), _layer_id, item.get_zone())
+		_tracks[item].first_time = true
 
 
 ## Finishes the animation imdetaly 
@@ -118,117 +116,63 @@ func finish() -> void:
 
 ## Internal function to seek to a point in the animation
 func seek_to(time: float) -> void:
-	for animation_track in _tracks.values():
+	for item: ContainerItem in _tracks.keys():
+		var from: float = _tracks[item].from
+		var current: float = _tracks[item].current
+		var first_time: bool = _tracks[item].first_time
 		var new_data: float = - 1
 
-		if animation_track.can_fade:
-			if time < animation_track.start or time > animation_track.stop:
+		if item.get_can_fade():
+			if time < item.get_start() or time > item.get_stop():
 				continue
 
-			var normalized_progress = (time - animation_track.start) / max(animation_track.stop - animation_track.start, 0.0001)
+			var normalized_progress = (time - item.get_start()) / max(item.get_stop() - item.get_start(), 0.0001)
 			new_data = Tween.interpolate_value(
-				animation_track.from,
-				animation_track.to - animation_track.from,
+				from,
+				item.get_value() - from,
 				normalized_progress,
 				1,
 				Tween.TRANS_LINEAR,
 				Tween.EASE_IN_OUT
 			)
 		
-		elif _previous_time > time and time <= animation_track.stop:
-			new_data = animation_track.from
+		elif _previous_time > time and time <= item.get_stop():
+			new_data = from
 		
-		elif time > _previous_time and time >= animation_track.start:
-			new_data = animation_track.to
+		elif time > _previous_time and time >= item.get_start():
+			new_data = item.get_value()
 
-		if new_data != - 1 and (animation_track.current != new_data or animation_track.first_time):
-			animation_track.current = new_data
-			animation_track.first_time = false
+		if new_data != - 1 and (current != new_data or first_time):
+			_tracks[item].current = new_data
+			_tracks[item].first_time = false
 
-			var fixture: Fixture = animation_track.fixture
-			fixture.set_parameter(animation_track.parameter, animation_track.function, new_data, _layer_id, animation_track.zone)
+			item.get_fixture().set_parameter(
+				item.get_parameter(), 
+				item.get_function(),
+				new_data,
+				_layer_id,
+				item.get_zone()
+			)
 	
 	_progress = time
 	_previous_time = time
 
 
-## Adds a method animation, method animation will call a method for each step in the animation, with the interpolated Variant as the argument
-func add_track(fixture: Fixture, parameter: String, function: String, zone: String, to: float, can_fade: bool = true, start: float = 0.0, stop: float = 1.0) -> int:
-	var ids: Array = _tracks.keys()
-	ids.sort()	
-	var id: int = type_convert(ids.max(), TYPE_INT) + 1
-	var from: float = fixture.get_current_value_layered_or_force_default(zone, parameter, _layer_id, function)
-	
-	_tracks[id] = {
-		"fixture": fixture,
-		"parameter": parameter,
-		"function": function,
-		"zone": zone,
-		"from": from,
-		"to": to,
-		"current": from,
-		"can_fade": can_fade,
-		"start": start,
-		"stop": stop,
-		"first_time": true
-	}
-
-	return id
-
-
-## Removes an animated method, will reset all values to default if reset == true
-func remove_track(id: Variant, reset: bool = true) -> void:
-	if _tracks.has(id):
-		if reset:
-			var track: Dictionary = _tracks[id]
-			track.fixture.set_parameter(track.parameter, track.function, track.from, _layer_id, track.zone)
-
-		_tracks.erase(id)
-
-
-## Gets an animated track from the given id
-func get_track_from_id(id: Variant) -> Dictionary:
-	return _tracks.get(id, {}).duplicate()
-
-
-## Returnes a copy of the animated data
-func get_animated_data(duplicate_data: bool = true) -> Dictionary:
-	return _tracks.duplicate(true) if duplicate_data else _tracks
-
-
-## Sets the animated data
-func set_animated_data(animation_data: Dictionary) -> void:
-	_tracks = animation_data.duplicate()
+## Called when data is stored to the container
+func _on_items_stored(items: Array) -> void:
+	for item: ContainerItem in items:
+		_tracks[item] = {
+			"from": item.get_fixture().get_current_value_layered_or_force_default(item.get_zone(), item.get_parameter(), _layer_id, item.get_function()),
+			"current": 0.0,
+			"first_time": true,
+		}
 
 
 ## Called when data is stored to the container
-func _on_data_stored(fixture: Fixture, parameter: String, function: String, value: Variant, zone: String, can_fade: bool, start: float, stop: float) -> void:
-	var id: int = add_track(
-		fixture, 
-		parameter, 
-		function, 
-		zone, 
-		value, 
-		can_fade, 
-		start, 
-		stop
-	)
-
-	_container_track_ids.get_or_add(fixture, {}).get_or_add(zone, {})[parameter] = id
-
-
-## Called when data is stored to the container
-func _on_data_erased(fixture: Fixture, parameter: String, zone: String) -> void:
-	remove_track(_container_track_ids[fixture][zone][parameter])
-
-	if not _container_track_ids[fixture][zone][parameter]:
-		_container_track_ids[fixture][zone].erase(parameter)
-
-		if not _container_track_ids[fixture][zone]:
-			_container_track_ids[fixture].erase(zone)
-
-			if not _container_track_ids[fixture]:
-				_container_track_ids.erase(fixture)
+func _on_items_erased(items: Array) -> void:
+	for item: ContainerItem in items:
+		item.get_fixture().erase_parameter(item.get_parameter(), _layer_id, item.get_zone())
+		_tracks.erase(item)
 
 
 ## Deletes all the animated data

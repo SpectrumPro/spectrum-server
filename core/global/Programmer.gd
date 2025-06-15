@@ -46,7 +46,6 @@ func clear() -> void:
 	on_cleared.emit()
 
 
-
 ## Function to set the fixture data at the given chanel key
 func set_parameter(p_fixtures: Array, p_parameter: String, p_function: String, p_value: float, p_zone: String) -> void:
 	for fixture in p_fixtures:
@@ -75,7 +74,7 @@ func erase_parameter(p_fixtures: Array, p_parameter: String, p_zone: String) -> 
 func _set_individual_fixture_data(p_fixture: Fixture, p_parameter: String, p_function: String, p_value: float, p_zone: String) -> void:
 	if p_fixture.has_parameter(p_zone, p_parameter, p_function):
 		p_fixture.set_override(p_parameter, p_function, p_value, p_zone)
-		_container.store_data(p_fixture, p_parameter, p_function, p_value, p_zone, p_fixture.function_can_fade(p_zone, p_parameter, p_function))
+		_container.store_data(p_fixture, p_zone, p_parameter, p_function, p_value, p_fixture.function_can_fade(p_zone, p_parameter, p_function))
 
 
 ## Eraces the data on a single fixture at a time
@@ -89,15 +88,8 @@ func _erase_individual_fixture_data(p_fixture: Fixture, p_parameter: String, p_z
 func store_data_to_container(container: DataContainer, mode: SaveMode, fixtures: Array = []) -> void:
 	match mode:
 		SaveMode.MODIFIED:
-			for fixture: Fixture in fixtures:
-				var current_data: Dictionary = _container.get_fixture_data()
-
-				if fixture in current_data:
-					for zone: String in current_data[fixture]:
-						for parameter: String in current_data[fixture][zone]:
-							var stored_data: Dictionary = current_data[fixture][zone][parameter]
-							container.store_data(fixture, parameter, stored_data.function, stored_data.value, zone, stored_data.can_fade)
-
+			_store_data_modified(container, mode, fixtures)
+		
 		# SaveMode.ALL:
 		# 	for fixture in fixtures:
 		# 		if fixture is Fixture:
@@ -110,6 +102,17 @@ func store_data_to_container(container: DataContainer, mode: SaveMode, fixtures:
 		# 			for channel_key: String in fixture.current_values:
 		# 				if fixture.current_values[channel_key]:
 		# 					container.store_data(fixture, channel_key, fixture.current_values[channel_key])
+
+
+## Stores modiyed fixture data into a container 
+func _store_data_modified(p_container: DataContainer, p_mode: SaveMode, p_fixtures: Array) -> void:
+	var items_to_add: Array[ContainerItem]
+
+	for item: ContainerItem in _container.get_items():
+		if item.get_fixture() in p_fixtures:
+			items_to_add.append(item.duplicate())
+	
+	p_container.store_items(items_to_add)
 
 
 ## erases data into a function

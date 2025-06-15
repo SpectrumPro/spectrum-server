@@ -28,6 +28,7 @@ var _global_class_tree: Dictionary = {
 			"ArtNetOutput": ArtNetOutput,
 			"DMXOutput": DMXOutput,
 		},
+		"ContainerItem": ContainerItem,
 		"EngineComponent": EngineComponent,
 		"FixtureGroup": FixtureGroup,
 		"FixtureGroupItem": FixtureGroupItem,

@@ -30,7 +30,6 @@ func _component_ready() -> void:
 	_auto_start = false
 	_auto_stop = false
 
-	_data_container.set_allow_store_zero_data(true)
 	_animator.set_container(_data_container)
 
 	_animator.set_layer_id(uuid)

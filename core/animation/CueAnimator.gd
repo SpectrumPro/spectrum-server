@@ -144,7 +144,7 @@ func seek_to(time: float) -> void:
 
 			if animation_track.parameter in _allowed_intensity_parameters:
 				new_data *= _intensity
-			
+
 			fixture.set_parameter(animation_track.parameter, animation_track.function, new_data, _layer_id, animation_track.zone)
 	
 	_progress = time
@@ -167,6 +167,7 @@ func add_track(id: String, fixture: Fixture, parameter: String, function: String
 		"first_time": true,
 		"animator": self
 	}
+	print(_tracks[id].parameter, ": ", _tracks[id].to)
 
 
 ## Removes an animated method, will reset all values to default if reset == true
@@ -183,33 +184,33 @@ func remove_track(id: String, reset: bool = true) -> void:
 
 
 ## Tracks a cues fixtures
-func track(cue: Cue, pre_existing_data: Dictionary[String, Dictionary]) -> Dictionary[String, Dictionary]:
-	var fixture_data: Dictionary = cue.get_fixture_data()
-	
-	for fixture: Fixture in fixture_data:
-		for zone: String in fixture_data[fixture]:
-			for parameter: String in fixture_data[fixture][zone]:
-				var data: Dictionary = fixture_data[fixture][zone][parameter]
-				var id: String = fixture.uuid + zone + parameter + data.function
-				var from: float = fixture.get_current_value_layered_or_force_default(zone, parameter, _layer_id, data.function)
+func track(p_cue: Cue, p_pre_existing_data: Dictionary[String, Dictionary]) -> Dictionary[String, Dictionary]:
+	for item: ContainerItem in p_cue.get_items():
+		var id: String = item.get_attribute_id()
+		var from: float = item.get_fixture().get_current_value_layered_or_force_default(
+			item.get_zone(), 
+			item.get_parameter(), 
+			_layer_id, 
+			item.get_function()
+		)
+		
+		add_track(
+			id,
+			item.get_fixture(), 
+			item.get_parameter(), 
+			item.get_function(), 
+			item.get_zone(),
+			from * (2 - (_intensity if item.get_parameter() in _allowed_intensity_parameters else 1.0)), 
+			item.get_value(), 
+			item.get_can_fade(), 
+			item.get_start(),
+			item.get_stop(),
+		)
 
-				add_track(
-					id,
-					fixture, 
-					parameter, 
-					data.function, 
-					zone,
-					from * (2 - (_intensity if parameter in _allowed_intensity_parameters else 1.0)), 
-					data.value, 
-					data.can_fade, 
-					data.start,
-					data.stop,
-				)
-
-				if id in pre_existing_data:
-					var animator: Variant = pre_existing_data[id].animator
-					if is_instance_valid(animator) and animator != self:
-						animator.remove_track(id, false)
+		if id in p_pre_existing_data:
+			var animator: Variant = p_pre_existing_data[id].animator
+			if is_instance_valid(animator) and animator != self:
+				animator.remove_track(id, false)
 
 	return _tracks
 

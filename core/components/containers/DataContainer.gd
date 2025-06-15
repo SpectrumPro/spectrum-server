@@ -5,33 +5,33 @@ class_name DataContainer extends EngineComponent
 ## DataContainer stores fixture data
 
 
-# Emitted when data is stored in this function
-signal on_data_stored(fixture: Fixture, parameter: String, function: String, value: Variant, zone: String, can_fade: bool, start: float, stop: float)
+## Emitted when ContainerItems are stored
+signal on_items_stored(items: Array)
 
-## Emitted when data is erased from this function
-signal on_data_erased(fixture: Fixture, parameter: String, zone: String)
+## Emitted when ContainerItems are erased
+signal on_items_erased(items: Array)
 
-## Emitted when the value of a fixtures data is changed
-signal on_data_value_changed(fixture: Fixture, parameter: String, zone: String, value: float)
+## Emitted when the function is changed in mutiple ContainerItems
+signal on_items_function_changed(items: Array, function: String)
 
-## Emitted when global data is stored in this function
-signal on_global_data_stored(parameter: String, function: String, value: Variant, can_fade: bool, start: float, stop: float)
+## Emitted when the value is changed in mutiple ContainerItems
+signal on_items_value_changed(items: Array, value: float)
 
-## Emitted when global data is erased from this function
-signal on_global_data_erased(parameter: String)
+## Emitted when the can_fade state is changed in mutiple ContainerItems
+signal on_items_can_fade_changed(items: Array, can_fade: bool)
 
-## Emitted when any data is modified
-signal data_modified()
+## Emitted when the start point is changed in mutiple ContainerItems
+signal on_items_start_changed(items: Array, start: float)
+
+## Emitted when the stop point is changed in mutiple ContainerItems
+signal on_items_stop_changed(items: Array, stop: float)
 
 
-## Allows this function to store zero data, ie storing the color of black, or a intensity of 0
-var _allow_store_zero_data: bool = true
+## All ContainerItems
+var _items: Array[ContainerItem]
 
-## Stored fixture data
-var _fixture_data: Dictionary = {}
-
-## Stored global data
-var _global_data: Dictionary = {}
+## All fixtures stored as { Fixture: { zone: { parameter: ContainerItem } } }
+var _fixture: Dictionary[Fixture, Dictionary]
 
 
 ## Constructor
@@ -41,206 +41,210 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = name) -> void:
 	super._init(p_uuid, p_name)
 
 
-## Changes the zero data store state
-func set_allow_store_zero_data(state: bool) -> void:
-	_allow_store_zero_data = state
+## Gets all the ContainerItems
+func get_items() -> Array[ContainerItem]:
+	return _items.duplicate()
 
 
 ## Gets all the fixture data
-func get_fixture_data() -> Dictionary:
-	return _fixture_data.duplicate()
+func get_fixtures() -> Dictionary[Fixture, Dictionary]:
+	return _fixture.duplicate(true)
 
 
-## Gets all the global data
-func get_global_data() -> Dictionary:
-	return _global_data.duplicate()
+## Gets a list of all fixtures in this DataContainer
+func get_stored_fixtures() -> Array:
+	return _fixture.keys()
 
 
-## Returns all the fixture stored in the fixture data
-func get_stored_fixtures() -> Array[Fixture]:
-	var fixtures: Array[Fixture]
-	fixtures.assign(_fixture_data.keys())
+## Stores data into this DataContainer
+func store_data(p_fixture: Fixture, p_zone: String, p_parameter: String, p_function: String, p_value: float, p_can_fade: bool = true, p_start: float = 0.0, p_stop: float = 1.0) -> ContainerItem:
+	var item: ContainerItem
 
-	return fixtures
+	if _fixture.has(p_fixture) and _fixture[p_fixture].has(p_zone) and _fixture[p_fixture][p_zone].has(p_parameter):
+		item = _fixture[p_fixture][p_zone][p_parameter]
+
+		set_value([item], p_value)
+		set_can_fade([item], p_can_fade)
+		set_start([item], p_start)
+		set_stop([item], p_stop)
+
+		return item
+	
+	else:
+		item = ContainerItem.new()	
+
+		item.set_fixture(p_fixture)
+		item.set_zone(p_zone)
+		item.set_parameter(p_parameter)
+		item.set_function(p_function)
+		item.set_value(p_value)
+		item.set_can_fade(p_can_fade)
+		item.set_start(p_start)
+		item.set_stop(p_stop)
+		
+		if store_item(item):
+			return item
+		else:
+			return null
 
 
-## Stores data into this function
-func store_data(p_fixture: Fixture, p_parameter: String, p_function: String, p_value: Variant, p_zone: String, p_can_fade: bool = true, p_start: float = 0.0, p_stop: float = 1.0) -> bool:
-	if not p_value and not _allow_store_zero_data:
+## Erases data
+func erase_data(p_fixture: Fixture, p_zone: String, p_parameter: String) -> bool:
+	var item: ContainerItem = _fixture.get(p_fixture, {}).get(p_zone, {}).get(p_parameter, null)
+
+	return erase_item(item)
+	
+
+## Stores a ContainerItem
+func store_item(p_item: ContainerItem, no_signal: bool = false) -> bool:
+	if not p_item or p_item in _items or not p_item.is_valid():
 		return false
+	
+	_items.append(p_item)
+	_fixture.get_or_add(p_item.get_fixture(), {}).get_or_add(p_item.get_zone(), {})[p_item.get_parameter()] = p_item
 
-	_fixture_data.get_or_add(p_fixture, {}).get_or_add(p_zone, {})[p_parameter] = {
-			"value": p_value,
-			"function": p_function,
-			"can_fade": p_can_fade,
-			"start": p_start,
-			"stop": p_stop
-		}
+	ComponentDB.register_component(p_item)
+	p_item.on_delete_requested.connect(erase_item.bind(p_item))
 
-	on_data_stored.emit(p_fixture, p_parameter, p_function, p_value, p_zone, p_can_fade, p_start, p_stop)
-	data_modified.emit()
-
+	if not no_signal:
+		on_items_stored.emit([p_item])
+	
 	return true
 
 
-## Erases data from this function
-func erase_data(p_fixture: Fixture, p_parameter: String, p_zone: String) -> bool:
-	if _fixture_data.get(p_fixture, {}).get(p_zone, {}).erase(p_parameter):
-		if _fixture_data[p_fixture][p_zone] == {}:
-			_fixture_data[p_fixture].erase(p_zone)
+## Stores mutiple items at once
+func store_items(p_items: Array) -> void:
+	var just_added_items: Array[ContainerItem]
 
-		if _fixture_data[p_fixture] == {}:
-			_fixture_data.erase(p_fixture)
-
-		on_data_erased.emit(p_fixture, p_parameter, p_zone)
-		data_modified.emit()
-
-		return true
-
-	return false
+	for item: Variant in p_items:
+		if item is ContainerItem:
+			if store_item(item, true):
+				just_added_items.append(item)
+	
+	if just_added_items:
+		on_items_stored.emit(just_added_items)
 
 
-## Sets a value
-func set_value(p_fixture: Fixture, p_parameter: String, p_zone: String, p_new_value: float) -> bool:
-	if not _fixture_data.get(p_fixture, {}).get(p_zone, {}).has(p_parameter):
+## Erases an item
+func erase_item(p_item: ContainerItem, no_signal: bool = false) -> bool:
+	if not p_item or p_item not in _items:
 		return false
+	
+	_items.erase(p_item)
+	_fixture[p_item.get_fixture()][p_item.get_zone()].erase(p_item.get_parameter())
 
-	var config: Dictionary = _fixture_data[p_fixture][p_zone][p_parameter]
-	if config.value == p_new_value:
-		return false
-
-	config.value = p_new_value
-	on_data_value_changed.emit(p_fixture, p_parameter, p_zone, p_new_value)
-
+	if not no_signal:
+		on_items_erased.emit(p_item)
+	
 	return true
 
 
-## Stores global data into this function
-func store_global_data(p_parameter: String, p_function: String, p_value: Variant, p_can_fade: bool = true, p_start: float = 0.0, p_stop: float = 0.0) -> bool:
-	if (not p_value and not _allow_store_zero_data) or _global_data.get(p_parameter) == p_value:
-		return false
+## Erases mutiple items at once
+func erase_items(p_items: Array) -> void:
+	var just_erased_items: Array[ContainerItem]
 
-	_global_data[p_parameter] = {
-		"value": p_value,
-		"function": p_function,
-		"can_fade": p_can_fade,
-		"start": p_start,
-		"stop": p_stop
-	}
-	on_global_data_stored.emit(p_parameter, p_function, p_value, p_can_fade, p_start, p_stop)
-	data_modified.emit()
-
-	return true
+	for item: Variant in p_items:
+		if item is ContainerItem:
+			if erase_item(item, true):
+				just_erased_items.append(item)
+	
+	if just_erased_items:
+		on_items_erased.emit(just_erased_items)
 
 
-## Erases global data from this function
-func erase_global_data(p_parameter: String) -> bool:
-	var state: bool = _global_data.erase(p_parameter)
+## Sets the function of mutiple items
+func set_function(p_items: Array, p_function: float) -> void:
+	var changed_items: Array[ContainerItem]
 
-	if state:
-		on_global_data_erased.emit(p_parameter)
-		data_modified.emit()
-
-	return state
-
-
-## Serializes the stored data
-func _serialize_stored_data() -> Dictionary:
-	var serialized_stored_data: Dictionary = {}
-
-	for fixture: Fixture in _fixture_data:
-		for zone: String in _fixture_data[fixture].keys():
-			for parameter: String in _fixture_data[fixture][zone].keys():
-				var stored_item: Dictionary = _fixture_data[fixture][zone][parameter]
-
-				if not fixture.uuid in serialized_stored_data:
-					serialized_stored_data[fixture.uuid] = {}
-
-				if not zone in serialized_stored_data[fixture.uuid]:
-					serialized_stored_data[fixture.uuid][zone] = {}
-
-				serialized_stored_data[fixture.uuid][zone][parameter] = {
-					"value": stored_item.value,
-					"function": stored_item.function,
-					"can_fade": stored_item.can_fade,
-					"start": stored_item.start,
-					"stop": stored_item.stop,
-				}
-
-	return serialized_stored_data
+	for item: Variant in p_items:
+		if item is ContainerItem:
+			if item.set_function(p_function):
+				changed_items.append(item)
+	
+	if changed_items:
+		on_items_function_changed.emit(changed_items, p_function)
 
 
-## Loads the stored data, by calling the given method
-func _load_stored_data(p_serialized_stored_data: Dictionary) -> void:
-	for fixture_uuid: String in p_serialized_stored_data.keys():
-		var fixture: Fixture = ComponentDB.get_component(fixture_uuid)
+## Sets the value of mutiple items
+func set_value(p_items: Array, p_value: float) -> void:
+	var changed_items: Array[ContainerItem]
 
-		if fixture is Fixture:
-			for zone: String in p_serialized_stored_data[fixture_uuid]:
-				for parameter: String in p_serialized_stored_data[fixture_uuid][zone]:
-					var stored_item: Dictionary = p_serialized_stored_data[fixture_uuid][zone][parameter]
-
-					store_data(
-						fixture,
-						parameter,
-						type_convert(stored_item.get("function", ""), TYPE_STRING),
-						type_convert(stored_item.get("value", 0), TYPE_FLOAT),
-						zone,
-						type_convert(stored_item.get("can_fade", true), TYPE_BOOL),
-						type_convert(stored_item.get("start", 0.0), TYPE_FLOAT),
-						type_convert(stored_item.get("stop", 1.0), TYPE_FLOAT)
-					)
+	for item: Variant in p_items:
+		if item is ContainerItem:
+			if item.set_value(p_value):
+				changed_items.append(item)
+	
+	if changed_items:
+		on_items_value_changed.emit(changed_items, p_value)
 
 
-## Serializes stored global data
-func _serialize_stored_global_data() -> Dictionary:
-	var serialized_stored_global_data: Dictionary = {}
+## Sets the value of mutiple items
+func set_can_fade(p_items: Array, p_can_fade: bool) -> void:
+	var changed_items: Array[ContainerItem]
 
-	for parameter: String in _global_data.keys():
-		var stored_item: Dictionary = _global_data[parameter]
-
-		serialized_stored_global_data[parameter] = {
-			"value": stored_item.value,
-			"function": stored_item.function,
-			"can_fade": stored_item.can_fade,
-			"start": stored_item.start,
-			"stop": stored_item.stop,
-		}
-
-	return serialized_stored_global_data
+	for item: Variant in p_items:
+		if item is ContainerItem:
+			if item.set_can_fade(p_can_fade):
+				changed_items.append(item)
+	
+	if changed_items:
+		on_items_can_fade_changed.emit(changed_items, p_can_fade)
 
 
-## Loads stored global data, by calling the given method
-func _load_stored_global_data(p_serialized_stored_global_data: Dictionary) -> void:
-	for parameter: String in p_serialized_stored_global_data.keys():
-		var stored_item: Dictionary = p_serialized_stored_global_data[parameter]
+## Sets the value of mutiple items
+func set_start(p_items: Array, p_start: float) -> void:
+	var changed_items: Array[ContainerItem]
 
-		store_global_data(
-			parameter,
-			type_convert(stored_item.get("function", ""), TYPE_STRING),
-			type_convert(stored_item.get("value", 0), TYPE_FLOAT),
-			type_convert(stored_item.get("can_fade", true), TYPE_BOOL),
-			type_convert(stored_item.get("start", 0.0), TYPE_FLOAT),
-			type_convert(stored_item.get("stop", 1.0), TYPE_FLOAT)
-		)
+	for item: Variant in p_items:
+		if item is ContainerItem:
+			if item.set_start(p_start):
+				changed_items.append(item)
+	
+	if changed_items:
+		on_items_start_changed.emit(changed_items, p_start)
+
+
+## Sets the value of mutiple items
+func set_stop(p_items: Array, p_stop: float) -> void:
+	var changed_items: Array[ContainerItem]
+
+	for item: Variant in p_items:
+		if item is ContainerItem:
+			if item.set_stop(p_stop):
+				changed_items.append(item)
+	
+	if changed_items:
+		on_items_stop_changed.emit(changed_items, p_stop)
 
 
 ## Serializes this DataContainer and returnes it in a dictionary
 func _serialize() -> Dictionary:
 	return {
-		"fixture_data": _serialize_stored_data(),
-		"global_data": _serialize_stored_global_data(),
+		"items": Utils.seralise_component_array(_items)
 	}
 
 
 ## Called when this DataContainer is to be loaded from serialized data
 func _load(serialized_data: Dictionary) -> void:
-	_load_stored_data(serialized_data.get("fixture_data", {}))
-	_load_stored_global_data(serialized_data.get("global_data", {}))
+	store_items(Utils.deseralise_component_array(type_convert(serialized_data.get("items", []), TYPE_ARRAY)))
+
+
+## Handles delete requests
+func _delete() -> void:
+	for item: ContainerItem in _items:
+		item.delete(true)
 
 
 ## Serializes this Datacontainer and returnes it in a dictionary
-func _on_serialize_request(mode: int) -> Dictionary: return _serialize()
+func _on_serialize_request(mode: int) -> Dictionary: 
+	return _serialize()
+
 
 ## Loads this DataContainer from a dictonary
-func _on_load_request(serialized_data) -> void: _load(serialized_data)
+func _on_load_request(serialized_data) -> void: 
+	_load(serialized_data)
+
+
+## Handles delete requests
+func _on_delete_request() -> void:
+	_delete()

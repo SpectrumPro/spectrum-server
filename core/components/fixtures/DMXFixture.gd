@@ -339,6 +339,15 @@ func get_default(p_zone: String, p_parameter: String, p_function: String = "", p
 		return remap(dmx_value, range[0], range[1], 0.0, 1.0)
 
 
+## Gets the force default value of a parameter
+func get_force_default(p_zone: String, p_parameter: String, p_function: String = "", p_raw_dmx: bool = false) -> float:
+	if has_force_default(p_function):
+		return get_default(p_zone, p_parameter)
+		
+	else:
+		return 0.0
+
+
 ## Gets the default function for a zone and parameter, or the first function if none can be found
 func get_default_function(p_zone: String, p_parameter: String) -> String:
 	var default_function: String = _parameters[p_zone][p_parameter].default_function

@@ -25,10 +25,10 @@ func set_component_id(cid: int, p_component: EngineComponent, no_signal: bool = 
 	if class_cid_map.right(cid):
 		return false
 
+	class_cid_map.erase_left(p_component)
+
 	if cid >= 0:
 		class_cid_map.map(p_component, cid)
-	else:
-		class_cid_map.erase_left(p_component)
 
 	p_component._cid = cid
 	p_component.cid_changed.emit(cid)
