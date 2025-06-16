@@ -71,7 +71,7 @@ func store_data(p_fixture: Fixture, p_zone: String, p_parameter: String, p_funct
 		return item
 	
 	else:
-		item = ContainerItem.new()	
+		item = ContainerItem.new()
 
 		item.set_fixture(p_fixture)
 		item.set_zone(p_zone)
@@ -153,7 +153,7 @@ func erase_items(p_items: Array) -> void:
 
 
 ## Sets the function of mutiple items
-func set_function(p_items: Array, p_function: float) -> void:
+func set_function(p_items: Array, p_function: String) -> void:
 	var changed_items: Array[ContainerItem]
 
 	for item: Variant in p_items:
@@ -236,12 +236,12 @@ func _delete() -> void:
 
 
 ## Serializes this Datacontainer and returnes it in a dictionary
-func _on_serialize_request(mode: int) -> Dictionary: 
+func _on_serialize_request(mode: int) -> Dictionary:
 	return _serialize()
 
 
 ## Loads this DataContainer from a dictonary
-func _on_load_request(serialized_data) -> void: 
+func _on_load_request(serialized_data) -> void:
 	_load(serialized_data)
 
 
