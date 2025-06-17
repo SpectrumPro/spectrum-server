@@ -126,7 +126,7 @@ func set_parameter(p_parameter: String, p_function: String, p_value: float, p_la
 	# print(p_parameter, ": ", p_value)
 
 	if _parameters.has(p_zone) and _parameters[p_zone].has(p_parameter) and _parameters[p_zone][p_parameter].functions.has(p_function):
-		
+
 		var offsets: Array = _parameters[p_zone][p_parameter].offsets
 		_raw_layers.get_or_add(p_zone, {}).get_or_add(p_parameter, {})[p_layer_id] = {"value": p_value, "function": p_function}
 
@@ -137,7 +137,7 @@ func set_parameter(p_parameter: String, p_function: String, p_value: float, p_la
 			mapped_layer[p_layer_id] = mapped_value
 
 			var max: int = mapped_layer.values().max()
-			
+
 			if max != _current.get(p_zone, {}).get(p_parameter, null):
 				_current.get_or_add(p_zone, {})[p_parameter] = mapped_value
 				_active_values.get_or_add(p_zone, {})[p_parameter] = {
@@ -151,15 +151,15 @@ func set_parameter(p_parameter: String, p_function: String, p_value: float, p_la
 		else:
 			var zones: Array = _parameters.keys()
 			zones.erase(p_zone)
-			
+
 			for zone: String in zones:
 				set_parameter(p_parameter, p_function, p_value, p_layer_id, zone, true)
-			
+
 			on_parameter_changed.emit(p_parameter, p_function, p_value, p_zone)
 			_queue_compilation()
-		
+
 		return true
-	
+
 	return false
 
 
@@ -187,14 +187,14 @@ func erase_parameter(p_parameter: String, p_layer_id: String, p_zone: String = "
 				on_parameter_erased.emit(p_parameter, p_zone)
 				_find_and_output_parameter_function(p_parameter, p_zone, max)
 				_queue_compilation()
-		
+
 		else:
 			var zones: Array = _parameters.keys()
 			zones.erase(p_zone)
-			
+
 			for zone: String in zones:
 				erase_parameter(p_parameter, p_layer_id, zone, true)
-			
+
 			on_parameter_erased.emit(p_parameter, p_zone)
 			_find_and_output_parameter_function(p_parameter, p_zone, _current[p_zone][p_parameter])
 
@@ -205,7 +205,7 @@ func erase_parameter(p_parameter: String, p_layer_id: String, p_zone: String = "
 func _find_and_output_parameter_function(p_parameter: String, p_zone: String, p_dmx_value: int) -> void:
 	if not p_dmx_value:
 		return
-		
+
 	for function: String in _parameters[p_zone][p_parameter].functions:
 		var dmx_range: Array = _parameters[p_zone][p_parameter].functions[function].dmx_range
 
@@ -243,23 +243,23 @@ func set_override(p_parameter: String, p_function: String, p_value: float, p_zon
 				if not p_disable_output:
 					on_override_changed.emit(p_parameter, p_function, p_value, p_zone)
 					_queue_compilation()
-		
+
 		else:
 			var zones: Array = _parameters.keys()
 			zones.erase(p_zone)
-			
+
 			for zone: String in zones:
 				set_override(p_parameter, p_function, p_value, zone, true)
-			
+
 			on_override_changed.emit(p_parameter, p_function, p_value, p_zone)
 			_queue_compilation()
-		
+
 		return true
-	
+
 	return false
 
 
-## Erases the parameter override 
+## Erases the parameter override
 func erase_override(p_parameter: String, p_zone: String = "root", p_disable_output: bool = false) -> void:
 	if _raw_override_layers.has(p_zone) and _raw_override_layers[p_zone].has(p_parameter):
 		var offsets: Array = _parameters[p_zone][p_parameter].offsets
@@ -274,18 +274,18 @@ func erase_override(p_parameter: String, p_zone: String = "root", p_disable_outp
 			_current_override[p_zone].erase(p_parameter)
 			if not _current_override[p_zone]:
 				_current_override.erase(p_zone)
-			
+
 			if not p_disable_output:
 				on_override_erased.emit(p_parameter, p_zone)
 				_queue_compilation()
-		
+
 		else:
 			var zones: Array = _parameters.keys()
 			zones.erase(p_zone)
-			
+
 			for zone: String in zones:
 				erase_override(p_parameter, zone, true)
-			
+
 			on_override_erased.emit(p_parameter, p_zone)
 			_queue_compilation()
 
@@ -329,7 +329,7 @@ func get_parameter_functions(p_zone: String, p_parameter: String) -> Array:
 func get_default(p_zone: String, p_parameter: String, p_function: String = "", p_raw_dmx: bool = false) -> float:
 	if p_function == "":
 		p_function = get_default_function(p_zone, p_parameter)
-	
+
 	var dmx_value: int = _parameters[p_zone][p_parameter].functions[p_function].default
 	var range: Array = _parameters[p_zone][p_parameter].functions[p_function].dmx_range
 
@@ -343,7 +343,7 @@ func get_default(p_zone: String, p_parameter: String, p_function: String = "", p
 func get_force_default(p_zone: String, p_parameter: String, p_function: String = "", p_raw_dmx: bool = false) -> float:
 	if has_force_default(p_function):
 		return get_default(p_zone, p_parameter)
-		
+
 	else:
 		return 0.0
 
@@ -367,7 +367,7 @@ func get_current_value(p_zone: String, p_parameter: String, p_allow_default: boo
 ## Gets the current value, or the default
 func get_current_value_or_force_default(p_zone: String, p_parameter: String) -> float:
 	var value: float = _active_values.get(p_zone, {}).get(p_parameter, {}).get("value", -1)
-	
+
 	if value == -1:
 		if has_force_default(p_parameter):
 			return get_default(p_zone, p_parameter)
@@ -429,7 +429,7 @@ func zero_channels() -> void:
 		for attribute: String in _parameters[zone].keys():
 			if len(_parameters[zone][attribute].offsets):
 				_current.get_or_add(zone, {})[attribute] = 0
-	
+
 	_current_dmx.clear()
 	_compile_output()
 	_current.clear()
@@ -440,7 +440,7 @@ func zero_channels() -> void:
 func _queue_compilation() -> void:
 	if _compilation_queued:
 		return
-	
+
 	_compilation_queued = true
 	_compile_output.call_deferred()
 
@@ -458,7 +458,7 @@ func _compile_output() -> void:
 				var shift_amount = (offset.size() - 1 - i) * 8
 				var channel_value = (value >> shift_amount) & 0xFF
 				_current_dmx[offset[i] + _channel - 1] = channel_value
-	
+
 	var final_dmx: Dictionary = _current_dmx.merged(_current_override_dmx, true)
 	dmx_data_updated.emit(final_dmx)
 	_compilation_queued = false

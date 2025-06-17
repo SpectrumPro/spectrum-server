@@ -25,6 +25,10 @@ signal on_all_override_removed()
 static var RootZone: String = "root"
 
 
+## Enables layer based LTP on layers
+var _ltp_layers: Array[String]
+
+
 ## Called when this EngineComponent is ready
 func _init(p_uuid: String = UUID_Util.v4(), p_name: String = name) -> void:
 	set_self_class("Fixture")
@@ -47,7 +51,7 @@ func set_override(p_parameter: String, p_function: String, p_value: float, p_zon
 	return false
 
 
-## Erases the parameter override 
+## Erases the parameter override
 func erase_override(p_parameter: String, zone: String = "root") -> void:
 	pass
 
@@ -140,3 +144,26 @@ func has_force_default(p_parameter: String) -> bool:
 ## Checks if this Fixture has a function that can fade
 func function_can_fade(p_zone: String, p_parameter: String, p_function: String) -> bool:
 	return false
+
+
+## Enabled LTP on a layer
+func add_ltp_layer(p_layer_id: String) -> bool:
+	if p_layer_id in _ltp_layers:
+		return false
+
+	_ltp_layers.append(p_layer_id)
+	return true
+
+
+## Enabled LTP on a layer
+func remove_ltp_layer(p_layer_id: String) -> bool:
+	if p_layer_id not in _ltp_layers:
+		return false
+
+	_ltp_layers.erase(p_layer_id)
+	return true
+
+
+## Enabled LTP on a layer
+func has_ltp_layer(p_layer_id: String) -> bool:
+	return p_layer_id in _ltp_layers
