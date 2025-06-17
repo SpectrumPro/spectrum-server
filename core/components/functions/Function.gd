@@ -14,6 +14,9 @@ signal on_active_state_changed(state: ActiveState)
 ## Emitted when the transport state changes
 signal on_transport_state_changed(state: TransportState)
 
+## Emitted when the PriorityMode state changes
+signal on_priority_mode_state_changed(state: PriorityMode)
+
 ## Emitted when auto start is changed
 signal on_auto_start_changed(auto_start: bool)
 
@@ -27,12 +30,20 @@ enum ActiveState {
 	ENABLED,
 }
 
-## Transport Stae
+## Transport State
 enum TransportState {
 	PAUSED,
 	FORWARDS,
 	BACKWARDS
 }
+
+
+## Priority Mode
+enum PriorityMode {
+	HTP,
+	LTP
+}
+
 
 ## Intensity of this function
 var _intensity: float = 0
@@ -45,6 +56,9 @@ var _transport_state: TransportState = TransportState.PAUSED
 
 ## The previous transport state before setting it to Paused
 var _previous_transport_state: TransportState = TransportState.PAUSED
+
+## The current PriorityMode
+var _priority_mode: PriorityMode = PriorityMode.HTP
 
 ## Should this Function set ActiveState to ENABLED when intensity is not 0
 var _auto_start: bool = true
@@ -197,6 +211,31 @@ func get_intensity() -> float:
 	return _intensity
 
 
+## Sets the _priority_mode state
+func set_priority_mode_state(p_priority_mode: PriorityMode) -> void:
+	if p_priority_mode == _priority_mode:
+		return
+	
+	_priority_mode = p_priority_mode
+	on_priority_mode_state_changed.emit(_priority_mode)
+	_handle_priority_mode_change(_priority_mode)
+
+
+## Override this function to handle _priority_mode changes
+func _handle_priority_mode_change(p_priority_mode: PriorityMode) -> void:
+	match p_priority_mode:
+		PriorityMode.HTP:
+			FixtureLibrary.remove_global_ltp_layer(uuid)
+		
+		PriorityMode.LTP:
+			FixtureLibrary.add_global_ltp_layer(uuid)
+
+
+## Gets the current PriorityMode
+func get_priority_mode_state() -> PriorityMode:
+	return _priority_mode
+
+
 ## Sets the auto start state
 func set_auto_start(p_auto_start: bool) -> void:
 	if _auto_start == p_auto_start:
@@ -233,6 +272,7 @@ func get_data_container() -> DataContainer:
 ## Returns serialized version of this component, change the mode to define if this object should be serialized for saving to disk, or for networking to clients
 func serialize(p_mode: int = CoreEngine.SERIALIZE_MODE_NETWORK) -> Dictionary:
 	return super.serialize(p_mode).merged({
+		"priority_mode": _priority_mode,
 		"auto_start": _auto_start,
 		"auto_stop": _auto_stop
 	}.merged({
@@ -244,6 +284,8 @@ func serialize(p_mode: int = CoreEngine.SERIALIZE_MODE_NETWORK) -> Dictionary:
 
 ## Loades this object from a serialized version
 func load(p_serialized_data: Dictionary) -> void:
+	set_priority_mode_state(type_convert(p_serialized_data.get("priority_mode", _priority_mode), TYPE_INT))
+
 	_auto_start = type_convert(p_serialized_data.get("auto_start", _auto_start), TYPE_BOOL)
 	_auto_stop = type_convert(p_serialized_data.get("auto_stop", _auto_stop), TYPE_BOOL)
 

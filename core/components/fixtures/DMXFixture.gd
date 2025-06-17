@@ -29,6 +29,10 @@ var _parameters: Dictionary = {}
 ## { "zone": { "parameter": { value: float, function: String } } }
 var _active_values: Dictionary[String, Dictionary]
 
+## Stores all active LTP parameters
+## { "zone": { "parameter": [ layer_id ] } } 
+var _active_ltp_parameters: Dictionary[String, Dictionary]
+
 ## All the input value layers. Mapped to the DMX value used to calculate HTP
 ## { "zone": { "parameter": { "layer_id": mapped_value } } }
 var _mapped_layers: Dictionary[String, Dictionary] = {}
@@ -134,9 +138,23 @@ func set_parameter(p_parameter: String, p_function: String, p_value: float, p_la
 			var mapped_layer: Dictionary = _mapped_layers.get_or_add(p_zone, {}).get_or_add(p_parameter, {})
 			mapped_layer[p_layer_id] = mapped_value
 
-			var max: int = mapped_layer.values().max()
+			var new_value: int = mapped_layer.values().max()
 
-			if max != _current.get(p_zone, {}).get(p_parameter, null):
+			# if has_ltp_layer(p_layer_id):
+			# 	if uuid == "7dcf43e3-34f4-4564-aee2-68eb788abf38": print("Using LTP, Current")
+			# 	new_value = mapped_value
+			# 	if not _active_ltp_parameters.get_or_add(p_zone, {}).get_or_add(p_parameter, {}).has(p_layer_id):
+			# 		_active_ltp_parameters[p_zone][p_parameter][p_layer_id] = null
+			
+			# elif _active_ltp_parameters.get(p_zone, {}).get(p_parameter, []) and _current.get(p_zone, {}).has(p_parameter):
+			# 	if uuid == "7dcf43e3-34f4-4564-aee2-68eb788abf38": print("Using LTP, Pre existing")
+			# 	new_value = _current[p_zone][p_parameter]
+			
+			# else:
+			# 	if uuid == "7dcf43e3-34f4-4564-aee2-68eb788abf38": print("Using HTP")
+			# 	new_value = mapped_layer.values().max()
+			
+			if new_value != _current.get(p_zone, {}).get(p_parameter, null):
 				_current.get_or_add(p_zone, {})[p_parameter] = mapped_value
 				_active_values.get_or_add(p_zone, {})[p_parameter] = {
 					"value": p_value,

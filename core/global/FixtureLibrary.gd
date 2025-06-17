@@ -36,6 +36,9 @@ var _manifest_importers: Dictionary = {
 	"gdtf": GDTFImport.new()
 }
 
+## Global LTP layers for fixtures
+var _global_ltp_layers: Dictionary[String, Variant]
+
 
 ## Load the fixture manifests from the folders, buit in manifests will override user manifests
 func _ready() -> void:
@@ -117,6 +120,29 @@ func request_manifest(p_manifest_uuid: String) -> Promise:
 ## Check loaded state
 func is_loaded() -> bool: 
 	return _is_loaded
+
+
+## Enabled LTP on a layer
+func add_global_ltp_layer(p_layer_id: String) -> bool:
+	if has_global_ltp_layer(p_layer_id):
+		return false
+
+	_global_ltp_layers[p_layer_id] = null
+	return true
+
+
+## Enabled LTP on a layer
+func remove_global_ltp_layer(p_layer_id: String) -> bool:
+	if not has_global_ltp_layer(p_layer_id):
+		return false
+
+	_global_ltp_layers.erase(p_layer_id)
+	return true
+
+
+## Enabled LTP on a layer
+func has_global_ltp_layer(p_layer_id: String) -> bool:
+	return _global_ltp_layers.has(p_layer_id)
 
 
 ## Finds all the fixture manifetsts in the folders

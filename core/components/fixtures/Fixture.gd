@@ -26,7 +26,7 @@ static var RootZone: String = "root"
 
 
 ## Enables layer based LTP on layers
-var _ltp_layers: Array[String]
+var _ltp_layers: Dictionary[String, Variant]
 
 
 ## Called when this EngineComponent is ready
@@ -148,16 +148,16 @@ func function_can_fade(p_zone: String, p_parameter: String, p_function: String) 
 
 ## Enabled LTP on a layer
 func add_ltp_layer(p_layer_id: String) -> bool:
-	if p_layer_id in _ltp_layers:
+	if _ltp_layers.has(p_layer_id):
 		return false
 
-	_ltp_layers.append(p_layer_id)
+	_ltp_layers[p_layer_id] = null
 	return true
 
 
 ## Enabled LTP on a layer
 func remove_ltp_layer(p_layer_id: String) -> bool:
-	if p_layer_id not in _ltp_layers:
+	if not _ltp_layers.has(p_layer_id):
 		return false
 
 	_ltp_layers.erase(p_layer_id)
@@ -166,4 +166,4 @@ func remove_ltp_layer(p_layer_id: String) -> bool:
 
 ## Enabled LTP on a layer
 func has_ltp_layer(p_layer_id: String) -> bool:
-	return p_layer_id in _ltp_layers
+	return _ltp_layers.has(p_layer_id) or FixtureLibrary.has_global_ltp_layer(p_layer_id)

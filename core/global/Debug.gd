@@ -44,6 +44,8 @@ func dump_fixture_data(fixture: Fixture) -> String:
     var path: String = debug_file_location + "fixture_" + fixture.uuid + "/"
 
     if fixture is DMXFixture:
+        Utils.save_json_to_file(path, "_active_ltp_parameters", fixture._active_ltp_parameters)
+        Utils.save_json_to_file(path, "_active_values", fixture._active_values)
         Utils.save_json_to_file(path, "_parameters", fixture._parameters)
         Utils.save_json_to_file(path, "_mapped_layers", fixture._mapped_layers)
         Utils.save_json_to_file(path, "_raw_layers", fixture._raw_layers)
