@@ -123,8 +123,6 @@ func get_current_dmx() -> Dictionary:
 
 ## Sets a parameter to a float value
 func set_parameter(p_parameter: String, p_function: String, p_value: float, p_layer_id: String, p_zone: String = "root", p_disable_output: bool = false) -> bool:
-	# print(p_parameter, ": ", p_value)
-
 	if _parameters.has(p_zone) and _parameters[p_zone].has(p_parameter) and _parameters[p_zone][p_parameter].functions.has(p_function):
 
 		var offsets: Array = _parameters[p_zone][p_parameter].offsets

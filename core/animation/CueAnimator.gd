@@ -167,7 +167,6 @@ func add_track(id: String, fixture: Fixture, parameter: String, function: String
 		"first_time": true,
 		"animator": self
 	}
-	print(_tracks[id].parameter, ": ", _tracks[id].to)
 
 
 ## Removes an animated method, will reset all values to default if reset == true

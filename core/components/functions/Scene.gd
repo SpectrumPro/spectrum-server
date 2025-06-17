@@ -48,12 +48,13 @@ func _handle_active_state_change(p_active_state: ActiveState) -> void:
 	
 	var fade_speed: float = (_fade_in_speed if p_active_state else -_fade_out_speed)
 
-	if fade_speed:
-		_animator.set_time_scale(1 / fade_speed)
+	if fade_speed != 0:
+		_animator.set_time_scale(1.0 / fade_speed)
 		_animator.play()
-
+		
 	else:
 		_animator.seek_to(1 if p_active_state else 0)
+		_set_intensity(1 if p_active_state else 0)
 	
 	_set_transport_state(TransportState.FORWARDS if p_active_state else TransportState.BACKWARDS)
 
