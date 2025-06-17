@@ -49,6 +49,7 @@ func add_trigger(p_component: EngineComponent, p_up_method: String, p_down_metho
 		return false
 
 	_triggers.get_or_add(p_row, {})[p_column] = {
+		"component": p_component,
 		"up": p_component.get(p_up_method),
 		"down": p_component.get(p_down_method),
 		"name": p_name
@@ -90,7 +91,7 @@ func rename_trigger(p_row: int, p_column: int, p_name: String, no_signal: bool =
 func call_trigger_up(p_row: int, p_column: int, p_value: Variant = null) -> void:
 	var trigger: Dictionary = _triggers.get(p_row, {}).get(p_column, {})
 
-	if not trigger:
+	if not trigger or not trigger.up:
 		return
 
 	if p_value == null:
@@ -105,7 +106,7 @@ func call_trigger_up(p_row: int, p_column: int, p_value: Variant = null) -> void
 func call_trigger_down(p_row: int, p_column: int, p_value: Variant = null) -> void:
 	var trigger: Dictionary = _triggers.get(p_row, {}).get(p_column, {})
 
-	if not trigger:
+	if not trigger or not trigger.down:
 		return
 
 	if p_value == null:
@@ -239,8 +240,8 @@ func _on_serialize_request(p_mode: int) -> Dictionary:
 		for column: int in _triggers[row]:
 			triggers[row][column] = {
 				"component": _triggers[row][column].component.uuid,
-				"up": _triggers[row][column].up.get_method(),
-				"down": _triggers[row][column].down.get_method(),
+				"up": _triggers[row][column].up.get_method() if _triggers[row][column].up else "",
+				"down": _triggers[row][column].down.get_method() if _triggers[row][column].down else "",
 				"name": _triggers[row][column].name
 			}
 
