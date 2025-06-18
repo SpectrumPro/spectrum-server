@@ -42,6 +42,9 @@ var class_tree: Array[String] = ["EngineComponent"]
 ## ComponentID
 var _cid: int = -1
 
+## List of functions that are allowed to be called by external control scripts.
+var _control_methods: Dictionary[String, Dictionary] = {}
+
 ## Network Config:
 ## high_frequency_signals: Contains all the signals that should be send over the udp stream, instead of the tcp websocket
 var network_config: Dictionary = {
@@ -87,6 +90,28 @@ func set_self_class(p_self_class_name: String) -> void:
 ## Adds a high frequency signal to the network config
 func register_high_frequency_signals(p_high_frequency_signals: Array) -> void:
 	network_config.high_frequency_signals.append_array(p_high_frequency_signals)
+
+
+## Registers a method that can be called by external control systems
+func register_control_method(p_name: String, p_down_method: Callable, p_up_method: Callable = Callable(), p_signal: Signal = Signal(), p_args: Array[int] = []) -> void:
+	_control_methods.merge({
+		p_name: {
+			"down": p_down_method,
+			"up": p_up_method,
+			"signal": p_signal,
+			"args": p_args
+		}
+	})
+
+
+## Gets a control method by name
+func get_control_methods() -> Dictionary[String, Dictionary]:
+	return _control_methods.duplicate()
+
+
+## Gets a control method by name
+func get_control_method(p_control_name: String) -> Dictionary:
+	return _control_methods.get(p_control_name, {})
 
 
 ## Returns the value from user meta at the given key, if the key is not found, default is returned

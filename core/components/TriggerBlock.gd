@@ -6,7 +6,7 @@ class_name TriggerBlock extends EngineComponent
 
 
 ## Emitted when a trigger is added
-signal on_trigger_added(component: EngineComponent, up_method: String, down_method: String, name: String, id: String, row: int, column: int)
+signal on_trigger_added(component: EngineComponent, id: String, name: String, row: int, column: int)
 
 ## Emitted when a trigger is added
 signal on_trigger_removed(row: int, column: int)
@@ -32,20 +32,18 @@ func _component_ready() -> void:
 
 
 ## Adds a trigger at the given row and column
-func add_trigger(p_component: EngineComponent, p_up_method: String, p_down_method: String, p_name: String, p_id: String, p_row: int, p_column: int, no_signal: bool = false) -> bool:
-	if (p_up_method and not p_component.has_method(p_up_method)) or (p_down_method and not p_component.has_method(p_down_method)):
+func add_trigger(p_component: EngineComponent, p_id: String, p_name: String, p_row: int, p_column: int, no_signal: bool = false) -> bool:
+	if not p_component.get_control_method(p_id):
 		return false
 
 	_triggers.get_or_add(p_row, {})[p_column] = {
 		"component": p_component,
-		"up": p_component.get(p_up_method),
-		"down": p_component.get(p_down_method),
+		"id": p_id,
 		"name": p_name,
-		"id": p_id
 	}
 
 	if not no_signal:
-		on_trigger_added.emit(p_component, p_up_method, p_down_method, p_name, p_id, p_row, p_column)
+		on_trigger_added.emit(p_component, p_id, p_name, p_row, p_column)
 
 	return true
 
@@ -79,14 +77,19 @@ func rename_trigger(p_row: int, p_column: int, p_name: String, no_signal: bool =
 ## Triggers a trigger
 func call_trigger_up(p_row: int, p_column: int, p_value: Variant = null) -> void:
 	var trigger: Dictionary = _triggers.get(p_row, {}).get(p_column, {})
+	if not trigger:
+		return
+	
+	var config: Dictionary = trigger.component.get_control_method(trigger.id)
 
-	if not trigger or not trigger.up:
+	if not config or not config.up:
 		return
 
-	if p_value == null:
-		trigger.up.call()
-	else:
-		trigger.up.call(p_value)
+	if config.args and p_value != null:
+		config.up.call(p_value)
+	
+	elif not config.args:
+		config.up.call()
 
 	on_trigger_up.emit(p_row, p_column, p_value)
 
@@ -94,14 +97,19 @@ func call_trigger_up(p_row: int, p_column: int, p_value: Variant = null) -> void
 ## Triggers a trigger
 func call_trigger_down(p_row: int, p_column: int, p_value: Variant = null) -> void:
 	var trigger: Dictionary = _triggers.get(p_row, {}).get(p_column, {})
+	if not trigger:
+		return
+	
+	var config: Dictionary = trigger.component.get_control_method(trigger.id)
 
-	if not trigger or not trigger.down:
+	if not config or not config.down:
 		return
 
-	if p_value == null:
-		trigger.down.call()
-	else:
-		trigger.down.call(p_value)
+	if config.args and p_value != null:
+		config.down.call(type_convert(p_value, config.args[0]))
+	
+	elif not config.args:
+		config.down.call()
 
 	on_trigger_down.emit(p_row, p_column, p_value)
 
@@ -120,10 +128,8 @@ func _on_serialize_request(p_mode: int) -> Dictionary:
 		for column: int in _triggers[row]:
 			triggers[row][column] = {
 				"component": _triggers[row][column].component.uuid,
-				"up": _triggers[row][column].up.get_method() if _triggers[row][column].up else "",
-				"down": _triggers[row][column].down.get_method() if _triggers[row][column].down else "",
+				"id": _triggers[row][column].id,
 				"name": _triggers[row][column].name,
-				"id": _triggers[row][column].id
 			}
 
 	return {
@@ -145,10 +151,8 @@ func _on_load_request(p_serialized_data: Dictionary) -> void:
 			var trigger_data: Dictionary = type_convert(row_dict.get(column_str, {}), TYPE_DICTIONARY)
 
 			var component_id: Variant = trigger_data.get("component", null)
-			var up: String = type_convert(trigger_data.get("up", false), TYPE_STRING)
-			var down: String = type_convert(trigger_data.get("down", false), TYPE_STRING)
-			var name: String = type_convert(trigger_data.get("name", ""), TYPE_STRING)
 			var id: String = type_convert(trigger_data.get("id", ""), TYPE_STRING)
+			var name: String = type_convert(trigger_data.get("name", ""), TYPE_STRING)
 
 			if component_id == null:
 				continue
@@ -157,6 +161,6 @@ func _on_load_request(p_serialized_data: Dictionary) -> void:
 			var column_int: int = int(column_str)
 
 			ComponentDB.request_component(component_id, func(component: EngineComponent) -> void:
-				add_trigger(component, up, down, name, id, row_int, column_int, true)
+				add_trigger(component, id, name, row_int, column_int, true)
 			)
 		

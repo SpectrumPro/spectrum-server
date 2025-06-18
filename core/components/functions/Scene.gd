@@ -26,6 +26,9 @@ var _animator: DataContainerAnimator = DataContainerAnimator.new()
 func _component_ready() -> void:
 	set_name("New Scene")
 	set_self_class("Scene")
+	
+	register_control_method("fade_in_speed", set_fade_in_speed, get_fade_in_speed, on_fade_in_speed_changed, [TYPE_FLOAT])
+	register_control_method("fade_out_speed", set_fade_out_speed, get_fade_out_speed, on_fade_out_speed_changed, [TYPE_FLOAT])
 
 	_auto_start = false
 	_auto_stop = false
@@ -96,6 +99,16 @@ func set_fade_in_speed(speed: float) -> void:
 func set_fade_out_speed(speed: float) -> void:
 	_fade_out_speed = abs(speed)
 	on_fade_out_speed_changed.emit(_fade_out_speed)
+
+
+## Gets the current fade speed
+func get_fade_in_speed() -> float: 
+	return _fade_in_speed
+
+
+## Gets the fade out speed
+func get_fade_out_speed() -> float: 
+	return _fade_out_speed
 
 
 ## Called when the animator steps

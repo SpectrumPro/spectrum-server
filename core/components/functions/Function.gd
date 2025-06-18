@@ -75,6 +75,17 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = name) -> void:
 	set_name("Function")
 	set_self_class("Function")
 
+	register_control_method("set_intensity", set_intensity, get_intensity, on_intensity_changed, [TYPE_FLOAT])
+	register_control_method("on", on)
+	register_control_method("off", off)
+	register_control_method("toggle", toggle)
+	register_control_method("play", play)
+	register_control_method("pause", pause)
+	register_control_method("temp", full, blackout)
+	register_control_method("flash", on, off)
+	register_control_method("full", full)
+	register_control_method("blackout", blackout)
+
 	register_high_frequency_signals([on_intensity_changed])
 	Server.add_networked_object(_data_container.uuid, _data_container)
 

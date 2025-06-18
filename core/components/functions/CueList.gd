@@ -91,6 +91,11 @@ func _component_ready() -> void:
 	set_name("CueList")
 	set_self_class("CueList")
 
+	register_control_method("go_previous", go_previous)
+	register_control_method("go_next", go_next)
+	register_control_method("set_global_fade_speed", set_global_fade_speed, get_global_fade_speed, on_global_fade_changed)
+	register_control_method("set_global_pre_wait_speed", set_global_pre_wait_speed, get_global_pre_wait_speed, on_global_pre_wait_changed)
+
 
 ## Adds a cue to the list
 func add_cue(p_cue: Cue, p_no_signal: bool = false) -> bool:
