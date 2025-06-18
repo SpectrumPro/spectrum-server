@@ -330,7 +330,7 @@ func _create_animator(p_name: String) -> CueAnimator:
 
 ## Called when an animator is finished
 func _on_animator_finished(p_animator: CueAnimator) -> void:
-	_active_animators.erase(p_animator)
+	_active_animators.erase(p_animator)	
 	Core.remove_child(p_animator)
 
 	p_animator.finished.disconnect(_on_animator_finished)
@@ -385,9 +385,12 @@ func _handle_cue_trigger(p_current_cue: Cue, p_current_cue_pos: int, p_animator:
 
 ## Kills all cue trigger mode timers
 func _kill_triger_timers() -> void:
-	for timer: Timer in _active_trigger_timers:
+	for timer: Timer in _active_trigger_timers.duplicate():
+		_active_trigger_timers.erase(timer)
 		timer.stop()
-		Core.remove_child(timer)
+
+		if timer.get_parent():
+			Core.remove_child(timer)
 
 
 ## Triggers a cue after a set wait time
@@ -395,7 +398,10 @@ func _trigger_cue_after(p_wait_time: float, p_cue: Cue) -> Timer:
 	var timer: Timer = Timer.new()
 	timer.timeout.connect(func ():
 		_active_trigger_timers.erase(timer)
-		Core.remove_child(timer)
+
+		if timer.get_parent():
+			Core.remove_child(timer)
+		
 		seek_to(p_cue)
 	)
 

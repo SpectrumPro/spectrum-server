@@ -141,15 +141,12 @@ func set_parameter(p_parameter: String, p_function: String, p_value: float, p_la
 			var new_value: int
 
 			if has_ltp_layer(p_layer_id):
-				if uuid == "7dcf43e3-34f4-4564-aee2-68eb788abf38": print("Using LTP, Current")
 				_active_ltp_parameters.get_or_add(p_zone, {}).get_or_add(p_parameter, {})[p_layer_id] = mapped_value
 
 			if _active_ltp_parameters.get(p_zone, {}).get(p_parameter, {}):
-				if uuid == "7dcf43e3-34f4-4564-aee2-68eb788abf38": print("Using LTP, Pre existing HTP")
 				new_value = _active_ltp_parameters[p_zone][p_parameter].values().max()
 			
 			else:
-				if uuid == "7dcf43e3-34f4-4564-aee2-68eb788abf38": print("Using HTP")
 				new_value = mapped_layer.values().max()
 			
 			if new_value != _current.get(p_zone, {}).get(p_parameter, null):
