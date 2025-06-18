@@ -138,31 +138,30 @@ func set_parameter(p_parameter: String, p_function: String, p_value: float, p_la
 			var mapped_layer: Dictionary = _mapped_layers.get_or_add(p_zone, {}).get_or_add(p_parameter, {})
 			mapped_layer[p_layer_id] = mapped_value
 
-			var new_value: int = mapped_layer.values().max()
+			var new_value: int
 
-			# if has_ltp_layer(p_layer_id):
-			# 	if uuid == "7dcf43e3-34f4-4564-aee2-68eb788abf38": print("Using LTP, Current")
-			# 	new_value = mapped_value
-			# 	if not _active_ltp_parameters.get_or_add(p_zone, {}).get_or_add(p_parameter, {}).has(p_layer_id):
-			# 		_active_ltp_parameters[p_zone][p_parameter][p_layer_id] = null
+			if has_ltp_layer(p_layer_id):
+				if uuid == "7dcf43e3-34f4-4564-aee2-68eb788abf38": print("Using LTP, Current")
+				_active_ltp_parameters.get_or_add(p_zone, {}).get_or_add(p_parameter, {})[p_layer_id] = mapped_value
+
+			if _active_ltp_parameters.get(p_zone, {}).get(p_parameter, {}):
+				if uuid == "7dcf43e3-34f4-4564-aee2-68eb788abf38": print("Using LTP, Pre existing HTP")
+				new_value = _active_ltp_parameters[p_zone][p_parameter].values().max()
 			
-			# elif _active_ltp_parameters.get(p_zone, {}).get(p_parameter, []) and _current.get(p_zone, {}).has(p_parameter):
-			# 	if uuid == "7dcf43e3-34f4-4564-aee2-68eb788abf38": print("Using LTP, Pre existing")
-			# 	new_value = _current[p_zone][p_parameter]
-			
-			# else:
-			# 	if uuid == "7dcf43e3-34f4-4564-aee2-68eb788abf38": print("Using HTP")
-			# 	new_value = mapped_layer.values().max()
+			else:
+				if uuid == "7dcf43e3-34f4-4564-aee2-68eb788abf38": print("Using HTP")
+				new_value = mapped_layer.values().max()
 			
 			if new_value != _current.get(p_zone, {}).get(p_parameter, null):
-				_current.get_or_add(p_zone, {})[p_parameter] = mapped_value
+				var remapped_value: float = remap(new_value, dmx_range[0], dmx_range[1], 0.0, 1.0)
+				_current.get_or_add(p_zone, {})[p_parameter] = new_value
 				_active_values.get_or_add(p_zone, {})[p_parameter] = {
-					"value": p_value,
+					"value": remapped_value,
 					"function": p_function
 				}
 
 				if not p_disable_output:
-					on_parameter_changed.emit(p_parameter, p_function, p_value, p_zone)
+					on_parameter_changed.emit(p_parameter, p_function, remapped_value, p_zone)
 					_queue_compilation()
 		else:
 			var zones: Array = _parameters.keys()
@@ -190,10 +189,24 @@ func erase_parameter(p_parameter: String, p_layer_id: String, p_zone: String = "
 
 			mapped_layer.erase(p_layer_id)
 			raw_layer.erase(p_layer_id)
-			var max: int = type_convert(mapped_layer.values().max(), TYPE_INT)
+
+			var new_value: int
+
+			if has_ltp_layer(p_layer_id):
+				_active_ltp_parameters[p_zone][p_parameter].erase(p_layer_id)
+
+				if not _active_ltp_parameters[p_zone][p_parameter]:
+					_active_ltp_parameters[p_zone].erase(p_parameter)
+			
+			if _active_ltp_parameters[p_zone].get(p_parameter, {}):
+				new_value = _active_ltp_parameters[p_zone][p_parameter].values().max()
+			
+			else:
+				new_value = type_convert(mapped_layer.values().max(), TYPE_INT)
+			
 
 			if mapped_layer:
-				_current[p_zone][p_parameter] = max
+				_current[p_zone][p_parameter] = new_value
 
 			else:
 				_current[p_zone].erase(p_parameter)
@@ -201,7 +214,7 @@ func erase_parameter(p_parameter: String, p_layer_id: String, p_zone: String = "
 
 			if not p_disable_output:
 				on_parameter_erased.emit(p_parameter, p_zone)
-				_find_and_output_parameter_function(p_parameter, p_zone, max)
+				_find_and_output_parameter_function(p_parameter, p_zone, new_value)
 				_queue_compilation()
 
 		else:
@@ -219,9 +232,6 @@ func erase_parameter(p_parameter: String, p_layer_id: String, p_zone: String = "
 
 ## Findes a function from a parameter using the current dmx value. and outputs it via on_parameter_changed
 func _find_and_output_parameter_function(p_parameter: String, p_zone: String, p_dmx_value: int) -> void:
-	if not p_dmx_value:
-		return
-
 	for function: String in _parameters[p_zone][p_parameter].functions:
 		var dmx_range: Array = _parameters[p_zone][p_parameter].functions[function].dmx_range
 
@@ -235,7 +245,7 @@ func _find_and_output_parameter_function(p_parameter: String, p_zone: String, p_
 			}
 
 			return
-
+	
 
 ## Sets a parameter override to a float value
 func set_override(p_parameter: String, p_function: String, p_value: float, p_zone: String = "root", p_disable_output: bool = false) -> bool:
