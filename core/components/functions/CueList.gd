@@ -304,7 +304,6 @@ func seek_to(cue: Cue) -> void:
 	_active_animators.append(animator)
 	_previous_seek_direction = TransportState.BACKWARDS if seeking_backwards else TransportState.FORWARDS
 	_cue_data_modified = false
-
 	
 	_handle_cue_trigger(cue, _active_pos, animator)
 	_set_transport_state(_previous_seek_direction)

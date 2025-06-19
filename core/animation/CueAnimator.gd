@@ -135,17 +135,18 @@ func seek_to(time: float) -> void:
 		
 		elif time > _previous_time and time >= animation_track.start:
 			new_data = animation_track.to
+		
+		var post_intensity_data: float = new_data
+		if animation_track.parameter in _allowed_intensity_parameters:
+			post_intensity_data *= _intensity
 
-		if new_data != - 1 and (animation_track.current != new_data or animation_track.first_time):
+		if post_intensity_data != - 1 and (animation_track.current != post_intensity_data or animation_track.first_time):
 			animation_track.current = new_data
 			animation_track.first_time = false
 
 			var fixture: Fixture = animation_track.fixture
 
-			if animation_track.parameter in _allowed_intensity_parameters:
-				new_data *= _intensity
-
-			fixture.set_parameter(animation_track.parameter, animation_track.function, new_data, _layer_id, animation_track.zone)
+			fixture.set_parameter(animation_track.parameter, animation_track.function, post_intensity_data, _layer_id, animation_track.zone)
 	
 	_progress = time
 	_previous_time = time
@@ -192,14 +193,14 @@ func track(p_cue: Cue, p_pre_existing_data: Dictionary[String, Dictionary]) -> D
 			_layer_id, 
 			item.get_function()
 		)
-		
+
 		add_track(
 			id,
 			item.get_fixture(), 
 			item.get_parameter(), 
 			item.get_function(), 
 			item.get_zone(),
-			from * (2 - (_intensity if item.get_parameter() in _allowed_intensity_parameters else 1.0)), 
+			from / (_intensity if item.get_parameter() in _allowed_intensity_parameters else 1.0), 
 			item.get_value(), 
 			item.get_can_fade(), 
 			item.get_start(),

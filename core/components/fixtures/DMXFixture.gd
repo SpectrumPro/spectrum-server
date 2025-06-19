@@ -195,7 +195,7 @@ func erase_parameter(p_parameter: String, p_layer_id: String, p_zone: String = "
 				if not _active_ltp_parameters[p_zone][p_parameter]:
 					_active_ltp_parameters[p_zone].erase(p_parameter)
 			
-			if _active_ltp_parameters[p_zone].get(p_parameter, {}):
+			if _active_ltp_parameters.get(p_zone, {}).get(p_parameter, {}):
 				new_value = _active_ltp_parameters[p_zone][p_parameter].values().max()
 			
 			else:
