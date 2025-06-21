@@ -6,16 +6,16 @@ class_name Fixture extends EngineComponent
 
 
 ## Emitted when a parameter is changed
-signal on_parameter_changed(parameter: String, function: String, value: Variant, zone: String)
+signal on_parameter_changed(zone: String, parameter: String, function: String, value: Variant)
 
 ## Emitted when a parameter is erased
-signal on_parameter_erased(parameter: String, zone: String)
+signal on_parameter_erased(zone: String, parameter: String)
 
 ## Emited when a parameter override is changed or added
-signal on_override_changed(parameter: String, function: String, value: Variant, zone: String)
+signal on_override_changed(zone: String, parameter: String, function: String, value: Variant)
 
 ## Emitted when a parameter override is removed
-signal on_override_erased(parameter: String, zone: String)
+signal on_override_erased(zone: String, parameter: String)
 
 ## Emitted when all overrides are removed
 signal on_all_override_removed()

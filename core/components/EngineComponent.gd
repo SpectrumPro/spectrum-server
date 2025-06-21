@@ -48,9 +48,9 @@ var _control_methods: Dictionary[String, Dictionary] = {}
 ## Network Config:
 ## high_frequency_signals: Contains all the signals that should be send over the udp stream, instead of the tcp websocket
 var network_config: Dictionary = {
-	"high_frequency_signals": [
+	"high_frequency_signals": {
 
-	]
+	}
 }
 
 
@@ -88,8 +88,13 @@ func set_self_class(p_self_class_name: String) -> void:
 
 
 ## Adds a high frequency signal to the network config
-func register_high_frequency_signals(p_high_frequency_signals: Array) -> void:
-	network_config.high_frequency_signals.append_array(p_high_frequency_signals)
+func register_high_frequency_signal(p_signal: Signal, p_match_args: int = 0) -> void:
+	network_config.high_frequency_signals[p_signal] = p_match_args
+
+
+## Gets the arg match count of a high frequency signal
+func get_hf_signal_arg_match(p_signal: Signal) -> int:
+	return network_config.high_frequency_signals.get(p_signal, 0)
 
 
 ## Registers a method that can be called by external control systems

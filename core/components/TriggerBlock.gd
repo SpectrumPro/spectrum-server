@@ -11,6 +11,9 @@ signal on_trigger_added(component: EngineComponent, id: String, name: String, ro
 ## Emitted when a trigger is added
 signal on_trigger_removed(row: int, column: int)
 
+## Emitted when a column is reset
+signal on_column_reset(column: int)
+
 ## Emitted when a trigger name is changes
 signal on_trigger_name_changed(row: int, column: int, name: String)
 
@@ -59,6 +62,15 @@ func remove_trigger(p_row: int, p_column: int, no_signal: bool = false) -> bool:
 		on_trigger_removed.emit(p_row, p_column)
 
 	return true
+
+
+## Resets a whole column
+func reset_column(p_column: int) -> void:
+	for row: int in _triggers:
+		if p_column in _triggers[row]:
+			remove_trigger(row, p_column, true)
+	
+	on_column_reset.emit(p_column)
 
 
 ## Renames a trigger

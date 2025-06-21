@@ -56,6 +56,7 @@ func _handle_active_state_change(p_active_state: ActiveState) -> void:
 		_animator.play()
 		
 	else:
+		_animator.pause()
 		_animator.seek_to(1 if p_active_state else 0)
 		_set_intensity(1 if p_active_state else 0)
 	

@@ -200,7 +200,7 @@ func track(p_cue: Cue, p_pre_existing_data: Dictionary[String, Dictionary]) -> D
 			item.get_parameter(), 
 			item.get_function(), 
 			item.get_zone(),
-			from / (_intensity if item.get_parameter() in _allowed_intensity_parameters else 1.0), 
+			(from / _intensity if _intensity != 0.0 else 0.0) if item.get_parameter() in _allowed_intensity_parameters else from,
 			item.get_value(), 
 			item.get_can_fade(), 
 			item.get_start(),

@@ -77,6 +77,9 @@ var _loop_mode: LoopMode = LoopMode.RESET
 ## Allow cues with trigger modes to loop back to the start when reaching the end.
 var _allow_triggered_looping: bool = false
 
+## Allows cues follow modes
+var _allow_follow_cues: bool = true
+
 ## All active animators
 var _active_animators: Array[CueAnimator]
 
@@ -93,8 +96,8 @@ func _component_ready() -> void:
 
 	register_control_method("go_previous", go_previous)
 	register_control_method("go_next", go_next)
-	register_control_method("set_global_fade_speed", set_global_fade_speed, get_global_fade_speed, on_global_fade_changed)
-	register_control_method("set_global_pre_wait_speed", set_global_pre_wait_speed, get_global_pre_wait_speed, on_global_pre_wait_changed)
+	register_control_method("set_global_fade_speed", set_global_fade_speed, get_global_fade_speed, on_global_fade_changed, [TYPE_FLOAT])
+	register_control_method("set_global_pre_wait_speed", set_global_pre_wait_speed, get_global_pre_wait_speed, on_global_pre_wait_changed, [TYPE_FLOAT])
 
 
 ## Adds a cue to the list
@@ -305,7 +308,9 @@ func seek_to(cue: Cue) -> void:
 	_previous_seek_direction = TransportState.BACKWARDS if seeking_backwards else TransportState.FORWARDS
 	_cue_data_modified = false
 	
-	_handle_cue_trigger(cue, _active_pos, animator)
+	if _allow_follow_cues:
+		_handle_cue_trigger(cue, _active_pos, animator)
+	
 	_set_transport_state(_previous_seek_direction)
 	_set_active_state(ActiveState.ENABLED)
 	_play()
@@ -470,15 +475,18 @@ func _handle_active_state_change(active_state: ActiveState) -> void:
 func _handle_transport_state_change(transport_state: TransportState) -> void:
 	match transport_state:
 		TransportState.FORWARDS:
+			_allow_follow_cues = true
 			if _active_animators and _previous_seek_direction == TransportState.FORWARDS:
 				_play()
 			else:
 				go_next()
 
 		TransportState.PAUSED:
+			_allow_follow_cues = false
 			_pause()
 
 		TransportState.BACKWARDS:
+			_allow_follow_cues = true
 			if _active_animators and _previous_seek_direction == TransportState.BACKWARDS:
 				_play()
 			else:

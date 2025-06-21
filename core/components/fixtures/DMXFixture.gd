@@ -76,7 +76,10 @@ func _component_ready() -> void:
 	set_name("DMXFixture")
 	set_self_class("DMXFixture")
 
-	register_high_frequency_signals([on_parameter_changed, on_override_changed])
+	register_high_frequency_signal(on_parameter_changed, 3)
+	register_high_frequency_signal(on_parameter_erased, 2)
+	register_high_frequency_signal(on_override_changed, 3)
+	register_high_frequency_signal(on_override_erased, 2)
 
 
 ## Gets the channel
@@ -158,7 +161,7 @@ func set_parameter(p_parameter: String, p_function: String, p_value: float, p_la
 				}
 
 				if not p_disable_output:
-					on_parameter_changed.emit(p_parameter, p_function, remapped_value, p_zone)
+					on_parameter_changed.emit(p_zone, p_parameter, p_function, remapped_value)
 					_queue_compilation()
 		else:
 			var zones: Array = _parameters.keys()
@@ -167,7 +170,7 @@ func set_parameter(p_parameter: String, p_function: String, p_value: float, p_la
 			for zone: String in zones:
 				set_parameter(p_parameter, p_function, p_value, p_layer_id, zone, true)
 
-			on_parameter_changed.emit(p_parameter, p_function, p_value, p_zone)
+			on_parameter_changed.emit(p_zone, p_parameter, p_function, p_value)
 			_queue_compilation()
 
 		return true
@@ -210,7 +213,7 @@ func erase_parameter(p_parameter: String, p_layer_id: String, p_zone: String = "
 				_active_values.get_or_add(p_zone, {}).erase(p_parameter)
 
 			if not p_disable_output:
-				on_parameter_erased.emit(p_parameter, p_zone)
+				# on_parameter_erased.emit(p_zone, p_parameter)
 				_find_and_output_parameter_function(p_parameter, p_zone, new_value)
 				_queue_compilation()
 
@@ -221,7 +224,7 @@ func erase_parameter(p_parameter: String, p_layer_id: String, p_zone: String = "
 			for zone: String in zones:
 				erase_parameter(p_parameter, p_layer_id, zone, true)
 
-			on_parameter_erased.emit(p_parameter, p_zone)
+			# on_parameter_erased.emit(p_zone, p_parameter)
 			_find_and_output_parameter_function(p_parameter, p_zone, _current[p_zone][p_parameter])
 
 			_queue_compilation()
@@ -229,19 +232,24 @@ func erase_parameter(p_parameter: String, p_layer_id: String, p_zone: String = "
 
 ## Findes a function from a parameter using the current dmx value. and outputs it via on_parameter_changed
 func _find_and_output_parameter_function(p_parameter: String, p_zone: String, p_dmx_value: int) -> void:
-	for function: String in _parameters[p_zone][p_parameter].functions:
-		var dmx_range: Array = _parameters[p_zone][p_parameter].functions[function].dmx_range
+	if not _current[p_zone].has(p_parameter):
+		var function: String = get_default_function(p_zone, p_parameter)
+		on_parameter_changed.emit(p_zone, p_parameter, function, get_default(p_zone, p_parameter, function))
+		
+	else:
+		for function: String in _parameters[p_zone][p_parameter].functions:
+			var dmx_range: Array = _parameters[p_zone][p_parameter].functions[function].dmx_range
 
-		if p_dmx_value >= dmx_range[0] and p_dmx_value <= dmx_range[1]:
-			var remapped_value: float = remap(p_dmx_value, dmx_range[0], dmx_range[1], 0, 1)
-			on_parameter_changed.emit(p_parameter, function, remapped_value, p_zone)
+			if p_dmx_value >= dmx_range[0] and p_dmx_value <= dmx_range[1]:
+				var remapped_value: float = remap(p_dmx_value, dmx_range[0], dmx_range[1], 0, 1)
+				on_parameter_changed.emit(p_zone, p_parameter, function, remapped_value)
 
-			_active_values.get_or_add(p_zone, {})[p_parameter] = {
-				"value": remapped_value,
-				"function": function
-			}
+				_active_values.get_or_add(p_zone, {})[p_parameter] = {
+					"value": remapped_value,
+					"function": function
+				}
 
-			return
+				return
 	
 
 ## Sets a parameter override to a float value
@@ -264,7 +272,7 @@ func set_override(p_parameter: String, p_function: String, p_value: float, p_zon
 					_current_override_dmx[offsets[i] + _channel - 1] = channel_value
 
 				if not p_disable_output:
-					on_override_changed.emit(p_parameter, p_function, p_value, p_zone)
+					on_override_changed.emit(p_zone, p_parameter, p_function, p_value)
 					_queue_compilation()
 
 		else:
@@ -274,7 +282,7 @@ func set_override(p_parameter: String, p_function: String, p_value: float, p_zon
 			for zone: String in zones:
 				set_override(p_parameter, p_function, p_value, zone, true)
 
-			on_override_changed.emit(p_parameter, p_function, p_value, p_zone)
+			on_override_changed.emit(p_zone, p_parameter, p_function, p_value)
 			_queue_compilation()
 
 		return true
@@ -299,7 +307,7 @@ func erase_override(p_parameter: String, p_zone: String = "root", p_disable_outp
 				_current_override.erase(p_zone)
 
 			if not p_disable_output:
-				on_override_erased.emit(p_parameter, p_zone)
+				on_override_erased.emit(p_zone, p_parameter)
 				_queue_compilation()
 
 		else:
@@ -309,7 +317,7 @@ func erase_override(p_parameter: String, p_zone: String = "root", p_disable_outp
 			for zone: String in zones:
 				erase_override(p_parameter, zone, true)
 
-			on_override_erased.emit(p_parameter, p_zone)
+			on_override_erased.emit(p_zone, p_parameter)
 			_queue_compilation()
 
 

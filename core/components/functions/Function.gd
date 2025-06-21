@@ -86,7 +86,7 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = name) -> void:
 	register_control_method("full", full)
 	register_control_method("blackout", blackout)
 
-	register_high_frequency_signals([on_intensity_changed])
+	register_high_frequency_signal(on_intensity_changed)
 	Server.add_networked_object(_data_container.uuid, _data_container)
 
 	super._init(p_uuid, p_name)
