@@ -159,16 +159,16 @@ func get_cues() -> Array[Cue]:
 
 
 ## Sets the posititon of a cue in the list
-func set_cue_position(cue: Cue, position: int) -> void:
-	if cue not in _cues:
+func set_cue_position(p_cue: Cue, p_position: int) -> void:
+	if p_cue not in _cues or p_position > len(_cues):
 		return
 	
-	var old_index: int = _cues.find(cue)
-	_cues.insert(position, cue)
+	var old_index: int = _cues.find(p_cue)
 	_cues.remove_at(old_index)
+	_cues.insert(p_position, p_cue)
 
 	_cue_data_modified = true
-	on_cue_order_changed.emit(cue, position)
+	on_cue_order_changed.emit(p_cue, p_position)
 
 
 ## Sets whether triggered cues can loop back to the start
