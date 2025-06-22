@@ -142,10 +142,9 @@ func output(dmx: Dictionary = dmx_data) -> void:
 	# Send the packet
 	_udp_peer.put_packet(packet)
 
-	
 
 ## Saves this component to a dictonary
-func _on_serialize_request(mode: int) -> Dictionary:
+func _on_serialize_request(p_flags: int) -> Dictionary:
 	var serialize_data: Dictionary = {
 		"ip_address": _ip_address,
 		"port": _port,
@@ -154,7 +153,7 @@ func _on_serialize_request(mode: int) -> Dictionary:
 		"auto_start": _auto_start
 	}
 
-	if mode == Core.SERIALIZE_MODE_NETWORK:
+	if p_flags & Core.SM_NETWORK:
 		serialize_data.merge({
 			"connection_state": _connection_state,
 			"connection_note": _previous_note

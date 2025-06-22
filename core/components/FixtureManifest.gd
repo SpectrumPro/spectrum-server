@@ -222,7 +222,7 @@ func has_force_default(p_parameter) -> bool:
 
 
 ## Overide this function to serialize your object
-func _on_serialize_request(p_mode: int) -> Dictionary:
+func _on_serialize_request(p_flags: int) -> Dictionary:
 	return {
 		"type": type,
 		"manufacturer": manufacturer,

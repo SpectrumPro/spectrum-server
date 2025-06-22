@@ -137,7 +137,7 @@ func _handle_intensity_change(p_intensity: float) -> void:
 
 
 ## Overide this function to serialize your object
-func _on_serialize_request(p_mode: int) -> Dictionary:
+func _on_serialize_request(p_flags: int) -> Dictionary:
 	var function_uuids: Array[String]
 
 	for function: Function in _functions:

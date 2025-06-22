@@ -236,7 +236,7 @@ func _delete() -> void:
 
 
 ## Serializes this Datacontainer and returnes it in a dictionary
-func _on_serialize_request(mode: int) -> Dictionary:
+func _on_serialize_request(flags: int) -> Dictionary:
 	return _serialize()
 
 

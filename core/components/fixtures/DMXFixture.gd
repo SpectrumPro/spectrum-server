@@ -496,14 +496,14 @@ func _compile_output() -> void:
 
 
 ## Saves this DMXFixture to a dictonary
-func _on_serialize_request(p_mode: int) -> Dictionary:
+func _on_serialize_request(p_flags: int) -> Dictionary:
 	var seralized_data: Dictionary = {
 		"channel": _channel,
 		"mode": _mode,
 		"manifest_uuid": _manifest.uuid if _manifest else ""
 	}
 
-	if p_mode == Core.SERIALIZE_MODE_NETWORK:
+	if p_flags & Core.SM_NETWORK:
 		seralized_data.merge({
 			"raw_override_layers": get_all_override_values(),
 			"active_values": get_all_values()

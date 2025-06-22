@@ -108,13 +108,13 @@ func _on_delete_request() -> void:
 
 
 ## Saves this FixtureGroup into a dictionary
-func _on_serialize_request(p_mode: int) -> Dictionary:
+func _on_serialize_request(p_flags: int) -> Dictionary:
 	var serialized_data: Dictionary = {
 		"fixtures": {}
 	}
 	
 	for fixture: Fixture in _fixtures:
-		serialized_data.fixtures[fixture.uuid] = _fixtures[fixture].serialize()
+		serialized_data.fixtures[fixture.uuid] = _fixtures[fixture].serialize(p_flags)
 
 	return serialized_data
 

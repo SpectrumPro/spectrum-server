@@ -36,7 +36,7 @@ static func objects_to_uuids(data, just_uuid: bool = false):
 			else:
 				return {
 						"_object_ref": str(data.get("uuid")),
-						"_serialized_object": data.serialize(CoreEngine.SERIALIZE_MODE_NETWORK),
+						"_serialized_object": data.serialize(Core.SM_NETWORK),
 						"_class_name": data.get("self_class_name")
 					}
 		
@@ -114,12 +114,12 @@ static func disconnect_signals(signals: Dictionary, object: Object) -> void:
 
 
 ## Seralizes an array of EngineComponents
-static func seralise_component_array(array: Array) -> Array[Dictionary]:
+static func seralise_component_array(array: Array, flags: int = 0) -> Array[Dictionary]:
 	var result: Array[Dictionary]
 
 	for component: Variant in array:
 		if component is EngineComponent:
-			result.append(component.serialize())
+			result.append(component.serialize(flags))
 
 	return result
 

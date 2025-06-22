@@ -121,7 +121,7 @@ func get_tracking_mode() -> TrackingMode:
 
 
 ## Returnes a serialized copy of this cue
-func _on_serialize_request(mode: int) -> Dictionary:
+func _on_serialize_request(p_flags: int) -> Dictionary:
 	return {
 		"qid": _qid,
 		"fade_time": _fade_time,

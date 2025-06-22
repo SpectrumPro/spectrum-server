@@ -171,23 +171,27 @@ func _on_delete_request() -> void:
 
 
 ## Returns serialized version of this component, change the mode to define if this object should be serialized for saving to disk, or for networking to clients
-func serialize(p_mode: int = CoreEngine.SERIALIZE_MODE_NETWORK) -> Dictionary:
+func serialize(p_flags: int = 0) -> Dictionary:
 	var serialized_data: Dictionary = {}
-	serialized_data = _on_serialize_request(p_mode)
+	serialized_data = _on_serialize_request(p_flags)
 
 	serialized_data.merge({
-		"uuid": uuid,
 		"name": name,
 		"class_name": self_class_name,
 		"cid": _cid,
 		"user_meta": get_all_user_meta()
 	}, true)
+	
+	if not (p_flags & Core.SM_DUPLICATE):
+		serialized_data.merge({
+			"uuid": uuid,
+		})
 
 	return serialized_data
 
 
 ## Overide this function to serialize your object
-func _on_serialize_request(p_mode: int) -> Dictionary:
+func _on_serialize_request(p_flags: int) -> Dictionary:
 	return {}
 
 

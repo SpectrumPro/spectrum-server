@@ -189,7 +189,7 @@ func _update_attribute_id() -> void:
 
 
 ## Saves this component into a dict
-func _on_serialize_request(mode: int) -> Dictionary:
+func _on_serialize_request(p_flags: int) -> Dictionary:
     return {
         "fixture": _fixture.uuid,
         "zone": _zone,

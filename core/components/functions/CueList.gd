@@ -511,7 +511,7 @@ func _handle_intensity_change(p_intensity: float) -> void:
 
 
 ## Saves this cue list to a Dictionary
-func _on_serialize_request(p_mode: int) -> Dictionary:
+func _on_serialize_request(p_flags: int) -> Dictionary:
 	return {
 		"use_global_fade": _use_global_fade,
 		"use_global_pre_wait": _use_global_pre_wait,
@@ -519,10 +519,10 @@ func _on_serialize_request(p_mode: int) -> Dictionary:
 		"global_pre_wait": _global_pre_wait,
 		"allow_triggered_looping": _allow_triggered_looping,
 		"loop_mode": _loop_mode,
-		"cues": Utils.seralise_component_array(_cues)
+		"cues": Utils.seralise_component_array(_cues, p_flags)
 	}.merged({
 		"active_cue_uuid": _active_cue.uuid if _active_cue else ""
-	} if p_mode == Core.SERIALIZE_MODE_NETWORK else {})
+	} if p_flags & Core.SM_NETWORK else {})
 
 
 ## Loads this cue list from a Dictionary

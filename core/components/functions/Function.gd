@@ -281,8 +281,8 @@ func get_data_container() -> DataContainer:
 
 
 ## Returns serialized version of this component, change the mode to define if this object should be serialized for saving to disk, or for networking to clients
-func serialize(p_mode: int = CoreEngine.SERIALIZE_MODE_NETWORK) -> Dictionary:
-	return super.serialize(p_mode).merged({
+func serialize(p_flags: int = 0) -> Dictionary:
+	return super.serialize(p_flags).merged({
 		"priority_mode": _priority_mode,
 		"auto_start": _auto_start,
 		"auto_stop": _auto_stop
@@ -290,7 +290,7 @@ func serialize(p_mode: int = CoreEngine.SERIALIZE_MODE_NETWORK) -> Dictionary:
 		"intensity": _intensity,
 		"active_state": _active_state,
 		"transport_state": _transport_state,
-	} if p_mode == CoreEngine.SERIALIZE_MODE_NETWORK else {}))
+	} if p_flags & Core.SM_NETWORK else {}))
 
 
 ## Loades this object from a serialized version

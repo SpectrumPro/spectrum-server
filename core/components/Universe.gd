@@ -240,12 +240,12 @@ func _compile_and_send():
 		
 
 ## Serializes this universe
-func _on_serialize_request(p_mode: int = Core.SERIALIZE_MODE_NETWORK) -> Dictionary:
+func _on_serialize_request(p_flags: int) -> Dictionary:
 	var serialized_outputs: Dictionary[String, Dictionary] = {}
 	var serialized_fixtures: Dictionary[String, Array] = {}
 
 	for output: DMXOutput in _outputs.values():
-		serialized_outputs[output.uuid] = output.serialize(p_mode)
+		serialized_outputs[output.uuid] = output.serialize(p_flags)
 	
 	for channel: int in _fixture_channels.keys():
 		serialized_fixtures[str(channel)] = []

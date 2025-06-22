@@ -24,8 +24,13 @@ signal _process_frame(delta: float)
 signal _output_timer()
 
 
-## Serialization mode, if set to network, components will save extra infomation that doesent need to be saved to disk
-enum {SERIALIZE_MODE_DISK, SERIALIZE_MODE_NETWORK}
+## Serialization mode,flags:
+
+## Network Seralize mode: Saves extra data to be sent to clients
+const SM_NETWORK: int = 1
+
+## Duplicate Mode. Saves everything but UUID for object duplication
+const SM_DUPLICATE: int = 2
 
 
 ## Output frequency of this engine, defaults to 45hz. defined as 1.0 / desired frequency
@@ -186,7 +191,7 @@ func _process(delta: float) -> void:
 
 
 ## Serializes all elements of this engine, used for file saving, and network synchronization
-func serialize(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
+func serialize(flags: int = SM_NETWORK) -> Dictionary:
 	var serialized_data: Dictionary = {
 		"schema_version": Details.schema_version,
 	}
@@ -196,9 +201,9 @@ func serialize(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
 		serialized_data[object_class_name] = {}
 		# Add them into the serialized_data
 		for component in ComponentDB.get_components_by_classname(object_class_name):
-			serialized_data[object_class_name][component.uuid] = component.serialize(mode)
+			serialized_data[object_class_name][component.uuid] = component.serialize(flags)
 
-	if mode == SERIALIZE_MODE_NETWORK:
+	if flags & SM_NETWORK:
 		serialized_data.file_name = get_file_name()
 
 	return serialized_data
@@ -210,7 +215,7 @@ func save(file_name: String = _current_file_name, autosave: bool = false) -> Err
 	if file_name:
 		set_file_name(file_name)
 		var file_path: String = (save_library_location + "/autosave") if autosave else save_library_location
-		return Utils.save_json_to_file(file_path, file_name, serialize(SERIALIZE_MODE_DISK))
+		return Utils.save_json_to_file(file_path, file_name, serialize(SM_NETWORK))
 
 	else:
 		print_verbose("save(): ", error_string(ERR_FILE_BAD_PATH))
@@ -405,6 +410,19 @@ func create_component(classname: String, name: String = "") -> EngineComponent:
 
 	else:
 		return null
+
+
+## Duplicates a component
+func duplicate_component(p_component: EngineComponent) -> EngineComponent:
+	if not ClassList.has_class(p_component.self_class_name):
+		return null
+	
+	var new_component: EngineComponent = ClassList.get_class_script(p_component.self_class_name).new()
+
+	new_component.load(p_component.serialize(SM_DUPLICATE))
+	add_component(new_component)
+	
+	return new_component
 
 
 ## Adds a new component to this engine

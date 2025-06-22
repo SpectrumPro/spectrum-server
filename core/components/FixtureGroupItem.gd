@@ -43,7 +43,7 @@ func set_position(p_position: Vector3) -> void:
 
 
 ## Saves this component into a dict
-func _on_serialize_request(mode: int) -> Dictionary:
+func _on_serialize_request(p_flags: int) -> Dictionary:
 	if fixture:
 		return {
 			"fixture": fixture.uuid,

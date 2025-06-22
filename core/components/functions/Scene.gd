@@ -123,11 +123,11 @@ func _on_animator_finished() -> void:
 
 
 ## Serializes this scene and returnes it in a dictionary
-func _on_serialize_request(mode: int) -> Dictionary:
+func _on_serialize_request(p_flags: int) -> Dictionary:
 	var serialized_data: Dictionary = {
 		"fade_in_speed": _fade_in_speed,
 		"fade_out_speed": _fade_out_speed,
-		"save_data": _data_container.serialize()
+		"save_data": _data_container.serialize(p_flags)
 	}
 
 	return serialized_data

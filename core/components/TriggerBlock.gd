@@ -132,7 +132,7 @@ func get_triggers() -> Dictionary[int, Dictionary]:
 
 
 ## Overide this function to serialize your object
-func _on_serialize_request(p_mode: int) -> Dictionary:
+func _on_serialize_request(p_flags: int) -> Dictionary:
 	var triggers: Dictionary[int, Dictionary]
 
 	for row: int in _triggers:
