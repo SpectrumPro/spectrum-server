@@ -255,6 +255,11 @@ func get_global_pre_wait_speed() -> float:
 	return _global_pre_wait
 
 
+## Gets the active cue, or null
+func get_active_cue() -> Cue:
+	return _active_cue
+
+
 ## Seeks to the next cue in the list
 func go_next() -> void:
 	if not _cues:
@@ -515,7 +520,9 @@ func _on_serialize_request(p_mode: int) -> Dictionary:
 		"allow_triggered_looping": _allow_triggered_looping,
 		"loop_mode": _loop_mode,
 		"cues": Utils.seralise_component_array(_cues)
-	}
+	}.merged({
+		"active_cue_uuid": _active_cue.uuid if _active_cue else ""
+	} if p_mode == Core.SERIALIZE_MODE_NETWORK else {})
 
 
 ## Loads this cue list from a Dictionary
@@ -528,7 +535,6 @@ func _on_load_request(serialized_data: Dictionary) -> void:
 	_loop_mode = type_convert(serialized_data.get("loop_mode", _loop_mode), TYPE_INT)
 
 	add_cues(Utils.deseralise_component_array(type_convert(serialized_data.get("cues", []), TYPE_ARRAY)))
-
 
 
 ## Called when this CueList is to be deleted

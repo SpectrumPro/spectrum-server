@@ -1,4 +1,4 @@
-name: Build and Release Spectrum Client
+name: Build and Release Spectrum Server
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   export_spectrum:
-    name: Build Spectrum Client
+    name: Build Spectrum Server
     runs-on: ubuntu-latest
     permissions: write-all
 
