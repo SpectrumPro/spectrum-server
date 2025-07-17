@@ -33,9 +33,6 @@ var _container: DataContainer
 ## Stores all track ids for containers
 var _container_track_ids: Dictionary[Fixture, Dictionary]
 
-## Seek to queued state
-var _seek_queued: bool = false
-
 ## Signals to connect to the container
 var _container_signals: Dictionary[String, Callable] = {
 	"on_items_stored": _on_items_stored,

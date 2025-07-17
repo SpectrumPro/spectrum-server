@@ -115,7 +115,7 @@ func _ready() -> void:
 	print()
 
 	var cli_args: PackedStringArray = OS.get_cmdline_args()
-
+	print(cli_args)
 	if "--load" in cli_args:
 		(func ():
 			var name_index: int = cli_args.find("--load") + 1
