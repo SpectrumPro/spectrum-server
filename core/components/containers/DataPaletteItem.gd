@@ -10,7 +10,7 @@ var position: Vector2i = Vector2i.ZERO
 
 
 ## Serializes this scene and returnes it in a dictionary
-func _on_serialize_request(mode: int) -> Dictionary:
+func _on_serialize_request(p_flags: int) -> Dictionary:
 	return _serialize().merged({
 		"position": var_to_str(position)
 	})

@@ -8,7 +8,7 @@ class_name CoreEngine extends Node
 ## Emited when components are added to this engine,
 signal on_components_added(components: Array[EngineComponent])
 
-## Emited when components are removed from this engine, 
+## Emited when components are removed from this engine,
 signal on_components_removed(components: Array[EngineComponent])
 
 ## Emitted when this engine is resetting
@@ -17,12 +17,20 @@ signal on_resetting()
 ## Emited when the file name is changed
 signal on_file_name_changed(file_name: String)
 
+## Emitted every frame
+signal _process_frame(delta: float)
+
  ## Emited [member CoreEngine.call_interval] number of times per second.
 signal _output_timer()
 
 
-## Serialization mode, if set to network, components will save extra infomation that doesent need to be saved to disk
-enum {SERIALIZE_MODE_DISK, SERIALIZE_MODE_NETWORK}
+## Serialization mode,flags:
+
+## Network Seralize mode: Saves extra data to be sent to clients
+const SM_NETWORK: int = 1
+
+## Duplicate Mode. Saves everything but UUID for object duplication
+const SM_DUPLICATE: int = 2
 
 
 ## Output frequency of this engine, defaults to 45hz. defined as 1.0 / desired frequency
@@ -30,6 +38,11 @@ var call_interval: float = 1.0 / 45.0 # 1 second divided by 45
 
 var _accumulated_time: float = 0.0 ## Used as an internal refernce for timing call_interval correctly
 
+## Should print fps per frame
+var _print_fps: bool = false
+
+## Previous fps
+var _previous_fps: int = 0
 
 ## Root data folder
 var data_folder := (OS.get_environment("USERPROFILE") if OS.has_feature("windows") else OS.get_environment("HOME")) + "/.spectrum"
@@ -53,7 +66,7 @@ var EngineConfig = {
 		},
 		{
 			"object": (Programmer),
-			"name": "programmer"
+			"name": "Programmer"
 		},
 		{
 			"object": Debug.new(),
@@ -65,20 +78,27 @@ var EngineConfig = {
 		},
 		{
 			"object": (ClassList),
-			"name": "classlist"
+			"name": "ClassList"
+		},
+		{
+			"object": (CIDManager),
+			"name": "CIDManager"
 		},
 	],
-	## Root classes are the primary classes that will be seralized and loaded 
+	## Root classes are the primary classes that will be seralized and loaded
 	"root_classes": [
+		"Fixture",
 		"Universe",
-		"Function"
+		"Function",
+		"FixtureGroup",
+		"TriggerBlock"
 	]
 }
 
 func _ready() -> void:
-	# Set low processor mode to true, to avoid using too much system resources 
+	# Set low processor mode to true, to avoid using too much system resources
 	OS.set_low_processor_usage_mode(false)
-	
+
 	var script_child: Node = Node.new()
 	script_child.name = "Scripts"
 	add_child(script_child)
@@ -95,14 +115,16 @@ func _ready() -> void:
 	print()
 
 	var cli_args: PackedStringArray = OS.get_cmdline_args()
-
+	print(cli_args)
 	if "--load" in cli_args:
-		var name_index: int = cli_args.find("--load") + 1
-		var save_name: String = cli_args[name_index]
+		(func ():
+			var name_index: int = cli_args.find("--load") + 1
+			var save_name: String = cli_args[name_index]
 
-		print(TF.auto_format(0, "Loading save file: ", save_name))
+			print(TF.auto_format(0, "Loading save file: ", save_name))
 
-		load_from_file(save_name)
+			load_from_file(save_name)
+		).call_deferred()
 
 
 	if "--tests" in cli_args:
@@ -123,6 +145,10 @@ func _ready() -> void:
 		if not "--test-keep-alive" in cli_args:
 			save.call_deferred("Global Test At: " + str(Time.get_datetime_string_from_system()), true)
 			get_tree().quit.call_deferred()
+
+
+	if "--fps" in cli_args:
+		_print_fps = true
 
 
 	# if "--relay-server" in cli_args:
@@ -146,18 +172,26 @@ func _add_auto_network_classes() -> void:
 func _process(delta: float) -> void:
 	# Accumulate the time
 	_accumulated_time += delta
-	
+
 	# Check if enough time has passed since the last function call
 	if _accumulated_time >= call_interval:
 		# Call the function
 		_output_timer.emit()
-		
+
 		# Subtract the interval from the accumulated time
 		_accumulated_time -= call_interval
 
+	_process_frame.emit(delta)
+
+	var fps: int = Engine.get_frames_per_second()
+
+	if _print_fps and fps != _previous_fps:
+		_previous_fps = fps
+		print(fps)
+
 
 ## Serializes all elements of this engine, used for file saving, and network synchronization
-func serialize(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
+func serialize(flags: int = SM_NETWORK) -> Dictionary:
 	var serialized_data: Dictionary = {
 		"schema_version": Details.schema_version,
 	}
@@ -167,33 +201,36 @@ func serialize(mode: int = SERIALIZE_MODE_NETWORK) -> Dictionary:
 		serialized_data[object_class_name] = {}
 		# Add them into the serialized_data
 		for component in ComponentDB.get_components_by_classname(object_class_name):
-			serialized_data[object_class_name][component.uuid] = component.serialize(mode)
-	
-	if mode == SERIALIZE_MODE_NETWORK:
+			serialized_data[object_class_name][component.uuid] = component.serialize(flags)
+
+	if flags & SM_NETWORK:
 		serialized_data.file_name = get_file_name()
-		
+
 	return serialized_data
 
 
 ## Saves this engine to disk
 func save(file_name: String = _current_file_name, autosave: bool = false) -> Error:
-	
+
 	if file_name:
+		set_file_name(file_name)
 		var file_path: String = (save_library_location + "/autosave") if autosave else save_library_location
-		return Utils.save_json_to_file(file_path, file_name, serialize(SERIALIZE_MODE_DISK))
+		return Utils.save_json_to_file(file_path, file_name, serialize(SM_NETWORK))
+
 	else:
+		print_verbose("save(): ", error_string(ERR_FILE_BAD_PATH))
 		return ERR_FILE_BAD_PATH
 
 
 ## Get serialized data from a file, and load it into this engine
-func load_from_file(file_name: String) -> void:
+func load_from_file(file_name: String, no_signal: bool = false) -> void:
 	var saved_file = FileAccess.open(save_library_location + "/" + file_name, FileAccess.READ)
 
 	# Check for any open errors
 	if not saved_file:
 		print("Unable to open file: \"", file_name, "\", ", error_string(FileAccess.get_open_error()))
-		return 
-	
+		return
+
 	var serialized_data: Dictionary = JSON.parse_string(saved_file.get_as_text())
 	print_verbose(serialized_data)
 
@@ -204,14 +241,14 @@ func load_from_file(file_name: String) -> void:
 			print(TF.auto_format(TF.AUTO_MODE.WARNING, TF.bold("WARNING:"), " Save file: \"", file_name, "\" Is schema version: ", schema_version, " How ever version: ", Details.schema_version, " Is expected. Errors may occur loading this file"))
 	else:
 		print(TF.auto_format(TF.AUTO_MODE.WARNING, TF.bold("WARNING:"), " Save file: \"", file_name, "\" Does not have a schema version. Errors may occur loading this file"))
-	
+
 
 	set_file_name(file_name)
-	self.load(serialized_data) # Use self.load as load() is a gdscript global function
+	self.load(serialized_data, no_signal) # Use self.load as load() is a gdscript global function
 
 
 ## Loads serialized data into this engine
-func load(serialized_data: Dictionary) -> void:
+func load(serialized_data: Dictionary, no_signal: bool = false) -> void:
 	# Array to keep track of all the components that have just been added, allowing them all to be networked to the client in the same message
 	var just_added_components: Array[EngineComponent] = []
 
@@ -219,17 +256,18 @@ func load(serialized_data: Dictionary) -> void:
 	for object_class_name: String in EngineConfig.root_classes:
 		for component_uuid: String in serialized_data.get(object_class_name, {}):
 			var serialized_component: Dictionary = serialized_data[object_class_name][component_uuid]
-		
+
 			# Check if the components class name is a valid class type in the engine
-			if serialized_component.get("class_name", "") in ClassList.global_class_table:
-				var new_component: EngineComponent = ClassList.global_class_table[serialized_component.class_name].new(component_uuid)
+			if ClassList.has_class(serialized_component.get("class_name", "")):
+				var new_component: EngineComponent = ClassList.get_class_script(serialized_component.class_name).new(component_uuid)
 				new_component.load(serialized_component)
 				add_component(new_component, true)
 
 				just_added_components.append(new_component)
 
-	
-	on_components_added.emit.call_deferred(just_added_components)
+
+	if not no_signal:
+		on_components_added.emit.call_deferred(just_added_components)
 
 
 ## Returnes all the saves files from the save library
@@ -237,7 +275,7 @@ func get_all_saves_from_library() -> Array[Dictionary]:
 	var saves: Array[Dictionary] = []
 	var version_match: RegEx = RegEx.new()
 	version_match.compile('"schema_version"\\s*:\\s*(\\d+)')
-	
+
 	for file_name in DirAccess.open(save_library_location).get_files():
 		var path: String = save_library_location + "/" + file_name
 		var access: FileAccess = FileAccess.open(path, FileAccess.READ)
@@ -273,9 +311,12 @@ func rename_file(orignal_name: String, new_name: String) -> Error:
 
 		if err == OK:
 			access.remove(orignal_name)
-		
+
+			if orignal_name == get_file_name():
+				set_file_name(new_name)
+
 		return err
-	
+
 	else:
 		return ERR_FILE_BAD_PATH
 
@@ -286,7 +327,7 @@ func delete_file(file_name: String) -> Error:
 
 	if access.file_exists(file_name):
 		return access.remove(file_name)
-	
+
 	else:
 		return ERR_FILE_BAD_PATH
 
@@ -294,7 +335,7 @@ func delete_file(file_name: String) -> Error:
 ## Resets the engine, then loads from a save file:
 func reset_and_load(file_name: String) -> void:
 	reset()
-	load_from_file(file_name)
+	load_from_file(file_name, true)
 
 
 ## Resets the engine back to the default state
@@ -311,7 +352,7 @@ func reset() -> void:
 	for object_class_name: String in EngineConfig.root_classes:
 		for component: EngineComponent in ComponentDB.get_components_by_classname(object_class_name):
 			component.delete()
-	
+
 	Server.disable_signals = false
 
 
@@ -327,19 +368,18 @@ func reload_scripts() -> void:
 
 		var node: Node = Node.new()
 		var script: GDScript = load(user_script_folder + "/" + script_name)
-		
+
 		node.name = script_name.replace(".gd", "")
 		node.set_script(script)
 		$Scripts.add_child(node)
-	
+
 
 ## Imports all the custon function types and adds them to the class list
 func import_custom_functions() -> void:
 	var scripts: Dictionary = get_scripts_from_folder(user_functions_folder)
-
 	for script_name: String in scripts:
 		var script: Script = scripts[script_name]
-		ClassList.register_function_class(script_name.replace(".gd", ""), script)
+		ClassList.register_custom_class(["EngineComponent", "Function", script_name.replace(".gd", "")], script)
 
 
 ## Returns all the scripts in the given folder, stored as {"ScriptName": Script}
@@ -358,14 +398,31 @@ func get_scripts_from_folder(folder: String) -> Dictionary:
 
 ## Creates and adds a new component using the classname to get the type, will return null if the class is not found
 func create_component(classname: String, name: String = "") -> EngineComponent:
-	if ClassList.global_class_table.has(classname):
-		var new_component: EngineComponent = ClassList.global_class_table[classname].new()
+	if ClassList.has_class(classname):
+		var new_component: EngineComponent = ClassList.get_class_script(classname).new()
+
+		if name:
+			new_component.name = name
+
 		add_component(new_component)
 
 		return new_component
 
 	else:
 		return null
+
+
+## Duplicates a component
+func duplicate_component(p_component: EngineComponent) -> EngineComponent:
+	if not ClassList.has_class(p_component.self_class_name):
+		return null
+	
+	var new_component: EngineComponent = ClassList.get_class_script(p_component.self_class_name).new()
+
+	new_component.load(p_component.serialize(SM_DUPLICATE))
+	add_component(new_component)
+	
+	return new_component
 
 
 ## Adds a new component to this engine
@@ -379,7 +436,7 @@ func add_component(component: EngineComponent, no_signal: bool = false) -> Engin
 
 		if not no_signal:
 			on_components_added.emit([component])
-	
+
 	else:
 		print("Component: ", component.uuid, " is already in this engine")
 
@@ -405,12 +462,12 @@ func remove_component(component: EngineComponent, no_signal: bool = false) -> bo
 	# Check if this universe is part of this engine
 	if component in ComponentDB.components.values():
 		ComponentDB.deregister_component(component)
-				
+
 		if not no_signal:
 			on_components_removed.emit([component])
-	
+
 		return true
-	
+
 	# If not return false
 	else:
 		print("Component: ", component.uuid, " is not part of this engine")
@@ -420,12 +477,12 @@ func remove_component(component: EngineComponent, no_signal: bool = false) -> bo
 ## Removes mutiple universes at once from this engine, this will not delete the components.
 func remove_components(components: Array, no_signal: bool = false) -> void:
 	var just_removed_components: Array = []
-	
+
 	for component in components:
 		if component is EngineComponent:
 			if remove_component(component, true):
 				just_removed_components.append(component)
-	
+
 	if not no_signal and just_removed_components:
 		on_components_removed.emit(just_removed_components)
 
@@ -436,6 +493,15 @@ func create_animator() -> Animator:
 	add_child(animator)
 
 	return animator
+
+
+## Enables process frame on a component
+func set_component_process(component: EngineComponent, process: bool) -> void:
+	if process and _process_frame.is_connected(component._process):
+		_process_frame.connect(component._process)
+
+	elif not process and not _process_frame.is_connected(component._process):
+		_process_frame.disconnect(component._process)
 
 
 func _notification(what: int) -> void:

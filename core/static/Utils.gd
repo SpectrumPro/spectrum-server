@@ -36,7 +36,7 @@ static func objects_to_uuids(data, just_uuid: bool = false):
 			else:
 				return {
 						"_object_ref": str(data.get("uuid")),
-						"_serialized_object": data.serialize(CoreEngine.SERIALIZE_MODE_NETWORK),
+						"_serialized_object": data.serialize(Core.SM_NETWORK),
 						"_class_name": data.get("self_class_name")
 					}
 		
@@ -68,8 +68,8 @@ static func uuids_to_objects(data: Variant, networked_objects: Dictionary):
 					return networked_objects[data._object_ref].object
 
 				elif "_class_name" in data.keys():
-					if data["_class_name"] in ClassList.global_class_table:
-						var initialized_object = ClassList.global_class_table[data["_class_name"]].new(data._object_ref)
+					if ClassList.has_class(data["_class_name"]):
+						var initialized_object = ClassList.get_class_script(data["_class_name"]).new(data._object_ref)
 
 						if initialized_object.has_method("load") and "_serialized_object" in data.keys():
 							initialized_object.load(data._serialized_object)
@@ -97,23 +97,42 @@ static func uuids_to_objects(data: Variant, networked_objects: Dictionary):
 	return data
 
 
+## Connects all the callables to the signals in the dictionary. Stored as {"SignalName": Callable}
+static func connect_signals(signals: Dictionary, object: Object) -> void:
+	if is_instance_valid(object):
+		for signal_name: String in signals:
+			if object.has_signal(signal_name) and not (object.get(signal_name) as Signal).is_connected(signals[signal_name]):
+				(object.get(signal_name) as Signal).connect(signals[signal_name])
 
-## Returns the Highest Takes Precedence
-static func get_htp_color(color_1: Color, color_2: Color) -> Color:
-	# Calculate the intensity of each channel for color1
-	var intensity_1_r = color_1.r
-	var intensity_1_g = color_1.g
-	var intensity_1_b = color_1.b
 
-	# Calculate the intensity of each channel for color2
-	var intensity_2_r = color_2.r
-	var intensity_2_g = color_2.g
-	var intensity_2_b = color_2.b
+## Disconnects all the callables from the signals in the dictionary. Stored as {"SignalName": Callable}
+static func disconnect_signals(signals: Dictionary, object: Object) -> void:
+	if is_instance_valid(object):
+		for signal_name: String in signals:
+			if object.has_signal(signal_name) and (object.get(signal_name) as Signal).is_connected(signals[signal_name]):
+				(object.get(signal_name) as Signal).disconnect(signals[signal_name])
 
-	# Compare the intensities for each channel and return the color with the higher intensity for each channel
-	var result_color = Color()
-	result_color.r = intensity_1_r if intensity_1_r > intensity_2_r else intensity_2_r
-	result_color.g = intensity_1_g if intensity_1_g > intensity_2_g else intensity_2_g
-	result_color.b = intensity_1_b if intensity_1_b > intensity_2_b else intensity_2_b
 
-	return result_color
+## Seralizes an array of EngineComponents
+static func seralise_component_array(array: Array, flags: int = 0) -> Array[Dictionary]:
+	var result: Array[Dictionary]
+
+	for component: Variant in array:
+		if component is EngineComponent:
+			result.append(component.serialize(flags))
+
+	return result
+
+
+## Deseralizes an array of seralized EngineComponents
+static func deseralise_component_array(array: Array) -> Array[EngineComponent]:
+	var result: Array[EngineComponent]
+
+	for seralized_component: Variant in array:
+		if seralized_component is Dictionary and seralized_component.has("class_name"):
+			var component: EngineComponent = ClassList.get_class_script(seralized_component.class_name).new()
+
+			component.load(seralized_component)
+			result.append(component)
+
+	return result

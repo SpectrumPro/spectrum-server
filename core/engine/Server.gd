@@ -12,10 +12,13 @@ var websocket_port: int = 3824
 var udp_port: int = websocket_port - 1
 
 ## How often to send the the UDP queue
-var udp_frequency: float = 1.0 / 45.0  # 1 second divided by 45
+var udp_frequency: float = 1.0 / 60.0  # 1 second divided by 45
 
 ## Disables signal emissions to clients
 var disable_signals: bool = false
+
+## Dissables the use of the high frequency UDP socketc
+var dissable_high_frequency: bool = false
 
 
 ## Used as an internal refernce for timing call_interval correctly
@@ -28,7 +31,7 @@ var _networked_objects: Dictionary = {}
 var _networked_object_callbacks: Dictionary = {}
 
 ## The queue of data that needs to be send over the UDP socket, there can only be one item in the queue at one, so new data will be merged into what is already there, using Dictionary.merge()
-var _udp_queue: Dictionary = {}
+var _udp_queue: Dictionary[Array, Dictionary] = {}
 
 
 func _ready() -> void:
@@ -68,10 +71,27 @@ func _process(delta: float) -> void:
 	if _accumulated_time >= udp_frequency:
 		
 		if _udp_queue:
-			MainUDPSocket.put_var(_udp_queue)
+			var data: Dictionary[Array, Array]
+
+			for id: Array in _udp_queue:
+				data[id] = []
+				for base_args: Array in _udp_queue[id].keys():
+					data[id].append(base_args + _udp_queue[id][base_args])
+
+			MainUDPSocket.put_var(data)
 			_udp_queue = {}
 		
 		_accumulated_time -= udp_frequency
+
+
+## Registers a component as a network object
+func register_component(p_component: EngineComponent) -> void:
+	add_networked_object(p_component.uuid, p_component, p_component.on_delete_requested)
+
+
+## Deregisters a component as a network object
+func deregister_component(p_component: EngineComponent) -> void:
+	remove_networked_object(p_component.uuid)
 
 
 ## Adds an object to the networked_objects dictnary, allowing for networked functions for the object
@@ -140,7 +160,7 @@ func add_networked_object(object_name: String, object: Object, delete_signal: Si
 		
 		var object_signal: Signal = object.get(object_signal_dict.name)
 
-		if object_signal in object_network_config.high_frequency_signals:
+		if object_signal in object_network_config.high_frequency_signals and not dissable_high_frequency:
 			_networked_object_callbacks[object_name].signals[object_signal] = func (arg1: Variant = null, arg2: Variant = null, arg3: Variant = null, arg4: Variant = null, arg5: Variant = null, arg6: Variant = null, arg7: Variant = null, arg8: Variant = null):
 					if disable_signals:
 						return
@@ -151,9 +171,21 @@ func add_networked_object(object_name: String, object: Object, delete_signal: Si
 						return not (arg == null)
 					)
 
-					send_high_frequency({
-						[object_name, object_signal_dict.name]: args
-					})
+					var id: Array = [object_name, object_signal_dict.name]
+					var match_args: int = object_network_config.high_frequency_signals[object_signal]
+					var args_to_match: Array = args
+					var args_to_append: Array = []
+
+					if match_args:
+						args_to_match = args.slice(0, match_args)
+						args_to_append = args.slice(match_args)
+
+					if _udp_queue.has(id):
+						_udp_queue[id][args_to_match] = args_to_append
+
+					else:
+						_udp_queue[id] = {args_to_match: args_to_append}
+					
 
 		else:
 			# Get the signal from the object and connect a function to it that will seralise the data, and send it to the clients
@@ -245,7 +277,7 @@ func _on_web_socket_server_message_received(peer_id, message):
 		# Search through all the values in the command and see if there is any object refernces, if so try and find the object
 		var command: Dictionary = Utils.uuids_to_objects(message, _networked_objects)
 
-		if "args" in command:
+		if "args" in command:			
 			for index in len(command.args):
 				# Check if the type of the arg passed by the client matches the arg expected by the function, if not stop now to avoid a crash, ignore if the expected type is null, as this could also be Variant
 				if not typeof(command.args[index]) == method.args.values()[index] and not method.args.values()[index] == 0:

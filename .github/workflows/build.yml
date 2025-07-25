@@ -1,28 +1,37 @@
-name: Build Godot Project
+name: Build and Release Spectrum Server
 
 on:
-  push: {}
-  pull_request: {}
+  push:
+    tags:
+      - "v*"
 
 jobs:
-  Godot:
+  export_spectrum:
+    name: Build Spectrum Server
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        platform: [win64, linux/X11, macOS]
+    permissions: write-all
+
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           lfs: true
-      - name: Build
-        id: build
-        uses: manleydev/build-godot-action@v1.4.1
+
+      - name: Export Spectrum
+        id: export
+        uses: firebelley/godot-export@v6.0.0
         with:
-          name: Spectrum
-          preset: ${{ matrix.platform }}
-          debugMode: "false"
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v2
+          godot_executable_download_url: https://github.com/godotengine/godot-builds/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip
+          godot_export_templates_download_url: https://github.com/godotengine/godot-builds/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz
+          relative_project_path: ./
+          archive_output: true
+          presets_to_export: Windows, Linux, macOS 
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1.14.0
         with:
-          name: Spectrum - ${{ matrix.platform }}
-          path: ${{ github.workspace }}/${{ steps.build.outputs.build }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          generateReleaseNotes: true
+          tag: ${{ github.ref_name }}
+          artifacts: ${{ steps.export.outputs.archive_directory }}/*
+

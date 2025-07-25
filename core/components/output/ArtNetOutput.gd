@@ -1,48 +1,116 @@
 # Copyright (c) 2024 Liam Sherwin, All rights reserved.
 # This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
 
-class_name ArtNetOutput extends DataOutputPlugin
+class_name ArtNetOutput extends DMXOutput
+## Art-Net DMX Output
 
-var ip_address: String = "127.0.0.1" ## IP address of node to connect to
-var port: int = 6454 ## Art-Net port number
-var universe_number: int = 0 ## Art-Net universe number
 
-var _udp_peer = PacketPeerUDP.new() ## PacketPeerUDP responsible for sending art-net packets
+## Emitted when the ip is changed
+signal on_ip_changed(ip: String)
+
+## Emitted when the broadcast state is changed
+signal on_broadcast_state_changed(use_broadcast: bool)
+
+## Emitted when the universe number is changed
+signal on_universe_number_changed(universe_number: int)
+
+
+## IP address of node to connect to
+var _ip_address: String = "127.0.0.1"
+
+## Art-Net _port number
+var _port: int = 6454
+
+## Broadcast state
+var _use_broadcast: bool = false
+
+## Art-Net universe number
+var _universe_number: int = 0
+
+ ## PacketPeerUDP responsible for sending art-net packets
+var _udp_peer = PacketPeerUDP.new()
+
 
 ## Called when this EngineComponent is ready
 func _component_ready():
-	# Sets name, description, and authors list of this plugin
-	plugin_name = "Art-Net Output"
-	plugin_authors = ["Liam Sherwin"]
-	plugin_description = "Outputs dmx data over Art-Net"
+	set_name("Art-Net Output")
+	set_self_class("ArtNetOutput")
 
-	name = plugin_name
 
-	self_class_name = "ArtNetOutput"
 
-	start()
+## Sets the ip address
+func set_ip(p_ip: String) -> void:
+	_ip_address = p_ip
+
+	on_ip_changed.emit(_ip_address)
+
+	if _connection_state:
+		start()
+
+
+## Gets the ip address
+func get_ip() -> String:
+	return _ip_address
+
+
+
+## Sets the broadcast state
+func set_use_broadcast(p_use_broadcast: bool) -> void:
+	_use_broadcast = p_use_broadcast
+	_udp_peer.set_broadcast_enabled(_use_broadcast)
+	
+	on_broadcast_state_changed.emit(_use_broadcast)
+
+	if _connection_state:
+		start()
+
+
+## Gets the broadcast state
+func get_use_broadcast() -> bool:
+	return _use_broadcast
+
+
+## Sets the universe number
+func set_universe_number(p_universe_number: int) -> void:
+	output({})
+	_universe_number = p_universe_number
+	on_universe_number_changed.emit()
+
+
+## Gets the universe number
+func get_universe_number() -> int:
+	return _universe_number
 
 
 ## Called when this output is started
 func start():
-	stop() # Stop the current connection, if one exists
-	connection_state_changed.emit(true, "Art-Net Connected") # Emit state changed to true
-	_udp_peer.connect_to_host(ip_address, port) # Connect to the node
+	stop()
+	set_use_broadcast(_use_broadcast)
+	var err: Error = _udp_peer.set_dest_address(_ip_address, _port)
+
+	if err:
+		on_connection_state_changed.emit(false, error_string(err))
+
+	else:
+		_connection_state = true
+		on_connection_state_changed.emit(true, "Art-Net Connected")
 
 
 ## Called when this output is stoped
 func stop():
-	connection_state_changed.emit(false, "Art-Net Disconnected") # Emit state changed to false
-	_udp_peer.close() # Disconnect from the node
+	output({})
+	_connection_state = false
+	on_connection_state_changed.emit(false, "Art-Net Disconnected")
+	_udp_peer.close()
 
 
 ## Called when this output it told to output
-func output() -> void:
+func output(dmx: Dictionary = dmx_data) -> void:
 
-	if not _udp_peer.is_bound():
+	if not _connection_state:
 		return
 
-	var packet = PackedByteArray([65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, int(universe_number) % 256, int(universe_number) / 256, 02, 00])
+	var packet = PackedByteArray([65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, int(_universe_number) % 256, int(_universe_number) / 256, 02, 00])
 	
 	# # Art-Net ID ('Art-Net')
 	# packet.append_array([65, 114, 116, 45, 78, 101, 116, 0])
@@ -61,38 +129,49 @@ func output() -> void:
 	# packet.append(0)
 	
 	# # Universe (16-bit)
-	# packet.append(int(universe_number) % 256)  # Lower 8 bits
-	# packet.append(int(universe_number) / 256)  # Upper 8 bits
+	# packet.append(int(_universe_number) % 256)  # Lower 8 bits
+	# packet.append(int(_universe_number) / 256)  # Upper 8 bits
 	
 	# # Length (16-bit)
 	# packet.append(02)
 	# packet.append(00)
 	# DMX Channels
 	for channel in range(1, 513):
-		packet.append(clamp(dmx_data.get(channel, 0), 0, 255))
+		packet.append(clamp(dmx.get(channel, 0), 0, 255))
 	
 	# Send the packet
 	_udp_peer.put_packet(packet)
 
-	
 
-## Called when this output is requested to serialize its config
-func _on_serialize_request(mode: int) -> Dictionary:
-	
-	return {
-		"ip_address": ip_address,
-		"port": port,
-		"universe_number": universe_number
+## Saves this component to a dictonary
+func _on_serialize_request(p_flags: int) -> Dictionary:
+	var serialize_data: Dictionary = {
+		"ip_address": _ip_address,
+		"port": _port,
+		"use_broadcast": _use_broadcast,
+		"universe_number": _universe_number,
+		"auto_start": _auto_start
 	}
 
+	if p_flags & Core.SM_NETWORK:
+		serialize_data.merge({
+			"connection_state": _connection_state,
+			"connection_note": _previous_note
+		})
 
+	return serialize_data
+
+
+## Loads this component from a dictonary
 func _on_load_request(serialized_data: Dictionary) -> void:
-	ip_address = str(serialized_data.get("ip_address", ip_address))
-	port = int(serialized_data.get("port", port))
-	universe_number = int(serialized_data.get("universe_number", universe_number))
+	_ip_address = type_convert(serialized_data.get("ip_address", _ip_address), TYPE_STRING)
+	_port = type_convert(serialized_data.get("port", _port), TYPE_INT)
+	_use_broadcast = type_convert(serialized_data.get("use_broadcast"), TYPE_BOOL)
+	_universe_number = type_convert(serialized_data.get("universe_number", _universe_number), TYPE_INT)
+	_auto_start = type_convert(serialized_data.get("auto_start", _auto_start), TYPE_BOOL)
 
-	start()
-
+	if _auto_start:
+		start()	
 
 
 ## Called when this object is requested to be deleted

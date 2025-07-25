@@ -37,3 +37,23 @@ func dump_networked_objects() -> String:
     Utils.save_json_to_file(debug_file_location, file_name, Utils.objects_to_uuids(networked_objects, true))
 
     return debug_file_location + file_name
+
+
+## Dumps all fixture data to a files
+func dump_fixture_data(fixture: Fixture) -> String:
+    var path: String = debug_file_location + "fixture_" + fixture.uuid + "/"
+
+    if fixture is DMXFixture:
+        Utils.save_json_to_file(path, "_active_ltp_parameters", fixture._active_ltp_parameters)
+        Utils.save_json_to_file(path, "_active_values", fixture._active_values)
+        Utils.save_json_to_file(path, "_parameters", fixture._parameters)
+        Utils.save_json_to_file(path, "_mapped_layers", fixture._mapped_layers)
+        Utils.save_json_to_file(path, "_raw_layers", fixture._raw_layers)
+        Utils.save_json_to_file(path, "_raw_override_layers", fixture._raw_override_layers)
+        Utils.save_json_to_file(path, "_current", fixture._current)
+        Utils.save_json_to_file(path, "_current_dmx", fixture._current_dmx)
+        Utils.save_json_to_file(path, "_current_override", fixture._current_override)
+        Utils.save_json_to_file(path, "_current_override_dmx", fixture._current_override_dmx)
+        Utils.save_json_to_file(path, "_default", fixture._default)
+    
+    return path

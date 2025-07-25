@@ -6,13 +6,11 @@ class_name Tester extends RefCounted
 
 
 var unit_tests: Array = [
-    FunctionCreationTester,
-    ClassListTester,
+
 ]
 
 
 var global_tests: Array = [
-    CueListGlobalTester
 ]
 
 

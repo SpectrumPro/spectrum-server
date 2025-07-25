@@ -127,7 +127,7 @@ func set_mode(p_mode: OperationMode) -> void:
 
 
 ## Saves this DataPalette into a dictionary
-func _on_serialize_request(mode: int) -> Dictionary:
+func _on_serialize_request(p_flags: int) -> Dictionary:
 	var serialized_palettes: Array = []
 
 	for palette: DataPaletteItem in _position_matrix.all().values():
