@@ -160,7 +160,7 @@ func get_cues() -> Array[Cue]:
 
 ## Sets the posititon of a cue in the list
 func set_cue_position(p_cue: Cue, p_position: int) -> void:
-	if p_cue not in _cues or p_position > len(_cues):
+	if p_cue not in _cues or p_position > len(_cues) - 1:
 		return
 	
 	var old_index: int = _cues.find(p_cue)
