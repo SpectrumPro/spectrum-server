@@ -159,3 +159,8 @@ static func error(arg1=_n, arg2=_n, arg3=_n, arg4=_n, arg5=_n, arg6=_n, arg7=_n,
 ## Shorthand for auto_format(TF.AUTO_MODE.INFO)
 static func info(arg1=_n, arg2=_n, arg3=_n, arg4=_n, arg5=_n, arg6=_n, arg7=_n, arg8=_n) -> String: 
     return auto_format(AUTO_MODE.INFO, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+
+
+## Prints auto_format()
+static func print_auto(arg1=_n, arg2=_n, arg3=_n, arg4=_n, arg5=_n, arg6=_n, arg7=_n, arg8=_n) -> void: 
+    print(auto_format(AUTO_MODE.NORMAL, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8))

@@ -30,6 +30,7 @@ driver/enable_input=true
 
 [autoload]
 
+Network="*res://core/engine/NetworkManager.gd"
 ClassList="*res://core/global/ClassList.gd"
 FixtureLibrary="*res://core/global/FixtureLibrary.gd"
 Programmer="*res://core/global/Programmer.gd"
