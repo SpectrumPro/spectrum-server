@@ -166,17 +166,17 @@ func close() -> void:
 
 
 ## Sends a command to the session, using p_node_filter as the NodeFilter
-func send_command(p_command: Variant, p_node_filter: NodeFilter = NodeFilter.AUTO) -> Error:
+func send_command(p_command: Variant, p_node_filter: NodeFilter = NodeFilter.AUTO, p_nodes: Array[NetworkNode] = []) -> Error:
 	var message: ConstaNetCommand = ConstaNetCommand.new()
 	
 	message.command = p_command
 	message.data_type = typeof(p_command)
 	
-	return send_pre_existing_command(message, p_node_filter)
+	return send_pre_existing_command(message, p_node_filter, p_nodes)
 
 
 ## Sends a pre-existing ConstaNetCommand message to the session
-func send_pre_existing_command(p_command: ConstaNetCommand, p_node_filter: NodeFilter = NodeFilter.AUTO) -> Error:
+func send_pre_existing_command(p_command: ConstaNetCommand, p_node_filter: NodeFilter = NodeFilter.AUTO, p_nodes: Array[NetworkNode] = []) -> Error:
 	var local_node: ConstellationNode = _network.get_local_node()
 	p_command.in_session = _session_id
 	p_command.origin_id = local_node.get_node_id()
@@ -193,9 +193,12 @@ func send_pre_existing_command(p_command: ConstaNetCommand, p_node_filter: NodeF
 				local_node.handle_message(p_command)
 				return OK
 			
-			else:
+			elif has_session_master():
 				p_command.target_id = _session_master.get_node_id()
 				return _session_master.send_message_udp(p_command)
+			
+			else:
+				return ERR_DOES_NOT_EXIST
 			
 		NodeFilter.ALL_NODES:
 			for node: ConstellationNode in _nodes:
@@ -213,6 +216,13 @@ func send_pre_existing_command(p_command: ConstaNetCommand, p_node_filter: NodeF
 				p_command.target_id = node.get_node_id()
 				node.send_message_udp(p_command)
 				
+			return OK
+		
+		NodeFilter.MANUAL:
+			for node: ConstellationNode in p_nodes:
+				p_command.target_id = node.get_node_id()
+				node.send_message_udp(p_command)
+			
 			return OK
 		
 		_:
