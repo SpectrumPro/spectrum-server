@@ -133,6 +133,10 @@ func _init() -> void:
 		on_resetting,
 		on_file_name_changed,
 	])
+	
+	settings_manager.set_method_allow_deserialize(add_component.get_method())
+	settings_manager.set_method_allow_deserialize(add_components.get_method())
+	settings_manager.set_signal_allow_serialize(on_components_added.get_name())
 
 	Utils.ensure_folder_exists(_save_library_location)
 

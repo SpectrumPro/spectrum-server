@@ -12,6 +12,11 @@ var _left: Dictionary = {}
 var _right: Dictionary = {}
 
 
+## Init
+func _init(left_type: Variant = null, right_type: Variant = null) -> void:
+	pass
+
+
 ## Maps 2 items, returning false if the map failed
 func map(left: Variant, right: Variant) -> void:
 	_left[left] = right
@@ -21,20 +26,32 @@ func map(left: Variant, right: Variant) -> void:
 ## Creates a new RefMap from a Dictionary
 static func from(dictionary: Dictionary) -> RefMap:
 	var map: RefMap = RefMap.new()
-
+	
 	for key: Variant in dictionary:
 		map.map(key, dictionary[key])
-
+		
 	return map
 
 
+## Merges data into this RefMap
+func merge(p_data: Dictionary, p_override: bool = false) -> void:
+	for key: Variant in p_data:
+		var value: Variant = p_data[key]
+		
+		if not _left.has(key) or p_override:
+			_left[key] = value
+		
+		if not _right.has(value) or p_override:
+			_right[value] = key
+
+
 ## Gets an item from the map using the left key
-func left(key: Variant) -> Variant:
-	return _left.get(key, null)
+func left(key: Variant, p_default: Variant = null) -> Variant:
+	return _left.get(key, p_default)
 
 
 ## Gets an item from the map using the right key
-func right(key: Variant) -> Variant:
+func right(key: Variant, p_default: Variant = null) -> Variant:
 	return _right.get(key, null)
 
 
