@@ -1,9 +1,10 @@
 # Copyright (c) 2025 Liam Sherwin, All rights reserved.
 # This file is part of the Constellation Network Engine, licensed under the GPL v3.
 
-class_name NetworkSession extends Node
+class_name NetworkSession extends NetworkItem
 ## Base class for all NetworkSessions
 
+@warning_ignore_start("unused_signal")
 
 ## Emitted when a node joins the session
 signal node_joined(node: NetworkNode)
@@ -17,9 +18,6 @@ signal master_changed(node: NetworkNode)
 ## Emitted when the priority order of a node is changed
 signal priority_changed(node: NetworkNode, position: int)
 
-## Emited when this session is to be deleted after all nodes disconnect
-signal request_delete()
-
 
 ## Enum for session flags
 enum SessionFlags {
@@ -30,12 +28,16 @@ enum SessionFlags {
 ## Enum for the node filter
 enum NodeFilter {
 	NONE,				## Default State
+	AUTO,				## NodeFilter.ALL_OTHER_NODES if local node is not session master, otherwise NodeFilter.MASTER
 	MASTER,				## Send only to the session master
 	ALL_NODES,			## Send to all nodes
 	ALL_OTHER_NODES,	## Send to all nodes, expect the session master
 	MANUAL,				## Manualy specify a list of nodes to send to
 }
 
+
+## The SettingsManager for this 
+var settings_manager: SettingsManager = SettingsManager.new()
 
 ## The current SessionMaster
 var _session_master: NetworkNode
@@ -113,12 +115,12 @@ func close() -> void:
 
 
 ## Sends a command to the session, using p_node_filter as the NodeFilter
-func send_command(p_command: Variant, p_node_filter: NodeFilter = NodeFilter.MASTER) -> Error:
+func send_command(p_command: Variant, p_node_filter: NodeFilter = NodeFilter.AUTO) -> Error:
 	return ERR_UNAVAILABLE
 
 
 ## Sends a pre-existing ConstaNetCommand message to the session
-func send_pre_existing_command(p_command: ConstaNetCommand, p_node_filter: NodeFilter = NodeFilter.MASTER) -> Error:
+func send_pre_existing_command(p_command: ConstaNetCommand, p_node_filter: NodeFilter = NodeFilter.AUTO) -> Error:
 	return ERR_UNAVAILABLE
 
 

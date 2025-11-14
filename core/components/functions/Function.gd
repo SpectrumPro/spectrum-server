@@ -71,9 +71,9 @@ var _data_container: DataContainer = DataContainer.new()
 
 
 ## Constructor
-func _init(p_uuid: String = UUID_Util.v4(), p_name: String = name) -> void:
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 	set_name("Function")
-	set_self_class("Function")
+	_set_self_class("Function")
 
 	register_control_method("set_intensity", set_intensity, get_intensity, on_intensity_changed, [TYPE_FLOAT])
 	register_control_method("on", on)
@@ -87,7 +87,7 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = name) -> void:
 	register_control_method("blackout", blackout)
 
 	register_high_frequency_signal(on_intensity_changed)
-	Server.add_networked_object(_data_container.uuid, _data_container)
+	Server.add_networked_object(_data_container.uuid(), _data_container)
 
 	super._init(p_uuid, p_name)
 
@@ -236,10 +236,10 @@ func set_priority_mode_state(p_priority_mode: PriorityMode) -> void:
 func _handle_priority_mode_change(p_priority_mode: PriorityMode) -> void:
 	match p_priority_mode:
 		PriorityMode.HTP:
-			FixtureLibrary.remove_global_ltp_layer(uuid)
+			FixtureLibrary.remove_global_ltp_layer(uuid())
 		
 		PriorityMode.LTP:
-			FixtureLibrary.add_global_ltp_layer(uuid)
+			FixtureLibrary.add_global_ltp_layer(uuid())
 
 
 ## Gets the current PriorityMode
@@ -305,5 +305,5 @@ func load(p_serialized_data: Dictionary) -> void:
 
 ## Deletes this component localy, with out contacting the server. Usefull when handling server side delete requests
 func delete(p_local_only: bool = false) -> void:
-	Server.remove_networked_object(_data_container.uuid)
+	Server.remove_networked_object(_data_container.uuid())
 	super.delete(p_local_only)

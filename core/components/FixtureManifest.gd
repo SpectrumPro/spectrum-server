@@ -32,7 +32,7 @@ var _force_defaults: Array[String]
 
 
 func _component_ready() -> void:
-	set_self_class("FixtureManifest")
+	_set_self_class("FixtureManifest")
 	set_name("FixtureManifest")
 
 

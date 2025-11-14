@@ -47,7 +47,7 @@ var _tracking_mode: TrackingMode = TrackingMode.TRACKING
 ## Constructor
 func _component_ready() -> void:
 	set_name("Cue")
-	set_self_class("Cue")
+	_set_self_class("Cue")
 
 
 ## Sets this Cue's QID

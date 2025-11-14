@@ -41,9 +41,9 @@ static func load_from_file(file_path: String) -> FixtureManifest:
 		if parser.get_node_type() == XMLParser.NODE_ELEMENT:
 			match parser.get_node_name():
 				"FixtureType":
-					manifest.name = parser.get_named_attribute_value_safe("Name")
+					manifest.set_name(parser.get_named_attribute_value_safe("Name"))
 					manifest.manufacturer = parser.get_named_attribute_value_safe("Manufacturer")
-					manifest.uuid = parser.get_named_attribute_value_safe("FixtureTypeID")
+					manifest._uuid = parser.get_named_attribute_value_safe("FixtureTypeID")
 				
 				"GeometryReference":
 					c_geo_name = parser.get_named_attribute_value_safe("Geometry")
@@ -148,7 +148,7 @@ static func load_from_file(file_path: String) -> FixtureManifest:
 static func get_info(file_path: String) -> FixtureManifest:
 	var manifest: FixtureManifest = FixtureManifest.new()
 	manifest.type = FixtureManifest.Type.Info
-	manifest.uuid = "unknown"
+	manifest._uuid = "unknown"
 
 	var x = _get_xml_reader(file_path)
 	if not x:
@@ -162,9 +162,9 @@ static func get_info(file_path: String) -> FixtureManifest:
 		if parser.get_node_type() == XMLParser.NODE_ELEMENT:
 			match parser.get_node_name():
 				"FixtureType":
-					manifest.name = parser.get_named_attribute_value_safe("Name")
+					manifest.set_name(parser.get_named_attribute_value_safe("Name"))
 					manifest.manufacturer = parser.get_named_attribute_value_safe("Manufacturer")
-					manifest.uuid = parser.get_named_attribute_value_safe("FixtureTypeID")
+					manifest._uuid = parser.get_named_attribute_value_safe("FixtureTypeID")
 					
 				"DMXMode":
 					current_mode = parser.get_named_attribute_value_safe("Name")
@@ -230,4 +230,3 @@ static func _separate_channels_by_zones(manifest: FixtureManifest) -> void:
 					manifest._categorys.get_or_add(mode, {}).get_or_add("root", {})[attribute] = category
 		
 		manifest._modes[mode].zones = new_zones
-

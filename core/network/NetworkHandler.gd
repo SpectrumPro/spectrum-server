@@ -1,9 +1,10 @@
 # Copyright (c) 2025 Liam Sherwin, All rights reserved.
 # This file is part of the Constellation Network Engine, licensed under the GPL v3.
 
-class_name NetworkHandler extends Node
+class_name NetworkHandler extends NetworkItem
 ## Base class for all NetworkHandlers
 
+@warning_ignore_start("unused_signal")
 
 ## Emitted when a NetworkNode is found
 signal node_found(node: NetworkNode)
@@ -13,6 +14,9 @@ signal session_created(session: NetworkSession)
 
 ## Emitted when the NetworkState is changed
 signal network_state_changed(network_state: NetworkState, err_code: Error)
+
+## Emitted when a command is recieved
+signal command_recieved(form: NetworkNode, data_type: Variant.Type, command: Variant)
 
 
 ## Enum for NetworkState
@@ -25,11 +29,17 @@ enum NetworkState {
 }
 
 
+## The SettingsManager for this 
+var settings_manager: SettingsManager = SettingsManager.new()
+
 ## The current NetworkState
 var _network_state: NetworkState = NetworkState.OFFLINE
 
 ## Previous error code of the NetworkState
 var _network_state_err_code: Error = FAILED
+
+## Human readable NetworkHandler name
+var _handler_name: String = "NetworkHandler"
 
 
 ## Starts the local node
@@ -55,6 +65,11 @@ func join_session(p_session: NetworkSession) -> bool:
 ## Leaves a session 
 func leave_session() -> bool:
 	return false
+
+
+## Sends a command to the session, using p_node_filter as the NodeFilter
+func send_command(p_command: Variant, p_node_filter: NetworkSession.NodeFilter = NetworkSession.NodeFilter.MASTER) -> Error:
+	return ERR_UNAVAILABLE
 
 
 ## Gets the current NetworkState
@@ -85,3 +100,8 @@ func get_known_sessions() -> Array[NetworkSession]:
 ## Returns all unknown NetworkSessions
 func get_unknown_sessions() -> Array[NetworkSession]:
 	return []
+
+
+## Gets the name of this network handler
+func get_handler_name() -> String:
+	return _handler_name

@@ -22,7 +22,7 @@ var _functions: Array[Function]
 ## Init
 func _component_ready() -> void:
 	set_name("FunctionGroup")
-	set_self_class("FunctionGroup")
+	_set_self_class("FunctionGroup")
 
 
 

@@ -185,7 +185,7 @@ func save_to_new_cue_list(fixtures: Array) -> CueList:
 	var blackout_cue: Cue = Cue.new()
 	var new_cue: Cue = Cue.new()
 
-	blackout_cue.name = "Blackout"
+	blackout_cue.set_name("Blackout")
 	store_data_to_container(new_cue, SaveMode.MODIFIED, fixtures)
 
 	new_cue_list.add_cue(blackout_cue)

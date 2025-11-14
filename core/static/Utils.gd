@@ -27,6 +27,20 @@ static func ensure_folder_exists(folder_path: String) -> void:
 
 
 
+## Returns all the scripts in the given folder, stored as {"ScriptName": Script}
+static func get_scripts_from_folder(p_folder: String) -> Dictionary:
+	ensure_folder_exists(p_folder)
+	var script_files: PackedStringArray = DirAccess.get_files_at(p_folder)
+	var scripts: Dictionary = {}
+
+	# Loop through all the script files if any, and add them
+	for file_name: String in script_files:
+		if file_name.ends_with(".gd"):
+			scripts[file_name] = load(p_folder + "/" + file_name)
+
+	return scripts
+
+
 ## Checks if there are any Objects in the data passed, also checks inside of arrays and dictionarys. If any are found, they are replaced with there uuid, if no uuid if found, it will be null instead 
 static func objects_to_uuids(data, just_uuid: bool = false):
 	match typeof(data):

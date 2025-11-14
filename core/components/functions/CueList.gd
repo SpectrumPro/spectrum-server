@@ -92,7 +92,7 @@ var _active_trigger_timers: Array[Timer]
 
 func _component_ready() -> void:
 	set_name("CueList")
-	set_self_class("CueList")
+	_set_self_class("CueList")
 
 	register_control_method("go_previous", go_previous)
 	register_control_method("go_next", go_next)
@@ -296,7 +296,7 @@ func seek_to(cue: Cue) -> void:
 		_active_pos + 1
 	)
 
-	var animator: CueAnimator = _create_animator(cue.name)
+	var animator: CueAnimator = _create_animator(cue.name())
 
 	if seeking_backwards and _loop_mode == LoopMode.RESET:
 		animator.set_animated_data(_get_reset_tracks(animator))
@@ -326,7 +326,7 @@ func seek_to(cue: Cue) -> void:
 func _create_animator(p_name: String) -> CueAnimator:
 	var animator: CueAnimator = CueAnimator.new()
 
-	animator.set_layer_id(uuid)
+	animator.set_layer_id(uuid())
 	animator.set_intensity(_intensity)
 	animator.set_allowed_intensity_parameters(_allowed_intensity_parameters)
 	on_intensity_changed.connect(animator.set_intensity)
@@ -444,7 +444,7 @@ func _stop() -> void:
 	for track: Dictionary in _active_fixtures.values():
 		(track.fixture as Fixture).erase_parameter(
 			track.parameter,
-			uuid,
+			uuid(),
 			track.zone
 		)
 
@@ -507,7 +507,7 @@ func _handle_intensity_change(p_intensity: float) -> void:
 			var fixture: Fixture = data.fixture
 			var value: float = data.current * _intensity
 
-			fixture.set_parameter(data.parameter, data.function, value, uuid, data.zone)
+			fixture.set_parameter(data.parameter, data.function, value, uuid(), data.zone)
 
 
 ## Saves this cue list to a Dictionary
@@ -521,7 +521,7 @@ func _on_serialize_request(p_flags: int) -> Dictionary:
 		"loop_mode": _loop_mode,
 		"cues": Utils.seralise_component_array(_cues, p_flags)
 	}.merged({
-		"active_cue_uuid": _active_cue.uuid if _active_cue else ""
+		"active_cue_uuid": _active_cue.uuid() if _active_cue else ""
 	} if p_flags & Core.SM_NETWORK else {})
 
 

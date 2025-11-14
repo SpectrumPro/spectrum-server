@@ -74,7 +74,7 @@ var _compilation_queued: bool = false
 
 func _component_ready() -> void:
 	set_name("DMXFixture")
-	set_self_class("DMXFixture")
+	_set_self_class("DMXFixture")
 
 	register_high_frequency_signal(on_parameter_changed, 3)
 	register_high_frequency_signal(on_parameter_erased, 2)

@@ -31,7 +31,7 @@ var _triggers: Dictionary[int, Dictionary]
 ## Ready
 func _component_ready() -> void:
 	set_name("TriggerBlock")
-	set_self_class("TriggerBlock")
+	_set_self_class("TriggerBlock")
 
 
 ## Adds a trigger at the given row and column

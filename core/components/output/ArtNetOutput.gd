@@ -34,7 +34,7 @@ var _udp_peer = PacketPeerUDP.new()
 ## Called when this EngineComponent is ready
 func _component_ready():
 	set_name("Art-Net Output")
-	set_self_class("ArtNetOutput")
+	_set_self_class("ArtNetOutput")
 
 
 

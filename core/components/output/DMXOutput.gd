@@ -25,9 +25,9 @@ var _connection_state: bool = false
 var _previous_note: String = ""
 
 
-func _init(p_uuid: String = UUID_Util.v4(), p_name: String = name) -> void:
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 	set_name("DMX Output")
-	set_self_class("DMXOutput")
+	_set_self_class("DMXOutput")
 
 	super._init()
 

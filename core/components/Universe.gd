@@ -37,7 +37,7 @@ var _dmx_overrides: Dictionary = {}
 ## Called when this EngineComponent is ready
 func _component_ready() -> void:
 	set_name("Universe")
-	set_self_class("Universe")
+	_set_self_class("Universe")
 
 	var zero: Dictionary
 	for i in range(1, 513):
@@ -245,7 +245,7 @@ func _on_serialize_request(p_flags: int) -> Dictionary:
 	var serialized_fixtures: Dictionary[String, Array] = {}
 
 	for output: DMXOutput in _outputs.values():
-		serialized_outputs[output.uuid] = output.serialize(p_flags)
+		serialized_outputs[output.uuid()] = output.serialize(p_flags)
 	
 	for channel: int in _fixture_channels.keys():
 		serialized_fixtures[str(channel)] = []

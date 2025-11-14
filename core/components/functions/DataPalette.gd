@@ -40,7 +40,7 @@ var _current_palette: DataPaletteItem = null
 func create_palette(p_name: String, p_position: Vector2i) -> bool:    
 	var new_palette_item: DataPaletteItem = DataPaletteItem.new()
 
-	new_palette_item.name = p_name
+	new_palette_item.set_name(p_name)
 	new_palette_item.position = p_position
 
 	return add_palette(new_palette_item)
@@ -154,4 +154,3 @@ func _on_load_request(serialized_data) -> void:
 	
 	if just_added_palettes:
 		on_palettes_added.emit(just_added_palettes)
-

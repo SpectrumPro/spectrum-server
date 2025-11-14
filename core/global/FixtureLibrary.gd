@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name CoreFixtureLibrary extends Node
 ## The main fixture library used to manage fixture manifests
@@ -39,12 +40,27 @@ var _manifest_importers: Dictionary = {
 ## Global LTP layers for fixtures
 var _global_ltp_layers: Dictionary[String, Variant]
 
+## The SettingsManager
+var settings_manager: SettingsManager = SettingsManager.new()
+
+
+## init
+func _init() -> void:
+	settings_manager.set_owner(self)
+	settings_manager.set_inheritance_array(["CoreFixtureLibrary"])
+	settings_manager.register_networked_methods_auto([
+		create_fixture,
+		get_manifest,
+		get_sorted_manifest_info,
+		is_loaded,
+	])
+
 
 ## Load the fixture manifests from the folders, buit in manifests will override user manifests
 func _ready() -> void:
 	await Core.ready
 
-	_user_fixture_library_path = Core.data_folder + "/fixtures"
+	_user_fixture_library_path = Core.get_data_folder() + "/fixtures"
 	Utils.ensure_folder_exists(_user_fixture_library_path)
 
 	for location: String in [_user_fixture_library_path, _built_in_library_path]:
@@ -60,20 +76,20 @@ func _ready() -> void:
 
 
 ## Creates a new fixture from a manifest
-func create_fixture(p_manifest_uuid: String, p_universe: Universe, p_config: Dictionary) -> void:
+func create_fixture(p_manifest_uuid: String, p_universe: Universe, p_channel: int, p_quantity: int, p_offset: int, p_mode: String, p_name: String, p_increment_name: bool) -> void:
 	var just_added_fixtures: Array[Fixture] = []
 	var manifest: FixtureManifest = get_manifest(p_manifest_uuid)
 
-	if manifest and manifest.has_mode(p_config.get("mode")):
-		var length: int = manifest.get_mode_length(p_config.mode)
+	if manifest and manifest.has_mode(p_mode):
+		var length: int = manifest.get_mode_length(p_mode)
 
-		for i: int in range(p_config.quantity):
+		for i: int in range(p_quantity):
 
 			var new_fixture: DMXFixture = DMXFixture.new()
 
-			new_fixture.set_channel(p_config.channel + (length * i) + (p_config.offset * i))
-			new_fixture.set_name(p_config.name + ((" " + str(i + 1)) if p_config.increment_name else ""))
-			new_fixture.set_manifest(manifest, p_config.mode)
+			new_fixture.set_channel(p_channel + (length * i) + (p_offset * i))
+			new_fixture.set_name(p_name + ((" " + str(i + 1)) if p_increment_name else ""))
+			new_fixture.set_manifest(manifest, p_mode)
 
 			just_added_fixtures.append(new_fixture)
 	

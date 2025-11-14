@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details
 
 class_name CoreEngine extends Node
 ## The core engine that powers Spectrum
@@ -17,10 +18,7 @@ signal on_resetting()
 ## Emited when the file name is changed
 signal on_file_name_changed(file_name: String)
 
-## Emitted every frame
-signal _process_frame(delta: float)
-
- ## Emited [member CoreEngine.call_interval] number of times per second.
+## Emited [member CoreEngine.call_interval] number of times per second.
 signal _output_timer()
 
 
@@ -34,34 +32,39 @@ const SM_DUPLICATE: int = 2
 
 
 ## Output frequency of this engine, defaults to 45hz. defined as 1.0 / desired frequency
-var call_interval: float = 1.0 / 45.0 # 1 second divided by 45
+var _call_interval: float = 1.0 / 45.0 # 1 second divided by 45
 
-var _accumulated_time: float = 0.0 ## Used as an internal refernce for timing call_interval correctly
-
-## Should print fps per frame
-var _print_fps: bool = false
-
-## Previous fps
-var _previous_fps: int = 0
+## Used as an internal refernce for timing call_interval correctly
+var _accumulated_time: float = 0.0 
 
 ## Root data folder
-var data_folder := (OS.get_environment("USERPROFILE") if OS.has_feature("windows") else OS.get_environment("HOME")) + "/.spectrum"
+var _data_folder := (OS.get_environment("USERPROFILE") if OS.has_feature("windows") else OS.get_environment("HOME")) + "/.spectrum"
 
 ## The location for storing all the save show files
-var save_library_location: String = data_folder + "/saves"
-var user_script_folder: String = data_folder + "/scripts"
-var user_functions_folder: String = data_folder + "/functions"
+var _save_library_location: String = _data_folder + "/saves"
 
+## The location for storing all the scripts
+var _script_folder_location: String = _data_folder + "/scripts"
 
 ## The name of the current save file
 var _current_file_name: String = ""
 
+## The child node that contains all scripts
+var _script_child: Node
 
-var EngineConfig = {
+## EngineConfig
+var _config: EngineConfig
+
+## The SettingsManager for CoreEngine
+var settings_manager: SettingsManager = SettingsManager.new()
+
+
+## Internal engine config options
+class EngineConfig extends Object:
 	## Network objects will be auto added to the servers networked objects index
-	"network_objects": [
+	var network_objects: Array[Dictionary] = [
 		{
-			"object": (self),
+			"object": (Core),
 			"name": "engine"
 		},
 		{
@@ -69,8 +72,8 @@ var EngineConfig = {
 			"name": "Programmer"
 		},
 		{
-			"object": Debug.new(),
-			"name": "debug"
+			"object": (Debug.new()),
+			"name": "Debug"
 		},
 		{
 			"object": (FixtureLibrary),
@@ -78,41 +81,69 @@ var EngineConfig = {
 		},
 		{
 			"object": (ClassList),
-			"name": "ClassList"
+			"name": "classlist"
 		},
 		{
 			"object": (CIDManager),
 			"name": "CIDManager"
 		},
-	],
-	## Root classes are the primary classes that will be seralized and loaded
-	"root_classes": [
+	]
+	
+	## Root classes are the primary classes that will be seralized and loaded 
+	var root_classes: Array[String] = [
 		"Fixture",
 		"Universe",
 		"Function",
 		"FixtureGroup",
 		"TriggerBlock"
 	]
-}
 
-func _ready() -> void:
-	# Set low processor mode to true, to avoid using too much system resources
+
+
+## Init
+func _init() -> void:
 	OS.set_low_processor_usage_mode(false)
-
-	var script_child: Node = Node.new()
-	script_child.name = "Scripts"
-	add_child(script_child)
-
-	reload_scripts()
-	import_custom_functions()
-
 	Details.print_startup_detils()
-	Utils.ensure_folder_exists(save_library_location)
 
-	_add_auto_network_classes.call_deferred()
+	settings_manager.set_owner(self)
+	settings_manager.set_inheritance_array(["CoreEngine"])
+
+	settings_manager.register_networked_methods_auto([
+		serialize,
+		save,
+		load_from_file,
+		load,
+		get_all_saves_from_library,
+		get_file_name,
+		set_file_name,
+		rename_file,
+		delete_file,
+		create_component,
+		duplicate_component,
+		add_component,
+		add_components,
+		remove_component,
+		remove_components,
+		get_data_folder,
+	])
+
+	settings_manager.register_networked_signals_auto([
+		on_components_added,
+		on_components_removed,
+		on_resetting,
+		on_file_name_changed,
+	])
+
+	Utils.ensure_folder_exists(_save_library_location)
+
+
+## Ready
+func _ready() -> void:
+	_config = EngineConfig.new()
+
 	Network.start_all()
-
-	print()
+	_reload_scripts()
+	_add_auto_network_classes.call_deferred()
 
 	var cli_args: PackedStringArray = OS.get_cmdline_args()
 	if "--load" in cli_args:
@@ -126,95 +157,45 @@ func _ready() -> void:
 		).call_deferred()
 
 
-	if "--tests" in cli_args:
-		print("\nRunning Tests")
-		var tester = Tester.new()
-		tester.run(Tester.test_type.UNIT_TESTS)
-
-		if not "--test-keep-alive" in cli_args:
-			save.call_deferred("Test At: " + str(Time.get_datetime_string_from_system()), true)
-			get_tree().quit.call_deferred()
-
-
-	if "--tests-global" in cli_args:
-		print("\nRunning Tests")
-		var tester = Tester.new()
-		tester.run(Tester.test_type.GLOBAL_TESTS)
-
-		if not "--test-keep-alive" in cli_args:
-			save.call_deferred("Global Test At: " + str(Time.get_datetime_string_from_system()), true)
-			get_tree().quit.call_deferred()
-
-
-	if "--fps" in cli_args:
-		_print_fps = true
-
-
-	# if "--relay-server" in cli_args:
-	# 	print(TF.auto_format(TF.AUTO_MODE.INFO, "Trying to connect to relay server"))
-
-	# 	var ip_index: int = cli_args.find("--relay-server") + 1
-
-	# 	if ip_index < cli_args.size() and cli_args[ip_index].is_valid_ip_address():
-	# 		print(cli_args[ip_index])
-	# 	else:
-	# 		print(TF.auto_format(TF.AUTO_MODE.ERROR, "Unable to connect to relay server, invalid IP address"))
-
-	# Extra start up code
-
-
-func _add_auto_network_classes() -> void:
-	for config: Dictionary in EngineConfig.network_objects:
-		Server.add_networked_object(config.name, config.object)
-
-
+## Process
 func _process(delta: float) -> void:
 	# Accumulate the time
 	_accumulated_time += delta
 
 	# Check if enough time has passed since the last function call
-	if _accumulated_time >= call_interval:
+	if _accumulated_time >= _call_interval:
 		# Call the function
 		_output_timer.emit()
 
 		# Subtract the interval from the accumulated time
-		_accumulated_time -= call_interval
-
-	_process_frame.emit(delta)
-
-	var fps: int = Engine.get_frames_per_second()
-
-	if _print_fps and fps != _previous_fps:
-		_previous_fps = fps
-		print(fps)
+		_accumulated_time -= _call_interval
 
 
 ## Serializes all elements of this engine, used for file saving, and network synchronization
-func serialize(flags: int = SM_NETWORK) -> Dictionary:
+func serialize(p_flags: int = SM_NETWORK) -> Dictionary:
 	var serialized_data: Dictionary = {
 		"schema_version": Details.schema_version,
 	}
 
 	# Loops through all the classes we have been told to serialize
-	for object_class_name: String in EngineConfig.root_classes:
+	for object_class_name: String in _config.root_classes:
 		serialized_data[object_class_name] = {}
 		# Add them into the serialized_data
 		for component in ComponentDB.get_components_by_classname(object_class_name):
-			serialized_data[object_class_name][component.uuid] = component.serialize(flags)
+			serialized_data[object_class_name][component.uuid()] = component.serialize(p_flags)
 
-	if flags & SM_NETWORK:
+	if p_flags & SM_NETWORK:
 		serialized_data.file_name = get_file_name()
 
 	return serialized_data
 
 
 ## Saves this engine to disk
-func save(file_name: String = _current_file_name, autosave: bool = false) -> Error:
-
-	if file_name:
-		set_file_name(file_name)
-		var file_path: String = (save_library_location + "/autosave") if autosave else save_library_location
-		return Utils.save_json_to_file(file_path, file_name, serialize(SM_NETWORK))
+func save(p_file_name: String = _current_file_name, p_autosave: bool = false) -> Error:
+	if p_file_name:
+		set_file_name(p_file_name)
+		var file_path: String = (_save_library_location + "/autosave") if p_autosave else _save_library_location
+		return Utils.save_json_to_file(file_path, p_file_name, serialize(SM_NETWORK))
 
 	else:
 		print_verbose("save(): ", error_string(ERR_FILE_BAD_PATH))
@@ -222,13 +203,13 @@ func save(file_name: String = _current_file_name, autosave: bool = false) -> Err
 
 
 ## Get serialized data from a file, and load it into this engine
-func load_from_file(file_name: String, no_signal: bool = false) -> void:
-	var saved_file = FileAccess.open(save_library_location + "/" + file_name, FileAccess.READ)
+func load_from_file(p_file_name: String, p_no_signal: bool = false) -> Error:
+	var saved_file = FileAccess.open(_save_library_location + "/" + p_file_name, FileAccess.READ)
 
 	# Check for any open errors
 	if not saved_file:
-		print("Unable to open file: \"", file_name, "\", ", error_string(FileAccess.get_open_error()))
-		return
+		print("Unable to open file: \"", p_file_name, "\", ", error_string(FileAccess.get_open_error()))
+		return FileAccess.get_open_error()
 
 	var serialized_data: Dictionary = JSON.parse_string(saved_file.get_as_text())
 	print_verbose(serialized_data)
@@ -237,36 +218,42 @@ func load_from_file(file_name: String, no_signal: bool = false) -> void:
 	var schema_version: int = int(serialized_data.get("schema_version", 0))
 	if schema_version:
 		if schema_version != Details.schema_version:
-			print(TF.auto_format(TF.AUTO_MODE.WARNING, TF.bold("WARNING:"), " Save file: \"", file_name, "\" Is schema version: ", schema_version, " How ever version: ", Details.schema_version, " Is expected. Errors may occur loading this file"))
+			print(TF.auto_format(TF.AUTO_MODE.WARNING, TF.bold("WARNING:"), " Save file: \"", p_file_name, "\" Is schema version: ", schema_version, " How ever version: ", Details.schema_version, " Is expected. Errors may occur loading this file"))
 	else:
-		print(TF.auto_format(TF.AUTO_MODE.WARNING, TF.bold("WARNING:"), " Save file: \"", file_name, "\" Does not have a schema version. Errors may occur loading this file"))
+		print(TF.auto_format(TF.AUTO_MODE.WARNING, TF.bold("WARNING:"), " Save file: \"", p_file_name, "\" Does not have a schema version. Errors may occur loading this file"))
 
 
-	set_file_name(file_name)
-	self.load(serialized_data, no_signal) # Use self.load as load() is a gdscript global function
+	set_file_name(p_file_name)
+	self.load(serialized_data, p_no_signal) # Use self.load as load() is a gdscript global function
+	return OK
 
 
 ## Loads serialized data into this engine
-func load(serialized_data: Dictionary, no_signal: bool = false) -> void:
+func load(p_serialized_data: Dictionary, p_no_signal: bool = false) -> void:
 	# Array to keep track of all the components that have just been added, allowing them all to be networked to the client in the same message
 	var just_added_components: Array[EngineComponent] = []
 
 	# Loops throught all the classes we have been told to seralize, and check if they are present in the saved data
-	for object_class_name: String in EngineConfig.root_classes:
-		for component_uuid: String in serialized_data.get(object_class_name, {}):
-			var serialized_component: Dictionary = serialized_data[object_class_name][component_uuid]
+	for object_class_name: String in _config.root_classes:
+		for component_uuid: String in p_serialized_data.get(object_class_name, {}):
+			var serialized_component: Dictionary = p_serialized_data[object_class_name][component_uuid]
 
 			# Check if the components class name is a valid class type in the engine
 			if ClassList.has_class(serialized_component.get("class_name", "")):
 				var new_component: EngineComponent = ClassList.get_class_script(serialized_component.class_name).new(component_uuid)
 				new_component.load(serialized_component)
-				add_component(new_component, true)
 
-				just_added_components.append(new_component)
+				if add_component(new_component, true):
+					just_added_components.append(new_component)
 
-
-	if not no_signal:
+	if not p_no_signal and just_added_components:
 		on_components_added.emit.call_deferred(just_added_components)
+
+
+## Resets the engine, then loads from a save file:
+func reset_and_load(p_file_name: String) -> void:
+	reset()
+	load_from_file(p_file_name, true)
 
 
 ## Returnes all the saves files from the save library
@@ -275,8 +262,8 @@ func get_all_saves_from_library() -> Array[Dictionary]:
 	var version_match: RegEx = RegEx.new()
 	version_match.compile('"schema_version"\\s*:\\s*(\\d+)')
 
-	for file_name in DirAccess.open(save_library_location).get_files():
-		var path: String = save_library_location + "/" + file_name
+	for file_name in DirAccess.open(_save_library_location).get_files():
+		var path: String = _save_library_location + "/" + file_name
 		var access: FileAccess = FileAccess.open(path, FileAccess.READ)
 
 		if access:
@@ -302,17 +289,17 @@ func set_file_name(p_file_name: String) -> void:
 
 
 ## Renames a save file
-func rename_file(orignal_name: String, new_name: String) -> Error:
-	var access: DirAccess = DirAccess.open(save_library_location)
+func rename_file(p_orignal_name: String, p_new_name: String) -> Error:
+	var access: DirAccess = DirAccess.open(_save_library_location)
 
-	if access.file_exists(orignal_name):
-		var err: Error = access.rename(orignal_name, new_name)
+	if access.file_exists(p_orignal_name):
+		var err: Error = access.rename(p_orignal_name, p_new_name)
 
 		if err == OK:
-			access.remove(orignal_name)
+			access.remove(p_orignal_name)
 
-			if orignal_name == get_file_name():
-				set_file_name(new_name)
+			if p_orignal_name == get_file_name():
+				set_file_name(p_new_name)
 
 		return err
 
@@ -321,91 +308,45 @@ func rename_file(orignal_name: String, new_name: String) -> Error:
 
 
 ## Deletes a save file
-func delete_file(file_name: String) -> Error:
-	var access: DirAccess = DirAccess.open(save_library_location)
+func delete_file(p_file_name: String) -> Error:
+	var access: DirAccess = DirAccess.open(_save_library_location)
 
-	if access.file_exists(file_name):
-		return access.remove(file_name)
+	if access.file_exists(p_file_name):
+		return access.remove(p_file_name)
 
 	else:
 		return ERR_FILE_BAD_PATH
 
 
-## Resets the engine, then loads from a save file:
-func reset_and_load(file_name: String) -> void:
-	reset()
-	load_from_file(file_name, true)
-
-
 ## Resets the engine back to the default state
 func reset() -> void:
 	print("Performing Engine Reset!")
-
-	on_resetting.emit()
-	Server.disable_signals = true
-	set_file_name("")
-
-	# Make a backup of the current state
 	save(Time.get_datetime_string_from_system(), true)
 
-	for object_class_name: String in EngineConfig.root_classes:
+	on_resetting.emit()
+	set_file_name("")
+
+	for object_class_name: String in _config.root_classes:
 		for component: EngineComponent in ComponentDB.get_components_by_classname(object_class_name):
 			component.delete()
 
 	Server.disable_signals = false
 
 
-## (Re)loads all the user scripts
-func reload_scripts() -> void:
-
-	for old_child in $Scripts.get_children():
-		$Scripts.remove_child(old_child)
-		old_child.queue_free()
-
-	# Loop through all the script files if any, and add them
-	for script_name: String in get_scripts_from_folder(user_script_folder).keys():
-
-		var node: Node = Node.new()
-		var script: GDScript = load(user_script_folder + "/" + script_name)
-
-		node.name = script_name.replace(".gd", "")
-		node.set_script(script)
-		$Scripts.add_child(node)
-
-
-## Imports all the custon function types and adds them to the class list
-func import_custom_functions() -> void:
-	var scripts: Dictionary = get_scripts_from_folder(user_functions_folder)
-	for script_name: String in scripts:
-		var script: Script = scripts[script_name]
-		ClassList.register_custom_class(["EngineComponent", "Function", script_name.replace(".gd", "")], script)
-
-
-## Returns all the scripts in the given folder, stored as {"ScriptName": Script}
-func get_scripts_from_folder(folder: String) -> Dictionary:
-	Utils.ensure_folder_exists(folder)
-	var script_files: PackedStringArray = DirAccess.get_files_at(folder)
-	var scripts: Dictionary = {}
-
-	# Loop through all the script files if any, and add them
-	for file_name: String in script_files:
-		if file_name.ends_with(".gd"):
-			scripts[file_name] = load(folder + "/" + file_name)
-
-	return scripts
-
 
 ## Creates and adds a new component using the classname to get the type, will return null if the class is not found
-func create_component(classname: String, name: String = "") -> EngineComponent:
-	if ClassList.has_class(classname):
-		var new_component: EngineComponent = ClassList.get_class_script(classname).new()
+func create_component(p_classname: String, p_name: String = "") -> EngineComponent:
+	if ClassList.has_class(p_classname):
+		var new_component: EngineComponent = ClassList.get_class_script(p_classname).new()
 
-		if name:
-			new_component.name = name
+		if p_name:
+			new_component.set_name(p_name)
 
-		add_component(new_component)
-
-		return new_component
+		if add_component(new_component):
+			return new_component
+		
+		else:
+			return null
 
 	else:
 		return null
@@ -413,76 +354,77 @@ func create_component(classname: String, name: String = "") -> EngineComponent:
 
 ## Duplicates a component
 func duplicate_component(p_component: EngineComponent) -> EngineComponent:
-	if not ClassList.has_class(p_component.self_class_name):
+	if not ClassList.has_class(p_component.classname()):
 		return null
 	
-	var new_component: EngineComponent = ClassList.get_class_script(p_component.self_class_name).new()
-
+	var new_component: EngineComponent = ClassList.get_class_script(p_component.classname()).new()
 	new_component.load(p_component.serialize(SM_DUPLICATE))
-	add_component(new_component)
+
+	if add_component(new_component):
+		return new_component
 	
-	return new_component
+	else:
+		return null
 
 
 ## Adds a new component to this engine
-func add_component(component: EngineComponent, no_signal: bool = false) -> EngineComponent:
+func add_component(p_component: EngineComponent, p_no_signal: bool = false) -> bool:
+	if not ComponentDB.has_component(p_component):
+		ComponentDB.register_component(p_component)
 
-	# Check if this component is not already apart of this engine
-	if not component in ComponentDB.components.values():
-		ComponentDB.register_component(component)
+		p_component.on_delete_requested.connect(remove_component.bind(p_component), CONNECT_ONE_SHOT)
 
-		component.on_delete_requested.connect(remove_component.bind(component), CONNECT_ONE_SHOT)
-
-		if not no_signal:
-			on_components_added.emit([component])
+		if not p_no_signal:
+			on_components_added.emit([p_component])
+		
+		return true
 
 	else:
-		print("Component: ", component.uuid, " is already in this engine")
-
-	return component
+		print("Component: ", p_component.uuid, " is already in this engine")
+		return false
 
 
 ## Adds mutiple components to this engine at once
-func add_components(components: Array, no_signal: bool = false) -> Array[EngineComponent]:
+func add_components(p_components: Array, p_no_signal: bool = false) -> Array[EngineComponent]:
 	var just_added_components: Array[EngineComponent]
 
 	# Loop though all the components requeted, and check there type
-	for component in components:
-		if component is EngineComponent:
-			just_added_components.append(add_component(component, true))
+	for component in p_components:
+		if component is EngineComponent and add_component(component, true):
+			just_added_components.append(component)
 
-	on_components_added.emit(just_added_components)
+	if not p_no_signal and just_added_components:
+		on_components_added.emit(just_added_components)
 
 	return just_added_components
 
 
 ## Removes a universe from this engine, this will not delete the component.
-func remove_component(component: EngineComponent, no_signal: bool = false) -> bool:
+func remove_component(p_component: EngineComponent, p_no_signal: bool = false) -> bool:
 	# Check if this universe is part of this engine
-	if component in ComponentDB.components.values():
-		ComponentDB.deregister_component(component)
+	if ComponentDB.has_component(p_component):
+		ComponentDB.deregister_component(p_component)
 
-		if not no_signal:
-			on_components_removed.emit([component])
+		if not p_no_signal:
+			on_components_removed.emit([p_component])
 
 		return true
 
 	# If not return false
 	else:
-		print("Component: ", component.uuid, " is not part of this engine")
+		print("Component: ", p_component.uuid, " is not part of this engine")
 		return false
 
 
 ## Removes mutiple universes at once from this engine, this will not delete the components.
-func remove_components(components: Array, no_signal: bool = false) -> void:
+func remove_components(p_components: Array, p_no_signal: bool = false) -> void:
 	var just_removed_components: Array = []
 
-	for component in components:
-		if component is EngineComponent:
-			if remove_component(component, true):
+	for component in p_components:
+		if component is EngineComponent and remove_component(component, true):
 				just_removed_components.append(component)
 
-	if not no_signal and just_removed_components:
+	if not p_no_signal and just_removed_components:
 		on_components_removed.emit(just_removed_components)
 
 
@@ -496,15 +438,49 @@ func create_animator() -> Animator:
 
 ## Enables process frame on a component
 func set_component_process(component: EngineComponent, process: bool) -> void:
-	if process and _process_frame.is_connected(component._process):
-		_process_frame.connect(component._process)
+	if process and get_tree().process_frame.is_connected(component._process):
+		get_tree().process_frame.connect(component._process)
 
-	elif not process and not _process_frame.is_connected(component._process):
-		_process_frame.disconnect(component._process)
+	elif not process and not get_tree().process_frame.is_connected(component._process):
+		get_tree().process_frame.disconnect(component._process)
 
 
+## Gets the system data folder
+func get_data_folder() -> String:
+	return _data_folder
+
+
+## Adds all objects from _config.network_objects to the Network
+func _add_auto_network_classes() -> void:
+	for config: Dictionary in _config.network_objects:
+		Network.register_network_object(config.name, config.object.get("settings_manager"))
+
+
+## (Re)loads all the user scripts
+func _reload_scripts() -> void:
+	if is_instance_valid(_script_child):
+		for script_node: Node in _script_child.get_children():
+			script_node.queue_free()
+		
+		remove_child(_script_child)
+	
+	_script_child = Node.new()
+	_script_child.name = "Scripts"
+	add_child(_script_child)
+
+	# Loop through all the script files if any, and add them
+	for script_name: String in Utils.get_scripts_from_folder(_script_folder_location).keys():
+
+		var node: Node = Node.new()
+		var script: GDScript = load(_script_folder_location + "/" + script_name)
+
+		node.name = script_name.replace(".gd", "")
+		node.set_script(script)
+		_script_child.add_child(node)
+
+
+## Uh Oh
 func _notification(what: int) -> void:
-	# Uh Oh
 	if what == NOTIFICATION_CRASH:
 		print(TF.auto_format(TF.AUTO_MODE.ERROR, "OH SHIT!"))
 		Details.shit()

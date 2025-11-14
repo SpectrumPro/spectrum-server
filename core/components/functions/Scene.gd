@@ -25,7 +25,7 @@ var _animator: DataContainerAnimator = DataContainerAnimator.new()
 ## Called when this EngineComponent is ready
 func _component_ready() -> void:
 	set_name("New Scene")
-	set_self_class("Scene")
+	_set_self_class("Scene")
 	
 	register_control_method("fade_in_speed", set_fade_in_speed, get_fade_in_speed, on_fade_in_speed_changed, [TYPE_FLOAT])
 	register_control_method("fade_out_speed", set_fade_out_speed, get_fade_out_speed, on_fade_out_speed_changed, [TYPE_FLOAT])
@@ -35,7 +35,7 @@ func _component_ready() -> void:
 
 	_animator.set_container(_data_container)
 
-	_animator.set_layer_id(uuid)
+	_animator.set_layer_id(uuid())
 	_animator.steped.connect(_on_animator_stepped)
 	_animator.finished.connect(_on_animator_finished)
 	Core.add_child(_animator)
@@ -138,9 +138,9 @@ func _on_load_request(serialized_data: Dictionary) -> void:
 	_fade_in_speed = abs(type_convert(serialized_data.get("fade_in_speed", _fade_in_speed), TYPE_FLOAT))
 	_fade_out_speed = abs(type_convert(serialized_data.get("fade_out_speed", _fade_out_speed), TYPE_FLOAT))
 	
-	Server.remove_networked_object(_data_container.uuid)
+	Server.remove_networked_object(_data_container.uuid())
 	_data_container.load(serialized_data.get("save_data", {}))
-	Server.add_networked_object(_data_container.uuid, _data_container)
+	Server.add_networked_object(_data_container.uuid(), _data_container)
 
 
 ## Called when this scene is to be deleted

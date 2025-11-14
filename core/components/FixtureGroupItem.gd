@@ -21,7 +21,7 @@ var position: Vector3 = Vector3.ZERO : set = set_position
 
 
 func _component_ready() -> void:
-	set_self_class("FixtureGroupItem")
+	_set_self_class("FixtureGroupItem")
 	set_name("Fixture Group Item")
 
 
@@ -30,7 +30,7 @@ func set_fixture(p_fixture: Fixture) -> void:
 	if p_fixture == fixture: return
 
 	fixture = p_fixture
-	set_name(fixture.name + " Group Item")
+	set_name(fixture.name() + " Group Item")
 	on_fixture_changed.emit(fixture)
 
 

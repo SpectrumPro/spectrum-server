@@ -18,7 +18,7 @@ var _fixtures: Dictionary = {}
 
 ## Called when this EngineComponent is ready
 func _component_ready() -> void:
-	set_self_class("FixtureGroup")
+	_set_self_class("FixtureGroup")
 	set_name("Fixture Group")
 
 
@@ -53,7 +53,7 @@ func add_group_item(group_item: FixtureGroupItem, no_signal: bool = false) -> bo
 	_fixtures[group_item.fixture] = group_item
 
 	group_item.fixture.on_delete_requested.connect(remove_fixture.bind(group_item.fixture), CONNECT_ONE_SHOT)
-	Server.add_networked_object(group_item.uuid, group_item, group_item.on_delete_requested)
+	Server.add_networked_object(group_item.uuid(), group_item, group_item.on_delete_requested)
 
 	if not no_signal:
 		on_fixtures_added.emit([group_item])
@@ -103,7 +103,7 @@ func remove_fixtures(fixtures: Array) -> void:
 
 func _on_delete_request() -> void:
 	for group_item: FixtureGroupItem in _fixtures.values():
-		Server.remove_networked_object(group_item.uuid)
+		Server.remove_networked_object(group_item.uuid())
 		group_item.delete()
 
 

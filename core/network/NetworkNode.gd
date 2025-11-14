@@ -1,15 +1,20 @@
 # Copyright (c) 2025 Liam Sherwin, All rights reserved.
 # This file is part of the Constellation Network Engine, licensed under the GPL v3.
 
-class_name NetworkNode extends Node
+class_name NetworkNode extends NetworkItem
 ## Base class for all NetworkNodes
 
+@warning_ignore_start("unused_signal")
+@warning_ignore_start("unused_private_class_variable")
 
 ## Emitted when the connection state is changed
 signal connection_state_changed(connection_state: ConnectionState)
 
 ## Emitted when the name of the node is changed
 signal node_name_changed(node_name: String)
+
+## Emittes when the current session is changed, or left
+signal session_changed(session: NetworkSession)
 
 ## Emitted when the Node joins a NetworkSession
 signal session_joined(session: NetworkSession)
@@ -44,6 +49,9 @@ enum NodeFlags {
 	LOCAL_NODE			= 2 << 0,	## This node is a Local node
 }
 
+
+## The SettingsManager for this 
+var settings_manager: SettingsManager = SettingsManager.new()
 
 ## Current state of the remote node local connection
 var _connection_state: ConnectionState = ConnectionState.UNKNOWN
@@ -135,6 +143,14 @@ func get_last_seen_time() -> float:
 ## Sends a message to set the name of this node on the network
 func set_node_name(p_name: String) -> void:
 	pass
+
+
+## Sets the session
+func set_session(p_session: NetworkSession) -> bool:
+	if is_instance_valid(p_session):
+		return join_session(p_session)
+	else:
+		return leave_session()
 
 
 ## Returns True if this node is local
