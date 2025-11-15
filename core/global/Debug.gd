@@ -53,7 +53,7 @@ func echo(p_echo_text: String) -> String:
 
 ## Dumps the Server's networked objects
 func dump_networked_objects() -> String:
-	var networked_objects: Dictionary = Server.get_networked_objects()
+	var networked_objects: Dictionary = Network._registered_network_objects.get_as_dict()
 
 	var file_name: String = Time.get_datetime_string_from_system() + "_dumped_network_objects"
 	Utils.save_json_to_file(debug_file_location, file_name, Utils.objects_to_uuids(networked_objects, true))

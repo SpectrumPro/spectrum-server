@@ -107,7 +107,7 @@ func add_cue(p_cue: Cue, p_no_signal: bool = false) -> bool:
 	
 	_cues.append(p_cue)
 	p_cue.on_delete_requested.connect(remove_cue.bind(p_cue))
-	Server.register_component(p_cue)
+	Network.register_network_object(p_cue.uuid(), p_cue.settings())
 
 	if not p_no_signal:
 		on_cues_added.emit([p_cue])
@@ -133,7 +133,7 @@ func remove_cue(p_cue: Cue, p_no_signal: bool = false) -> bool:
 		return false
 	 
 	_cues.erase(p_cue)
-	Server.deregister_component(p_cue)
+	Network.deregister_network_object(p_cue.settings())
 
 	if not p_no_signal:
 		on_cues_removed.emit([p_cue])

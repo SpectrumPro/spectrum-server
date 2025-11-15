@@ -138,9 +138,9 @@ func _on_load_request(serialized_data: Dictionary) -> void:
 	_fade_in_speed = abs(type_convert(serialized_data.get("fade_in_speed", _fade_in_speed), TYPE_FLOAT))
 	_fade_out_speed = abs(type_convert(serialized_data.get("fade_out_speed", _fade_out_speed), TYPE_FLOAT))
 	
-	Server.remove_networked_object(_data_container.uuid())
+	Network.deregister_network_object(_data_container.settings())
 	_data_container.load(serialized_data.get("save_data", {}))
-	Server.add_networked_object(_data_container.uuid(), _data_container)
+	Network.register_network_object(_data_container.uuid(), _data_container.settings())
 
 
 ## Called when this scene is to be deleted

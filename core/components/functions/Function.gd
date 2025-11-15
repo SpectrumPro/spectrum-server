@@ -87,7 +87,7 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 	register_control_method("blackout", blackout)
 
 	register_high_frequency_signal(on_intensity_changed)
-	Server.add_networked_object(_data_container.uuid(), _data_container)
+	Network.register_network_object(_data_container.uuid(), _data_container.settings())
 
 	super._init(p_uuid, p_name)
 
@@ -305,5 +305,5 @@ func load(p_serialized_data: Dictionary) -> void:
 
 ## Deletes this component localy, with out contacting the server. Usefull when handling server side delete requests
 func delete(p_local_only: bool = false) -> void:
-	Server.remove_networked_object(_data_container.uuid())
+	Network.deregister_network_object(_data_container.settings())
 	super.delete(p_local_only)

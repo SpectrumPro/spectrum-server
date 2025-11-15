@@ -334,9 +334,6 @@ func reset() -> void:
 		for component: EngineComponent in ComponentDB.get_components_by_classname(object_class_name):
 			component.delete()
 
-	Server.disable_signals = false
-
-
 
 ## Creates and adds a new component using the classname to get the type, will return null if the class is not found
 func create_component(p_classname: String, p_name: String = "") -> EngineComponent:
