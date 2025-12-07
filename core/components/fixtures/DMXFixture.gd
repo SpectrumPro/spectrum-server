@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name DMXFixture extends Fixture
 ## Dmx Fixture
@@ -7,6 +8,12 @@ class_name DMXFixture extends Fixture
 
 ## Emitted when the channel is changed
 signal on_channel_changed(channel: int)
+
+## Emitted when the universe is changed
+signal on_universe_changed(universe: Universe)
+
+## Emitted when the manifest is changed
+signal on_manifest_changed(manifest_uuid: String)
 
 ## Emitted when the dmx data is updated, this may not contain all the current dmx data, as it will only emit changes
 signal dmx_data_updated(dmx_data: Dictionary)
@@ -17,6 +24,9 @@ enum BlendMode {HTP, LTP}
 
 ## The DMX channel of this fixture
 var _channel: int = 1
+
+## The Universe this fixture is patched to
+var _universe: Universe
 
 ## The mode of this fixture
 var _mode: String = ""
@@ -72,19 +82,47 @@ var _manifest: FixtureManifest
 var _compilation_queued: bool = false
 
 
-func _component_ready() -> void:
+## init
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
+	super._init(p_uuid, p_name)
+	
 	set_name("DMXFixture")
 	_set_self_class("DMXFixture")
+	
+	_settings_manager.register_setting("channel", Data.Type.INT, set_channel, get_channel, [on_channel_changed]).set_min_max(1, 512)
+	_settings_manager.register_setting("universe", Data.Type.ENGINECOMPONENT, set_universe, get_universe, [on_universe_changed]).set_class_filter(Universe)
+	_settings_manager.register_setting("manifest", Data.Type.FIXTUREMANIFEST, set_manifest, get_manifest, [on_manifest_changed])
 
-	register_high_frequency_signal(on_parameter_changed, 3)
-	register_high_frequency_signal(on_parameter_erased, 2)
-	register_high_frequency_signal(on_override_changed, 3)
-	register_high_frequency_signal(on_override_erased, 2)
+	_settings_manager.register_networked_methods_auto([
+		get_channel,
+		get_universe,
+		get_manifest,
+		set_channel,
+		set_universe,
+		set_manifest,
+		get_current_dmx,
+		zero_channels,
+	])
+
+	_settings_manager.register_networked_signals_auto([
+		on_channel_changed,
+		on_universe_changed
+	])
 
 
 ## Gets the channel
 func get_channel() -> int:
 	return _channel
+
+
+## Gets the universe this fixture is patched to
+func get_universe() -> Universe:
+	return _universe
+
+
+## Gets the fixture manifest
+func get_manifest() -> FixtureManifest:
+	return _manifest
 
 
 ## Sets the channel
@@ -97,13 +135,32 @@ func set_channel(p_channel: int) -> void:
 	on_channel_changed.emit(_channel)
 
 
-## Gets the fixture manifest
-func get_manifest() -> FixtureManifest:
-	return _manifest
+## Sets the universe this fixture is patched to
+func set_universe(p_universe: Universe) -> bool:
+	if p_universe == _universe or not is_instance_valid(p_universe):
+		return false
+	
+	if _universe:
+		_universe.remove_fixture(self)
+	
+	return p_universe.add_fixture(self, _channel)
+
+
+## Called when a Universe is patching this fixture to self
+func set_universe_from_universe(p_universe: Universe) -> void:
+	_universe = p_universe
+	on_universe_changed.emit(_universe)
+
 
 
 ## Sets the manifest for this fixture
-func set_manifest(p_manifest: FixtureManifest, p_mode: String) -> void:
+func set_manifest(p_manifest: Variant, p_mode: String) -> bool:
+	if p_manifest is not FixtureManifest:
+		p_manifest = FixtureLibrary.get_manifest(type_convert(p_manifest, TYPE_STRING))
+	
+	if not is_instance_valid(p_manifest):
+		return false
+
 	_parameters = p_manifest.get_mode(p_mode).zones
 	_mode = p_mode
 	_manifest = p_manifest
@@ -117,8 +174,9 @@ func set_manifest(p_manifest: FixtureManifest, p_mode: String) -> void:
 			if len(_parameters[zone][attribute].offsets):
 				_default.get_or_add(zone, {})[attribute] = get_default(zone, attribute, "", true)
 
-
 	_compile_output()
+	on_manifest_changed.emit(_manifest.uuid())
+	return true
 
 
 ## Gets the current dmx data
@@ -500,7 +558,7 @@ func _on_serialize_request(p_flags: int) -> Dictionary:
 	var seralized_data: Dictionary = {
 		"channel": _channel,
 		"mode": _mode,
-		"manifest_uuid": _manifest.uuid if _manifest else ""
+		"manifest_uuid": _manifest.uuid() if _manifest else ""
 	}
 
 	if p_flags & Core.SM_NETWORK:

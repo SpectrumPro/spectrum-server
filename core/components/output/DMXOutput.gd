@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name DMXOutput extends EngineComponent
 ## Base class for all DMX outputs
@@ -25,11 +26,31 @@ var _connection_state: bool = false
 var _previous_note: String = ""
 
 
+## init
 func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
-	set_name("DMX Output")
+	super._init(p_uuid, p_name)
+	
+	set_name("DMXOutput")
 	_set_self_class("DMXOutput")
+	
+	_settings_manager.register_setting("auto_start", Data.Type.BOOL, set_auto_start, get_auto_start, [on_auto_start_changed])
+	_settings_manager.register_control("start", Data.Type.ACTION, start)
+	_settings_manager.register_control("stop", Data.Type.ACTION, stop)
+	_settings_manager.register_status("connection_status", Data.Type.BOOL, get_connection_state, [on_connection_state_changed])
 
-	super._init()
+	_settings_manager.register_networked_signals_auto([
+		on_connection_state_changed,
+		on_auto_start_changed,
+	])
+
+	_settings_manager.register_networked_methods_auto([
+		set_auto_start,
+		get_auto_start,
+		get_previous_note,
+		get_connection_state,
+		start,
+		stop,
+	])
 
 
 ## Sets the auto start state
@@ -73,4 +94,4 @@ func stop() -> void:
 func output(dmx: Dictionary = dmx_data) -> void:
 
 	# As this is the base class, this script does not really output anything, so we are just printing the dmx data
-	print(dmx_data)
+	pass

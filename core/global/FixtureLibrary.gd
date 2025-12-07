@@ -55,6 +55,9 @@ func _init() -> void:
 		is_loaded,
 	])
 
+	settings_manager.set_method_allow_serialize(get_sorted_manifest_info)
+	settings_manager.set_method_allow_serialize(get_manifest)
+
 
 ## Load the fixture manifests from the folders, buit in manifests will override user manifests
 func _ready() -> void:
@@ -194,8 +197,8 @@ func _find_manifests(folder_path: String) -> Dictionary:
 			manifest.importer = file_type
 			manifest.file_path = path
 			
-			result.sorted.get_or_add(manifest.manufacturer, {})[manifest.name] = manifest
-			result.files[manifest.uuid] = manifest
+			result.sorted.get_or_add(manifest.manufacturer, {})[manifest.name()] = manifest
+			result.files[manifest.uuid()] = manifest
 
 		file_name = access.get_next()
 	

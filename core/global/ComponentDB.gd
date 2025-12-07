@@ -36,9 +36,7 @@ var _component_requests: Dictionary = {}
 func _ready() -> void:
 	Core.on_resetting.connect(func () -> void:
 		_just_changed_components = {}
-		_class_callbacks = {}
 		_emit_class_callbacks_queued = false
-		_component_requests = {}
 	)
 
 
@@ -97,7 +95,7 @@ func get_component(uuid: String) -> EngineComponent:
 
 ## Checks if the given component exists in ComponentDB
 func has_component(p_component: EngineComponent) -> bool:
-	return _components.has(p_component.uuid)
+	return _components.has(p_component.uuid())
 
 
 ## Use this method if you need to call a function once a component is added to the engine. This will only be called once
@@ -162,8 +160,11 @@ func _check_class_callbacks(component: EngineComponent, remove: bool = false) ->
 func _emit_class_callbacks() -> void:
 	if _just_changed_components:
 		for classname: String in _just_changed_components:
-			for callback: Callable in _class_callbacks[classname]:
-				callback.callv(_just_changed_components[classname].values())
+			for callback: Callable in _class_callbacks[classname].duplicate():
+				if callback.is_valid():
+					callback.callv(_just_changed_components[classname].values())
+				else:
+					_class_callbacks[classname].erace(callback)
 	
 	_just_changed_components = {}
 	_emit_class_callbacks_queued = false

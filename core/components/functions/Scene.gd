@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name Scene extends Function
 ## Function for creating and recalling saved data
@@ -23,13 +24,12 @@ var _animator: DataContainerAnimator = DataContainerAnimator.new()
 
 
 ## Called when this EngineComponent is ready
-func _component_ready() -> void:
-	set_name("New Scene")
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
+	super._init(p_uuid, p_name)
+	
+	set_name("Scene")
 	_set_self_class("Scene")
 	
-	register_control_method("fade_in_speed", set_fade_in_speed, get_fade_in_speed, on_fade_in_speed_changed, [TYPE_FLOAT])
-	register_control_method("fade_out_speed", set_fade_out_speed, get_fade_out_speed, on_fade_out_speed_changed, [TYPE_FLOAT])
-
 	_auto_start = false
 	_auto_stop = false
 
@@ -39,6 +39,21 @@ func _component_ready() -> void:
 	_animator.steped.connect(_on_animator_stepped)
 	_animator.finished.connect(_on_animator_finished)
 	Core.add_child(_animator)
+
+	_settings_manager.register_setting("fade_in", Data.Type.FLOAT, set_fade_in_speed, get_fade_in_speed, [on_fade_in_speed_changed])
+	_settings_manager.register_setting("fade_out", Data.Type.FLOAT, set_fade_out_speed, get_fade_out_speed, [on_fade_out_speed_changed])
+
+	_settings_manager.register_networked_methods_auto([
+		set_fade_in_speed,
+		set_fade_out_speed,
+		get_fade_in_speed,
+		get_fade_out_speed,
+	])
+
+	_settings_manager.register_networked_signals_auto([
+		on_fade_in_speed_changed,
+		on_fade_out_speed_changed,
+	])
 
 
 ## Handles ActiveState changes

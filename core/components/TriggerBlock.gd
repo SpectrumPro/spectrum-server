@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name TriggerBlock extends EngineComponent
 ## Block of triggers
@@ -29,9 +30,30 @@ var _triggers: Dictionary[int, Dictionary]
 
 
 ## Ready
-func _component_ready() -> void:
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
+	super._init(p_uuid, p_name)
+	
 	set_name("TriggerBlock")
 	_set_self_class("TriggerBlock")
+
+	_settings_manager.register_networked_methods_auto([
+  	  	add_trigger,
+		remove_trigger,
+		reset_column,
+		rename_trigger,
+		call_trigger_up,
+		call_trigger_down,
+		get_triggers,
+	])
+
+	_settings_manager.register_networked_signals_auto([
+		on_trigger_added,
+		on_trigger_removed,
+		on_column_reset,
+		on_trigger_name_changed,
+		on_trigger_up,
+		on_trigger_down,
+	])
 
 
 ## Adds a trigger at the given row and column

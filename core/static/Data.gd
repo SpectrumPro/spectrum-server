@@ -36,10 +36,12 @@ enum Type {
 	NETWORKNODE,		## A NetworkNode
 	NETWORKHANDLER,		## A NetworkHandler
 	ENGINECOMPONENT,	## An EngineComponent
+	FIXTUREMANIFEST,	## An FixtureManifest
 	UIPANEL,			## A UI Panel
 	INPUTEVENT,			## An InputEvent
 	CUSTOMPANEL,		## A custom UIPanel
 	SETTINGSMANAGER,	## A SettingsManager
+	ACTION,				## An action
 }
 
 
@@ -72,6 +74,7 @@ static var custom_type_map: Dictionary[Type, Variant.Type] = {
 	Type.NETWORKNODE: 		TYPE_OBJECT,
 	Type.NETWORKHANDLER: 	TYPE_OBJECT,
 	Type.ENGINECOMPONENT: 	TYPE_OBJECT,
+	Type.FIXTUREMANIFEST: 	TYPE_OBJECT,
 	Type.UIPANEL:			TYPE_OBJECT,
 	Type.CUSTOMPANEL:		TYPE_OBJECT,
 	Type.SETTINGSMANAGER:	TYPE_OBJECT,

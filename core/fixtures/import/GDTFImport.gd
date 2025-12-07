@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name GDTFImport extends ManifestImport
 ## GDTF fixture import
@@ -16,8 +17,8 @@ func _init() -> void:
 	
 
 ## Loads a fixture manifest from the given file path
-static func load_from_file(file_path: String) -> FixtureManifest:
-	var parser = _get_xml_reader(file_path)[1]
+static func load_from_file(p_file_path: String) -> FixtureManifest:
+	var parser = _get_xml_reader(p_file_path)[1]
 	var manifest: FixtureManifest = FixtureManifest.new()
 	
 	var remove_number_regex := RegEx.new()
@@ -142,15 +143,13 @@ static func load_from_file(file_path: String) -> FixtureManifest:
 	return manifest
 
 
-
-
 ## Returns a dictionary with the name, manufacturer, and quanti of modes from the given gdtf file path
-static func get_info(file_path: String) -> FixtureManifest:
+static func get_info(p_file_path: String) -> FixtureManifest:
 	var manifest: FixtureManifest = FixtureManifest.new()
 	manifest.type = FixtureManifest.Type.Info
 	manifest._uuid = "unknown"
 
-	var x = _get_xml_reader(file_path)
+	var x = _get_xml_reader(p_file_path)
 	if not x:
 		return manifest
 	
@@ -178,13 +177,12 @@ static func get_info(file_path: String) -> FixtureManifest:
 	return manifest
 
 
-
 ## Returns a XMLParser for the given gdtf file path
-static func _get_xml_reader(file_path: String) -> Array[RefCounted]:
+static func _get_xml_reader(p_file_path: String) -> Array[RefCounted]:
 	var reader: ZIPReader = ZIPReader.new()
 	var parser: XMLParser = XMLParser.new()
 	
-	if reader.open(file_path) == OK:
+	if reader.open(p_file_path) == OK:
 		parser.open_buffer(reader.read_file("description.xml"))
 		return [reader, parser]
 	else:
@@ -192,13 +190,13 @@ static func _get_xml_reader(file_path: String) -> Array[RefCounted]:
 
 
 ## Separates all the channels from zones if they are not duplicates
-static func _separate_channels_by_zones(manifest: FixtureManifest) -> void:
+static func _separate_channels_by_zones(p_manifest: FixtureManifest) -> void:
 	var remove_number_regex := RegEx.new()
 	remove_number_regex.compile("\\d+")  # Matches one or more digits
-	manifest._categorys.clear()
+	p_manifest._categorys.clear()
 	
-	for mode: String in manifest._modes.keys():
-		var mode_data = manifest._modes[mode]
+	for mode: String in p_manifest._modes.keys():
+		var mode_data = p_manifest._modes[mode]
 		var all_attributes: Array[String] = []
 		
 		var new_zones: Dictionary = {
@@ -215,18 +213,18 @@ static func _separate_channels_by_zones(manifest: FixtureManifest) -> void:
 				
 				if all_attributes.count(attribute) == 1:
 					new_zones["root"][attribute] = param_data
-					manifest._categorys.get_or_add(mode, {}).get_or_add("root", {})[attribute] = category
+					p_manifest._categorys.get_or_add(mode, {}).get_or_add("root", {})[attribute] = category
 				else:
 					var new_zone_name: String = zone.capitalize().to_lower().replace(" ", "_")
 					if not new_zones.has(new_zone_name):
 						new_zones[new_zone_name] = {}
 					
 					new_zones[new_zone_name][attribute] = param_data
-					manifest._categorys.get_or_add(mode, {}).get_or_add(new_zone_name, {})[attribute] = category
+					p_manifest._categorys.get_or_add(mode, {}).get_or_add(new_zone_name, {})[attribute] = category
 					
 					new_zones["root"][attribute] = param_data.duplicate()
 					new_zones["root"][attribute].offsets = []
 					
-					manifest._categorys.get_or_add(mode, {}).get_or_add("root", {})[attribute] = category
+					p_manifest._categorys.get_or_add(mode, {}).get_or_add("root", {})[attribute] = category
 		
-		manifest._modes[mode].zones = new_zones
+		p_manifest._modes[mode].zones = new_zones

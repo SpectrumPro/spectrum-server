@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name DataContainer extends EngineComponent
 ## DataContainer stores fixture data
@@ -34,11 +35,39 @@ var _items: Array[ContainerItem]
 var _fixture: Dictionary[Fixture, Dictionary]
 
 
-## Constructor
+## init
 func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
+	super._init(p_uuid, p_name)
+	
 	set_name("DataContainer")
 	_set_self_class("DataContainer")
-	super._init(p_uuid, p_name)
+
+	_settings_manager.register_networked_methods_auto([
+		get_items,
+		get_fixtures,
+		get_stored_fixtures,
+		store_data,
+		erase_data,
+		store_item,
+		store_items,
+		erase_item,
+		erase_items,
+		set_function,
+		set_value,
+		set_can_fade,
+		set_start,
+		set_stop,
+	])
+
+	_settings_manager.register_networked_signals_auto([
+		on_items_stored,
+		on_items_erased,
+		on_items_function_changed,
+		on_items_value_changed,
+		on_items_can_fade_changed,
+		on_items_start_changed,
+		on_items_stop_changed,
+	])
 
 
 ## Gets all the ContainerItems

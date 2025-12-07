@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name CueList extends Function
 ## A list of cues
@@ -90,15 +91,67 @@ var _active_fixtures: Dictionary[String, Dictionary]
 var _active_trigger_timers: Array[Timer]
 
 
-func _component_ready() -> void:
+## init
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
+	super._init(p_uuid, p_name)
+	
 	set_name("CueList")
 	_set_self_class("CueList")
+	
+	_settings_manager.register_setting("allow_triggered_looping", Data.Type.BOOL, set_allow_triggered_looping, get_allow_triggered_looping, [on_triggered_looping_changed])
+	_settings_manager.register_setting("use_global_fade", Data.Type.BOOL, set_global_fade_state, get_global_fade_state, [on_global_fade_state_changed])
+	_settings_manager.register_setting("use_global_pre_wait", Data.Type.BOOL, set_global_pre_wait_state, get_global_pre_wait_state, [on_global_pre_wait_state_changed])
+	_settings_manager.register_setting("loop_mode", Data.Type.ENUM, set_loop_mode, get_loop_mode, [on_loop_mode_changed]).set_enum_dict(LoopMode)
+	
+	_settings_manager.register_control("go_previous", Data.Type.ACTION, go_previous)
+	_settings_manager.register_control("go_next", Data.Type.ACTION, go_next)
+	_settings_manager.register_control("global_fade_speed", Data.Type.FLOAT, set_global_fade_speed, get_global_fade_speed, [on_global_fade_changed])
+	_settings_manager.register_control("global_pre_wait_speed", Data.Type.FLOAT, set_global_pre_wait_speed, get_global_pre_wait_speed, [on_global_pre_wait_changed])
 
-	register_control_method("go_previous", go_previous)
-	register_control_method("go_next", go_next)
-	register_control_method("set_global_fade_speed", set_global_fade_speed, get_global_fade_speed, on_global_fade_changed, [TYPE_FLOAT])
-	register_control_method("set_global_pre_wait_speed", set_global_pre_wait_speed, get_global_pre_wait_speed, on_global_pre_wait_changed, [TYPE_FLOAT])
+	_settings_manager.register_networked_methods_auto([
+		add_cue,
+		add_cues,
+		remove_cue,
+		remove_cues,
+		get_cues,
+		set_cue_position,
+		set_allow_triggered_looping,
+		set_loop_mode,
+		set_global_fade_state,
+		set_global_pre_wait_state,
+		set_global_fade_speed,
+		set_global_pre_wait_speed,
+		get_loop_mode,
+		get_allow_triggered_looping,
+		get_global_fade_state,
+		get_global_pre_wait_state,
+		get_global_fade_speed,
+		get_global_pre_wait_speed,
+		get_active_cue,
+		go_next,
+		go_previous,
+		seek_to,
+	])
 
+	_settings_manager.set_method_allow_serialize(get_cues)
+	_settings_manager.set_method_allow_deserialize(add_cue)
+	_settings_manager.set_method_allow_deserialize(add_cues)
+
+	_settings_manager.register_networked_signals_auto([
+		on_active_cue_changed,
+		on_global_fade_state_changed,
+		on_global_pre_wait_state_changed,
+		on_global_fade_changed,
+		on_global_pre_wait_changed,
+		on_triggered_looping_changed,
+		on_loop_mode_changed,
+		on_cues_added,
+		on_cues_removed,
+		on_cue_order_changed,
+	])
+
+	_settings_manager.set_signal_allow_serialize(on_cues_added)
+	
 
 ## Adds a cue to the list
 func add_cue(p_cue: Cue, p_no_signal: bool = false) -> bool:

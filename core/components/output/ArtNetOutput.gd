@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name ArtNetOutput extends DMXOutput
 ## Art-Net DMX Output
@@ -31,11 +32,31 @@ var _universe_number: int = 0
 var _udp_peer = PacketPeerUDP.new()
 
 
-## Called when this EngineComponent is ready
-func _component_ready():
-	set_name("Art-Net Output")
+## Called when this object is first created
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
+	super._init(p_uuid, p_name)
+	
+	set_name("ArtNetOutput")
 	_set_self_class("ArtNetOutput")
+	
+	_settings_manager.register_setting("ip_address", Data.Type.IP, set_ip, get_ip, [on_ip_changed])
+	_settings_manager.register_setting("use_broadcast", Data.Type.BOOL, set_use_broadcast, get_use_broadcast, [on_broadcast_state_changed])
+	_settings_manager.register_setting("universe_number", Data.Type.INT, set_universe_number, get_universe_number, [on_universe_number_changed])
 
+	_settings_manager.register_networked_signals_auto([
+		on_ip_changed,
+		on_broadcast_state_changed,
+		on_universe_number_changed,
+	])
+
+	_settings_manager.register_networked_methods_auto([
+		set_ip,
+		get_ip,
+		set_use_broadcast,
+		get_use_broadcast,
+		set_universe_number,
+		get_universe_number,
+	])
 
 
 ## Sets the ip address

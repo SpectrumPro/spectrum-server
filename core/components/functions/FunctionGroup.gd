@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name FunctionGroup extends Function
 ## A group of functions
@@ -19,16 +20,35 @@ signal on_functions_index_changed(function: Function, index: int)
 var _functions: Array[Function]
 
 
-## Init
-func _component_ready() -> void:
+## init
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
+	super._init(p_uuid, p_name)
+	
 	set_name("FunctionGroup")
 	_set_self_class("FunctionGroup")
 
+	_settings_manager.register_networked_signals_auto([
+		on_functions_added,
+		on_functions_removed,
+		on_functions_index_changed,
+	])
+
+	_settings_manager.register_networked_methods_auto([
+		add_function,
+		add_functions,
+		remove_function,
+		remove_functions,
+		set_function_index,
+		move_up,
+		move_down,
+		get_functions,
+		has_function,
+	])
 
 
 ## Adds a function
 func add_function(p_function: Function, no_signal: bool = false) -> bool:
-	if not p_function or p_function in _functions or p_function == self:
+	if not p_function or p_function in _functions or p_function is FunctionGroup:
 		return false
 
 	p_function.on_delete_requested.connect(remove_function.bind(p_function))

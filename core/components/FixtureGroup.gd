@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name FixtureGroup extends EngineComponent
 ## Stores a group of fixtures, using FixtureGroupItem
@@ -16,10 +17,32 @@ signal on_fixtures_removed(fixtures: Array[Fixture])
 var _fixtures: Dictionary = {}
 
 
-## Called when this EngineComponent is ready
-func _component_ready() -> void:
+## init
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
+	super._init(p_uuid, p_name)
+	
+	set_name("FixtureGroup")
 	_set_self_class("FixtureGroup")
-	set_name("Fixture Group")
+
+	_settings_manager.register_networked_methods_auto([
+		get_group_item,
+		get_fixtures,
+		add_fixture,
+		add_group_item,
+		add_group_items,
+		remove_fixture,
+		remove_fixtures,
+	])
+
+	_settings_manager.set_method_allow_deserialize(add_group_item)
+	_settings_manager.set_method_allow_deserialize(add_group_items)
+
+	_settings_manager.register_networked_signals_auto([
+		on_fixtures_added,
+		on_fixtures_removed,
+	])
+
+	_settings_manager.set_signal_allow_serialize(on_fixtures_added)
 
 
 ## Gets a FixtureGroupItem

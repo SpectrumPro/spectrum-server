@@ -8,9 +8,9 @@ class_name ManifestImport extends RefCounted
 
 ## Loads a fixture manifest
 static func load_from_file(file_path: String) -> FixtureManifest:
-    return FixtureManifest.new()
+	return FixtureManifest.new()
 
 
 ## Gets a FixtureManifest in FixtureManifest.Type.Info mode
 static func get_info(file_path: String) -> FixtureManifest:
-    return FixtureManifest.new()
+	return FixtureManifest.new()

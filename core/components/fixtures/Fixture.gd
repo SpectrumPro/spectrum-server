@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name Fixture extends EngineComponent
 ## Base class for all controlable items
@@ -29,11 +30,44 @@ static var RootZone: String = "root"
 var _ltp_layers: Dictionary[String, Variant]
 
 
-## Called when this EngineComponent is ready
+## init
 func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 	super._init(p_uuid, p_name)
 	
+	set_name("Fixture")
 	_set_self_class("Fixture")
+
+	_settings_manager.register_networked_methods_auto([
+		set_override,
+		erase_override,
+		erase_all_overrides,
+		get_all_override_values,
+		get_all_values_layered,
+		get_all_values,
+		get_parameter_categories,
+		get_parameter_functions,
+		get_default,
+		get_force_default,
+		get_default_function,
+		get_current_value,
+		get_current_value_or_force_default,
+		get_current_value_layered,
+		get_current_value_layered_or_force_default,
+		get_zones,
+		has_overrides,
+		has_parameter,
+		has_force_default,
+		has_ltp_layer,
+		function_can_fade,
+	])
+
+	_settings_manager.register_networked_signals_auto([
+		on_parameter_changed,
+		on_parameter_erased,
+		on_override_changed,
+		on_override_erased,
+		on_all_override_removed,
+	])
 
 
 ## Sets a parameter to a float value

@@ -137,8 +137,8 @@ func send_responce(p_id: String, p_args: Array = [], p_flags: NetworkFlags = Net
 	return send_message({
 		"type": MessageType.RESPONCE,
 		"msg_id": p_id,
-		"args": var_to_str(serialize_objects(p_args, p_flags)), 
-	}, p_node_filter, p_nodes)
+		"args": serialize_objects(p_args, p_flags),
+ 	}, p_node_filter, p_nodes)
 
 
 ## Rgegisters a network object
