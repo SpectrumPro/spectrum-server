@@ -33,7 +33,7 @@ var _manifest_requests: Dictionary
 var _is_loaded: bool = false
 
 ## Contains all manifest importers keyed by the file extension 
-var _manifest_importers: Dictionary = {
+var _manifest_importers: Dictionary[String, ManifestImport] = {
 	"gdtf": GDTFImport.new()
 }
 
@@ -110,7 +110,7 @@ func get_manifest(p_manifest_uuid: String) -> FixtureManifest:
 		var manifest_info: FixtureManifest = _found_manifest_info[p_manifest_uuid]
 
 		if manifest_info.importer in _manifest_importers:
-			var manifest: FixtureManifest = (_manifest_importers[manifest_info.importer] as ManifestImport).load_from_file(manifest_info.file_path)
+			var manifest: FixtureManifest = _manifest_importers[manifest_info.importer].load_from_file(manifest_info.file_path)
 			_loaded_manifests[p_manifest_uuid] = manifest
 
 			return manifest
@@ -165,40 +165,35 @@ func has_global_ltp_layer(p_layer_id: String) -> bool:
 
 
 ## Finds all the fixture manifetsts in the folders
-func _find_manifests(folder_path: String) -> Dictionary:
-	# var user_library: Dictionary = _get_gdtf_list_from_folder(_user_fixture_library_path, true)
-	# var built_in_libaray: Dictionary = _get_gdtf_list_from_folder(_built_in_library_path, true)
-
-	# _sorted_fixture_manifests = user_library.sorted
-	# _sorted_fixture_manifests.merge(built_in_libaray.sorted, true)
-
-	# _fixture_manifests = user_library.files
-	# _fixture_manifests.merge(built_in_libaray.files, true)
-	
-	var access = DirAccess.open(folder_path)
-	var i: int = 1
+func _find_manifests(folder_path: String) -> Dictionary:	
+	var access:DirAccess = DirAccess.open(folder_path)
+	var index: int = 1
 	var num_of_files: int = len(access.get_files())
 
 	access.list_dir_begin()
-	var file_name = access.get_next()
+
+	var file_name: String = access.get_next()
 	var result: Dictionary = {
 		"sorted": {},
 		"files": {}
 	}
 
+	print()
+
 	while file_name != "":
 		var file_type: String = file_name.split(".")[-1]
 		if not access.current_is_dir() and file_type in _manifest_importers.keys():
 			var path: String = folder_path + "/" + file_name
-			printraw(TF.auto_format(0, "\r", "Importing Fixture (", file_type, "): ", i, "/", num_of_files))
-			i += 1
+			var manifest: Dictionary = _manifest_importers[file_type].get_info(path)
 
-			var manifest: FixtureManifest =( _manifest_importers[file_type] as ManifestImport).get_info(path)
 			manifest.importer = file_type
 			manifest.file_path = path
 			
-			result.sorted.get_or_add(manifest.manufacturer, {})[manifest.name()] = manifest
-			result.files[manifest.uuid()] = manifest
+			result.sorted.get_or_add(manifest.manufacturer, {})[manifest.name] = manifest
+			result.files[manifest.uuid] = manifest
+
+			printraw(TF.auto_format(0, "\r", "Imported Fixture (", file_type, "): ", index, "/", num_of_files))
+			index += 1
 
 		file_name = access.get_next()
 	

@@ -7,11 +7,10 @@ class_name GDTFImport extends ManifestImport
 
 
 ## Stores all GDTF attributes and their corresponding category
-static var parameter_infomation: Dictionary = {
-
-}
+static var parameter_infomation: Dictionary = {}
 
 
+## init
 func _init() -> void:
 	parameter_infomation = type_convert(load("res://core/fixtures/import/GDTFSpecAttributes.json").data, TYPE_DICTIONARY)
 	
@@ -144,10 +143,13 @@ static func load_from_file(p_file_path: String) -> FixtureManifest:
 
 
 ## Returns a dictionary with the name, manufacturer, and quanti of modes from the given gdtf file path
-static func get_info(p_file_path: String) -> FixtureManifest:
-	var manifest: FixtureManifest = FixtureManifest.new()
-	manifest.type = FixtureManifest.Type.Info
-	manifest._uuid = "unknown"
+static func get_info(p_file_path: String) -> Dictionary:
+	var manifest: Dictionary = {
+		"name": "unknown",
+		"manufacturer": "unknown",
+		"uuid": "unknown",
+		"modes": {}
+	}
 
 	var x = _get_xml_reader(p_file_path)
 	if not x:
@@ -161,18 +163,18 @@ static func get_info(p_file_path: String) -> FixtureManifest:
 		if parser.get_node_type() == XMLParser.NODE_ELEMENT:
 			match parser.get_node_name():
 				"FixtureType":
-					manifest.set_name(parser.get_named_attribute_value_safe("Name"))
+					manifest.name = parser.get_named_attribute_value_safe("Name")
 					manifest.manufacturer = parser.get_named_attribute_value_safe("Manufacturer")
-					manifest._uuid = parser.get_named_attribute_value_safe("FixtureTypeID")
+					manifest.uuid = parser.get_named_attribute_value_safe("FixtureTypeID")
 					
 				"DMXMode":
 					current_mode = parser.get_named_attribute_value_safe("Name")
-					manifest.create_mode(current_mode, 0)
+					manifest.modes[current_mode] = 0
 				
 				"DMXChannel":
 					var offset_array: Array = parser.get_named_attribute_value_safe("Offset").split(",")
 					if offset_array != [""]:
-						manifest.set_mode_length(current_mode, manifest.get_mode_length(current_mode) + len(offset_array))
+						manifest.modes[current_mode] = manifest.modes[current_mode] + len(offset_array)
 	
 	return manifest
 
