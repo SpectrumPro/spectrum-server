@@ -22,6 +22,7 @@ enum NetworkFlags {
 	NONE				= 0, ## No flags
 	ALLOW_SERIALIZE		= 1 << 0, ## Allows EngineComponents to be serialized on an outgoing message
 	ALLOW_DESERIALIZE	= 1 << 1, ## Allows EngineComponents to be deserialized on an incomming message
+	ALLOW_UNRESOLVED	= 1 << 2, ## Allows the EngineComponent's uuid to be passed instead of an object if it can't be resolved from ComponentDB
 }
 
 ## The max time in seconds that this node will wait for a response from another node
@@ -137,8 +138,8 @@ func send_responce(p_id: String, p_args: Array = [], p_flags: NetworkFlags = Net
 	return send_message({
 		"type": MessageType.RESPONCE,
 		"msg_id": p_id,
-		"args": serialize_objects(p_args, p_flags),
- 	}, p_node_filter, p_nodes)
+		"args": var_to_str(serialize_objects(p_args, p_flags)), 
+	}, p_node_filter, p_nodes)
 
 
 ## Rgegisters a network object
@@ -234,6 +235,13 @@ func deserialize_objects(p_data: Variant, p_flags: int = NetworkFlags.NONE) -> V
 						initialized_object.load(p_data._serialized_object)
 						
 					return initialized_object
+				
+				elif p_flags & NetworkFlags.ALLOW_UNRESOLVED:
+					return p_data._object_ref
+			
+			elif p_flags & NetworkFlags.ALLOW_UNRESOLVED:
+				return p_data._object_ref
+			
 			else:
 				return null
 		
@@ -301,7 +309,7 @@ func _on_command_recieved(p_from: NetworkNode, p_type: Variant.Type, p_command: 
 				
 			MessageType.RESPONCE:
 				if _awaiting_responces.has(msg_id):
-					args = deserialize_objects(args)
+					args = deserialize_objects(args, NetworkFlags.ALLOW_DESERIALIZE)
 					_awaiting_responces[msg_id].resolve(args)
 					_awaiting_responces.erase(msg_id)
 	

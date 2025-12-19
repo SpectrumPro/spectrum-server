@@ -25,6 +25,9 @@ signal _output_timer()
 ## Serialization mode,flags:
 
 ## Network Seralize mode: Saves extra data to be sent to clients
+const SM_NONE: int = 0
+
+## Network Seralize mode: Saves extra data to be sent to clients
 const SM_NETWORK: int = 1
 
 ## Duplicate Mode. Saves everything but UUID for object duplication
@@ -113,11 +116,13 @@ func _init() -> void:
 		save,
 		load_from_file,
 		load,
+		reset_and_load,
 		get_all_saves_from_library,
 		get_file_name,
 		set_file_name,
 		rename_file,
 		delete_file,
+		reset,
 		create_component,
 		duplicate_component,
 		add_component,
@@ -197,9 +202,12 @@ func serialize(p_flags: int = SM_NETWORK) -> Dictionary:
 ## Saves this engine to disk
 func save(p_file_name: String = _current_file_name, p_autosave: bool = false) -> Error:
 	if p_file_name:
-		set_file_name(p_file_name)
+
+		if not p_autosave:
+			set_file_name(p_file_name)
+			
 		var file_path: String = (_save_library_location + "/autosave") if p_autosave else _save_library_location
-		return Utils.save_json_to_file(file_path, p_file_name, serialize(SM_NETWORK))
+		return Utils.save_json_to_file(file_path, p_file_name, serialize(SM_NONE))
 
 	else:
 		print_verbose("save(): ", error_string(ERR_FILE_BAD_PATH))
@@ -257,7 +265,7 @@ func load(p_serialized_data: Dictionary, p_no_signal: bool = false) -> void:
 ## Resets the engine, then loads from a save file:
 func reset_and_load(p_file_name: String) -> void:
 	reset()
-	load_from_file(p_file_name, true)
+	load_from_file(p_file_name)
 
 
 ## Returnes all the saves files from the save library
@@ -288,6 +296,9 @@ func get_file_name() -> String:
 
 ## Sets the current file name, this does not change the name of the file on disk, only in memory
 func set_file_name(p_file_name: String) -> void:
+	if p_file_name == _current_file_name:
+		return
+	
 	_current_file_name = p_file_name
 	on_file_name_changed.emit(_current_file_name)
 

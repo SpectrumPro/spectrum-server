@@ -13,7 +13,10 @@ signal on_channel_changed(channel: int)
 signal on_universe_changed(universe: Universe)
 
 ## Emitted when the manifest is changed
-signal on_manifest_changed(manifest_uuid: String)
+signal on_manifest_changed(manifest: Variant, mode: String)
+
+## Emitted when the mode is changed
+signal on_mode_changed(mode: String)
 
 ## Emitted when the dmx data is updated, this may not contain all the current dmx data, as it will only emit changes
 signal dmx_data_updated(dmx_data: Dictionary)
@@ -92,6 +95,7 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 	_settings_manager.register_setting("channel", Data.Type.INT, set_channel, get_channel, [on_channel_changed]).set_min_max(1, 512)
 	_settings_manager.register_setting("universe", Data.Type.ENGINECOMPONENT, set_universe, get_universe, [on_universe_changed]).set_class_filter(Universe)
 	_settings_manager.register_setting("manifest", Data.Type.FIXTUREMANIFEST, set_manifest, get_manifest, [on_manifest_changed])
+	_settings_manager.register_status("mode", Data.Type.STRING, get_mode, [on_manifest_changed])
 
 	_settings_manager.register_networked_methods_auto([
 		get_channel,
@@ -106,8 +110,11 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 
 	_settings_manager.register_networked_signals_auto([
 		on_channel_changed,
-		on_universe_changed
+		on_universe_changed,
+		on_manifest_changed
 	])
+
+	_settings_manager.set_method_allow_unresolved(set_manifest)
 
 
 ## Gets the channel
@@ -125,14 +132,20 @@ func get_manifest() -> FixtureManifest:
 	return _manifest
 
 
+## Gets the manifest mode this fixture is in
+func get_mode() -> String:
+	return _mode
+
+
 ## Sets the channel
-func set_channel(p_channel: int) -> void:
+func set_channel(p_channel: int, p_no_signal: bool = false) -> void:
 	_channel = p_channel
 
 	if _current:
 		zero_channels()
 
-	on_channel_changed.emit(_channel)
+	if not p_no_signal:
+		on_channel_changed.emit(_channel)
 
 
 ## Sets the universe this fixture is patched to
@@ -147,27 +160,28 @@ func set_universe(p_universe: Universe) -> bool:
 
 
 ## Called when a Universe is patching this fixture to self
-func set_universe_from_universe(p_universe: Universe) -> void:
+func set_universe_from_universe(p_universe: Universe, p_no_signal: bool = false) -> void:
 	_universe = p_universe
-	on_universe_changed.emit(_universe)
+
+	if not p_no_signal:
+		on_universe_changed.emit(_universe)
 
 
 
 ## Sets the manifest for this fixture
-func set_manifest(p_manifest: Variant, p_mode: String) -> bool:
+func set_manifest(p_manifest: Variant, p_mode: String, p_no_signal: bool = false) -> bool:
 	if p_manifest is not FixtureManifest:
 		p_manifest = FixtureLibrary.get_manifest(type_convert(p_manifest, TYPE_STRING))
 	
 	if not is_instance_valid(p_manifest):
 		return false
 
+	zero_channels()
+
 	_parameters = p_manifest.get_mode(p_mode).zones
 	_mode = p_mode
 	_manifest = p_manifest
-
-	_current.clear()
 	_default.clear()
-	zero_channels()
 
 	for zone: String in _parameters.keys():
 		for attribute: String in _parameters[zone].keys():
@@ -175,7 +189,11 @@ func set_manifest(p_manifest: Variant, p_mode: String) -> bool:
 				_default.get_or_add(zone, {})[attribute] = get_default(zone, attribute, "", true)
 
 	_compile_output()
-	on_manifest_changed.emit(_manifest.uuid())
+
+	if not p_no_signal:
+		on_manifest_changed.emit(_manifest, _mode)
+		on_mode_changed.emit(_mode)
+	
 	return true
 
 
@@ -524,7 +542,6 @@ func zero_channels() -> void:
 	_current.clear()
 
 
-
 ## Queues compilation for the end of the frame
 func _queue_compilation() -> void:
 	if _compilation_queued:
@@ -532,7 +549,6 @@ func _queue_compilation() -> void:
 
 	_compilation_queued = true
 	_compile_output.call_deferred()
-
 
 
 ## Compiles the inputted data with internal data and overrides and outputs the result
@@ -572,14 +588,9 @@ func _on_serialize_request(p_flags: int) -> Dictionary:
 
 ## Loads this DMXFixture from a dictonary
 func _on_load_request(p_serialized_data: Dictionary) -> void:
-	set_channel(type_convert(p_serialized_data.get("channel"), TYPE_INT))
-
-	_mode = type_convert(p_serialized_data.get("mode", ""), TYPE_STRING)
-	var manifest_uuid: String = type_convert(p_serialized_data.get("manifest_uuid"), TYPE_STRING)
-	if manifest_uuid:
-		FixtureLibrary.request_manifest(manifest_uuid).then(func(manifest: FixtureManifest):
-			set_manifest(manifest, _mode)
-		)
+	_channel = type_convert(p_serialized_data.get("channel"), TYPE_INT)
+	set_manifest(type_convert(p_serialized_data.get("manifest_uuid"), TYPE_STRING), type_convert(p_serialized_data.get("mode", ""), TYPE_STRING), true)
+	
 
 
 ## Prints manifest info to console

@@ -107,7 +107,7 @@ func get_manifest(p_manifest_uuid: String) -> FixtureManifest:
 		return _loaded_manifests[p_manifest_uuid]
 	
 	elif _found_manifest_info.has(p_manifest_uuid):
-		var manifest_info: FixtureManifest = _found_manifest_info[p_manifest_uuid]
+		var manifest_info: Dictionary = _found_manifest_info[p_manifest_uuid]
 
 		if manifest_info.importer in _manifest_importers:
 			var manifest: FixtureManifest = _manifest_importers[manifest_info.importer].load_from_file(manifest_info.file_path)

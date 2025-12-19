@@ -128,7 +128,7 @@ func remove_output(p_output: DMXOutput, p_no_signal: bool = false) -> bool:
 		return false
 	
 	ComponentDB.deregister_component(p_output)
-	_outputs.erase(p_output.uuid)
+	_outputs.erase(p_output.uuid())
 
 	if not p_no_signal:
 		on_outputs_removed.emit([p_output])
@@ -158,8 +158,8 @@ func add_fixture(p_fixture: DMXFixture, p_channel: int = -1, p_no_signal: bool =
 		return false
 
 	var fixture_channel: int = p_fixture.get_channel() if p_channel == -1 else p_channel
-	p_fixture.set_channel(fixture_channel)
-	p_fixture.set_universe_from_universe(self)
+	p_fixture.set_channel(fixture_channel, true)
+	p_fixture.set_universe_from_universe(self, true)
 	
 	if not _fixture_channels.get(fixture_channel):
 		_fixture_channels[fixture_channel] = []
@@ -195,13 +195,14 @@ func remove_fixture(p_fixture: DMXFixture, p_no_signal: bool = false) -> bool:
 	if not p_fixture in _fixtures.values():
 		return false
 	
-	_fixtures.erase(p_fixture.uuid)
-	_fixture_channels[p_fixture.get_channel()].erase(p_fixture)
-
+	_fixtures.erase(p_fixture.uuid())
 	p_fixture.dmx_data_updated.disconnect(set_data)
 
-	if not _fixture_channels[p_fixture.get_channel()]:
-		_fixture_channels.erase(p_fixture.get_channel)
+	if _fixture_channels.has(p_fixture.get_channel()):
+		_fixture_channels[p_fixture.get_channel()].erase(p_fixture)
+		
+		if not _fixture_channels[p_fixture.get_channel()]:
+			_fixture_channels.erase(p_fixture.get_channel())
 
 	if not p_no_signal:
 		on_fixtures_removed.emit([p_fixture])
