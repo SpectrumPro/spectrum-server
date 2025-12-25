@@ -154,7 +154,7 @@ func get_triggers() -> Dictionary[int, Dictionary]:
 
 
 ## Overide this function to serialize your object
-func _on_serialize_request(p_flags: int) -> Dictionary:
+func serialize(p_flags: int = 0) -> Dictionary:
 	var triggers: Dictionary[int, Dictionary]
 
 	for row: int in _triggers:
@@ -166,15 +166,16 @@ func _on_serialize_request(p_flags: int) -> Dictionary:
 				"name": _triggers[row][column].name,
 			}
 
-	return {
+	return super.serialize(p_flags).merged({
 		"triggers": triggers
-	}
+	})
 
 
 ## Overide this function to handle load requests
-func _on_load_request(p_serialized_data: Dictionary) -> void:
-	var triggers: Dictionary = type_convert(p_serialized_data.get("triggers", {}), TYPE_DICTIONARY)
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
 
+	var triggers: Dictionary = type_convert(p_serialized_data.get("triggers", {}), TYPE_DICTIONARY)
 
 	for row_key: Variant in triggers.keys():
 		var row_str: String = str(row_key)

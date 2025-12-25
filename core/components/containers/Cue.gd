@@ -151,23 +151,25 @@ func get_tracking_mode() -> TrackingMode:
 
 
 ## Returnes a serialized copy of this cue
-func _on_serialize_request(p_flags: int) -> Dictionary:
-	return {
+func serialize(p_flags: int = 0) -> Dictionary:
+	return super.serialize(p_flags).merged({
 		"qid": _qid,
 		"fade_time": _fade_time,
 		"pre_wait": _pre_wait,
 		"trigger_mode": _trigger_mode,
 		"tracking_mode": _tracking_mode,
 		"stored_data": _serialize(),
-	}
+	})
 
 
 ## Loads this Cue from a dictionary
-func _on_load_request(serialized_data: Dictionary) -> void:
-	_qid = type_convert(serialized_data.get("qid", _qid), TYPE_STRING)
-	_fade_time = type_convert(serialized_data.get("fade_time", _fade_time), TYPE_FLOAT)
-	_pre_wait = type_convert(serialized_data.get("pre_wait", _pre_wait), TYPE_FLOAT)
-	_trigger_mode = type_convert(serialized_data.get("trigger_mode", _trigger_mode), TYPE_INT)
-	_tracking_mode = type_convert(serialized_data.get("tracking_mode", _tracking_mode), TYPE_INT)
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
+	
+	_qid = type_convert(p_serialized_data.get("qid", _qid), TYPE_STRING)
+	_fade_time = type_convert(p_serialized_data.get("fade_time", _fade_time), TYPE_FLOAT)
+	_pre_wait = type_convert(p_serialized_data.get("pre_wait", _pre_wait), TYPE_FLOAT)
+	_trigger_mode = type_convert(p_serialized_data.get("trigger_mode", _trigger_mode), TYPE_INT)
+	_tracking_mode = type_convert(p_serialized_data.get("tracking_mode", _tracking_mode), TYPE_INT)
 
-	_load(type_convert(serialized_data.get("stored_data", {}), TYPE_DICTIONARY))
+	_load(type_convert(p_serialized_data.get("stored_data", {}), TYPE_DICTIONARY))

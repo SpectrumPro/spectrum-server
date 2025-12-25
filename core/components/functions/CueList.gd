@@ -563,9 +563,20 @@ func _handle_intensity_change(p_intensity: float) -> void:
 			fixture.set_parameter(data.parameter, data.function, value, uuid(), data.zone)
 
 
+## Called when this CueList is to be deleted
+func delete(p_local_only: bool = false) -> void:
+	_stop()
+
+	for cue: Cue in _cues:
+		remove_cue(cue, true)
+		cue.delete(p_local_only)
+	
+	super.delete(p_local_only)
+
+
 ## Saves this cue list to a Dictionary
-func _on_serialize_request(p_flags: int) -> Dictionary:
-	return {
+func serialize(p_flags: int = 0) -> Dictionary:
+	return super.serialize(p_flags).merged({
 		"use_global_fade": _use_global_fade,
 		"use_global_pre_wait": _use_global_pre_wait,
 		"global_fade": _global_fade,
@@ -575,25 +586,18 @@ func _on_serialize_request(p_flags: int) -> Dictionary:
 		"cues": Utils.seralise_component_array(_cues, p_flags)
 	}.merged({
 		"active_cue_uuid": _active_cue.uuid() if _active_cue else ""
-	} if p_flags & Core.SM_NETWORK else {})
+	} if p_flags & Core.SM_NETWORK else {}))
 
 
 ## Loads this cue list from a Dictionary
-func _on_load_request(serialized_data: Dictionary) -> void:
-	_use_global_fade = type_convert(serialized_data.get("use_global_fade", _use_global_fade), TYPE_BOOL)
-	_use_global_pre_wait = type_convert(serialized_data.get("use_global_pre_wait", _use_global_pre_wait), TYPE_BOOL)
-	_global_fade = type_convert(serialized_data.get("global_fade", _global_fade), TYPE_FLOAT)
-	_global_pre_wait = type_convert(serialized_data.get("global_pre_wait", _global_pre_wait), TYPE_FLOAT)
-	_allow_triggered_looping = type_convert(serialized_data.get("allow_triggered_looping", _allow_triggered_looping), TYPE_BOOL)
-	_loop_mode = type_convert(serialized_data.get("loop_mode", _loop_mode), TYPE_INT)
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
 
-	add_cues(Utils.deseralise_component_array(type_convert(serialized_data.get("cues", []), TYPE_ARRAY)))
+	_use_global_fade = type_convert(p_serialized_data.get("use_global_fade", _use_global_fade), TYPE_BOOL)
+	_use_global_pre_wait = type_convert(p_serialized_data.get("use_global_pre_wait", _use_global_pre_wait), TYPE_BOOL)
+	_global_fade = type_convert(p_serialized_data.get("global_fade", _global_fade), TYPE_FLOAT)
+	_global_pre_wait = type_convert(p_serialized_data.get("global_pre_wait", _global_pre_wait), TYPE_FLOAT)
+	_allow_triggered_looping = type_convert(p_serialized_data.get("allow_triggered_looping", _allow_triggered_looping), TYPE_BOOL)
+	_loop_mode = type_convert(p_serialized_data.get("loop_mode", _loop_mode), TYPE_INT)
 
-
-## Called when this CueList is to be deleted
-func _on_delete_request() -> void:
-	_stop()
-
-	for cue: Cue in _cues:
-		remove_cue(cue, true)
-		cue.delete()
+	add_cues(Utils.deseralise_component_array(type_convert(p_serialized_data.get("cues", []), TYPE_ARRAY)))

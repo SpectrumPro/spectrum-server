@@ -264,16 +264,18 @@ func _delete() -> void:
 		item.delete(true)
 
 
+## Handles delete requests
+func delete(p_local_only: bool = false) -> void:
+	_delete()
+	super.delete(p_local_only)
+
+
 ## Serializes this Datacontainer and returnes it in a dictionary
-func _on_serialize_request(flags: int) -> Dictionary:
-	return _serialize()
+func serialize(p_flags: int = 0) -> Dictionary:
+	return super.serialize(p_flags).merged(_serialize())
 
 
 ## Loads this DataContainer from a dictonary
-func _on_load_request(serialized_data) -> void:
-	_load(serialized_data)
-
-
-## Handles delete requests
-func _on_delete_request() -> void:
-	_delete()
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
+	_load(p_serialized_data)

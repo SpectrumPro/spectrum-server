@@ -113,9 +113,9 @@ func _init() -> void:
 
 	settings_manager.register_networked_methods_auto([
 		serialize,
-		save,
+		deserialize,
+		save_to_file,
 		load_from_file,
-		load,
 		reset_and_load,
 		get_all_saves_from_library,
 		get_file_name,
@@ -199,8 +199,33 @@ func serialize(p_flags: int = SM_NETWORK) -> Dictionary:
 	return serialized_data
 
 
+## Loads serialized data into this engine
+func deserialize(p_serialized_data: Dictionary, p_no_signal: bool = false) -> void:
+	# Array to keep track of all the components that have just been added, allowing them all to be networked to the client in the same message
+	var just_added_components: Array[EngineComponent] = []
+
+	# Loops throught all the classes we have been told to seralize, and check if they are present in the saved data
+	for object_class_name: String in _config.root_classes:
+		for component_uuid: String in p_serialized_data.get(object_class_name, {}):
+			var serialized_component: Dictionary = p_serialized_data[object_class_name][component_uuid]
+			var classname: String = type_convert(serialized_component.get("class_name", ""), TYPE_STRING)
+
+			# Check if the components class name is a valid class type in the engine
+			if not ClassList.has_class(classname):
+				continue
+			
+			var new_component: EngineComponent = ClassList.get_class_script(serialized_component.class_name).new(component_uuid)
+			new_component.deserialize(serialized_component)
+
+			if add_component(new_component, true):
+				just_added_components.append(new_component)
+
+	if not p_no_signal and just_added_components:
+		on_components_added.emit.call_deferred(just_added_components)
+
+
 ## Saves this engine to disk
-func save(p_file_name: String = _current_file_name, p_autosave: bool = false) -> Error:
+func save_to_file(p_file_name: String = _current_file_name, p_autosave: bool = false) -> Error:
 	if p_file_name:
 
 		if not p_autosave:
@@ -236,30 +261,8 @@ func load_from_file(p_file_name: String, p_no_signal: bool = false) -> Error:
 
 
 	set_file_name(p_file_name)
-	self.load(serialized_data, p_no_signal) # Use self.load as load() is a gdscript global function
+	deserialize(serialized_data, p_no_signal) # Use self.load as load() is a gdscript global function
 	return OK
-
-
-## Loads serialized data into this engine
-func load(p_serialized_data: Dictionary, p_no_signal: bool = false) -> void:
-	# Array to keep track of all the components that have just been added, allowing them all to be networked to the client in the same message
-	var just_added_components: Array[EngineComponent] = []
-
-	# Loops throught all the classes we have been told to seralize, and check if they are present in the saved data
-	for object_class_name: String in _config.root_classes:
-		for component_uuid: String in p_serialized_data.get(object_class_name, {}):
-			var serialized_component: Dictionary = p_serialized_data[object_class_name][component_uuid]
-
-			# Check if the components class name is a valid class type in the engine
-			if ClassList.has_class(serialized_component.get("class_name", "")):
-				var new_component: EngineComponent = ClassList.get_class_script(serialized_component.class_name).new(component_uuid)
-				new_component.load(serialized_component)
-
-				if add_component(new_component, true):
-					just_added_components.append(new_component)
-
-	if not p_no_signal and just_added_components:
-		on_components_added.emit.call_deferred(just_added_components)
 
 
 ## Resets the engine, then loads from a save file:
@@ -336,7 +339,7 @@ func delete_file(p_file_name: String) -> Error:
 ## Resets the engine back to the default state
 func reset() -> void:
 	print("Performing Engine Reset!")
-	save(Time.get_datetime_string_from_system(), true)
+	save_to_file(Time.get_datetime_string_from_system(), true)
 
 	on_resetting.emit()
 	set_file_name("")
@@ -499,5 +502,5 @@ func _notification(what: int) -> void:
 		print()
 
 		var file_name: String = "Crash Save on " + Time.get_date_string_from_system()
-		print(TF.info("Attempting Autosave, Error Code: ", error_string(save(file_name, true))))
+		print(TF.info("Attempting Autosave, Error Code: ", error_string(save_to_file(file_name, true))))
 		print(TF.info("Saved as: \"", file_name, "\""))

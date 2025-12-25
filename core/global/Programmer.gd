@@ -36,6 +36,35 @@ var _container: DataContainer = DataContainer.new()
 ## Temp layer id
 var _layer_id: String = "Programmer"
 
+## The SettingsManager for this Programmer
+var settings_manager: SettingsManager = SettingsManager.new()
+
+
+## init
+func _init() -> void:
+	settings_manager.set_owner(self)
+	settings_manager.set_inheritance_array(["Programmer"])
+
+	settings_manager.register_networked_methods_auto([
+		clear,
+		set_parameter,
+		erase_parameter,
+		store_data_to_container,
+		erase_data_from_container,
+		store_into_new,
+		store_into,
+		save_to_new_scene,
+		save_to_new_cue_list,
+		save_to_new_cue,
+		merge_into_cue,
+		erase_from_cue,
+		shortcut_set_color,
+	])
+
+	settings_manager.register_networked_signals_auto([
+		on_cleared
+	])
+
 
 # Clears all values in the programmer
 func clear() -> void:

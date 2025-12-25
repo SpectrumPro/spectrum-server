@@ -68,21 +68,20 @@ func get_position() -> Vector3:
 
 
 ## Saves this component into a dict
-func _on_serialize_request(p_flags: int) -> Dictionary:
-	if _fixture:
-		return {
-			"fixture": _fixture.uuid,
-			"position": var_to_str(_position)
-		}
-	else:
-		return {}
+func serialize(p_flags: int = 0) -> Dictionary:
+	return super.serialize(p_flags).merged({
+		"fixture": _fixture.uuid(),
+		"position": var_to_str(_position)
+	} if _fixture else {})
 
 
 ## Loads this component from a dict
-func _on_load_request(serialized_data: Dictionary) -> void:
-	if serialized_data.get("fixture") is String and ComponentDB.get_component(serialized_data.fixture) is Fixture:
-		set_fixture(ComponentDB.get_component(serialized_data.fixture))
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
+
+	if p_serialized_data.get("fixture") is String and ComponentDB.get_component(p_serialized_data.fixture) is Fixture:
+		set_fixture(ComponentDB.get_component(p_serialized_data.fixture))
 	
-	var position: Variant = serialized_data.get("position", null)
+	var position: Variant = p_serialized_data.get("position", null)
 	if position is String and str_to_var(position) is Vector3:
 		set_position(str_to_var(position))

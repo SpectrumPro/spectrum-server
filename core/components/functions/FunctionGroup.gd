@@ -157,23 +157,27 @@ func _handle_intensity_change(p_intensity: float) -> void:
 
 
 ## Overide this function to serialize your object
-func _on_serialize_request(p_flags: int) -> Dictionary:
+func serialize(p_flags: int = 0) -> Dictionary:
 	var function_uuids: Array[String]
 
 	for function: Function in _functions:
 		function_uuids.append(function.uuid)
-	return {
+	return super.serialize(p_flags).merged({
 		"functions": function_uuids,
-	}
+	})
 
 
 ## Overide this function to handle load requests
-func _on_load_request(p_serialized_data: Dictionary) -> void:
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
+
 	var function_uuids: Array = type_convert(p_serialized_data.get("functions", []), TYPE_ARRAY)
 
 	for uuid: Variant in function_uuids:
-		if uuid is String:
-			ComponentDB.request_component(uuid, func (function: EngineComponent):
-				if function is Function:
-					add_function(function, true)
-			)
+		if not uuid is String:
+			return
+		
+		ComponentDB.request_component(uuid, func (function: EngineComponent):
+			if function is Function:
+				add_function(function, true)
+		)
