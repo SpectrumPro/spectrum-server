@@ -137,27 +137,28 @@ func _on_animator_finished() -> void:
 	_set_transport_state(TransportState.PAUSED)
 
 
+## Called when this scene is to be deleted
+func delete(p_local_only: bool = false) -> void:
+	_animator.delete()
+	super.delete(p_local_only)
+
+
 ## Serializes this scene and returnes it in a dictionary
-func _on_serialize_request(p_flags: int) -> Dictionary:
-	var serialized_data: Dictionary = {
+func serialize(p_flags: int = 0) -> Dictionary:
+	return super.serialize(p_flags).merged({
 		"fade_in_speed": _fade_in_speed,
 		"fade_out_speed": _fade_out_speed,
 		"save_data": _data_container.serialize(p_flags)
-	}
-
-	return serialized_data
+	})
 
 
 ## Called when this scene is to be loaded from serialized data
-func _on_load_request(serialized_data: Dictionary) -> void:	
-	_fade_in_speed = abs(type_convert(serialized_data.get("fade_in_speed", _fade_in_speed), TYPE_FLOAT))
-	_fade_out_speed = abs(type_convert(serialized_data.get("fade_out_speed", _fade_out_speed), TYPE_FLOAT))
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
+
+	_fade_in_speed = abs(type_convert(p_serialized_data.get("fade_in_speed", _fade_in_speed), TYPE_FLOAT))
+	_fade_out_speed = abs(type_convert(p_serialized_data.get("fade_out_speed", _fade_out_speed), TYPE_FLOAT))
 	
 	Network.deregister_network_object(_data_container.settings())
-	_data_container.load(serialized_data.get("save_data", {}))
+	_data_container.load(p_serialized_data.get("save_data", {}))
 	Network.register_network_object(_data_container.uuid(), _data_container.settings())
-
-
-## Called when this scene is to be deleted
-func _on_delete_request() -> void:
-	_animator.delete()

@@ -14,7 +14,7 @@ signal on_fixtures_removed(fixtures: Array[Fixture])
 
 
 ## Stores all the fixtures and there positions. Stored as {Fixture: FixtureGroupItem}
-var _fixtures: Dictionary = {}
+var _fixtures: Dictionary[Fixture, FixtureGroupItem] = {}
 
 
 ## init
@@ -25,9 +25,10 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 	_set_self_class("FixtureGroup")
 
 	_settings_manager.register_networked_methods_auto([
-		get_group_item,
 		get_fixtures,
+		get_group_items,
 		add_fixture,
+		get_group_item_for,
 		add_group_item,
 		add_group_items,
 		remove_fixture,
@@ -45,14 +46,25 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 	_settings_manager.set_signal_allow_serialize(on_fixtures_added)
 
 
-## Gets a FixtureGroupItem
-func get_group_item(fixture: Fixture) -> FixtureGroupItem:
-	return _fixtures.get(fixture)
-
-
 ## Gets all the fixtures
-func get_fixtures() -> Array:
-	return _fixtures.keys()
+func get_fixtures() -> Array[Fixture]:
+	var result: Array[Fixture]
+	result.assign(_fixtures.keys())
+	
+	return result
+
+
+## Gets all the group items
+func get_group_items() -> Array[FixtureGroupItem]:
+	var result: Array[FixtureGroupItem]
+	result.assign(_fixtures.values())
+	
+	return result
+
+
+## Gets a FixtureGroupItem
+func get_group_item_for(fixture: Fixture) -> FixtureGroupItem:
+	return _fixtures.get(fixture)
 
 
 ## Adds a new fixture to this group. Returns false the fixture is already in this group
@@ -61,8 +73,8 @@ func add_fixture(fixture: Fixture, position: Vector3 = Vector3.ZERO, no_signal: 
 
 	var new_group_item: FixtureGroupItem = FixtureGroupItem.new()
 
-	new_group_item.fixture = fixture
-	new_group_item.position = position
+	new_group_item.set_fixture(fixture)
+	new_group_item.set_position(position)
 
 	add_group_item(new_group_item, no_signal)    
 
@@ -71,11 +83,11 @@ func add_fixture(fixture: Fixture, position: Vector3 = Vector3.ZERO, no_signal: 
 
 ## Adds a pre-existing FixtureGroupItem. Returns false the fixture is already in this group
 func add_group_item(group_item: FixtureGroupItem, no_signal: bool = false) -> bool:
-	if group_item.fixture in _fixtures: return false
+	if group_item.get_fixture() in _fixtures: return false
 
-	_fixtures[group_item.fixture] = group_item
+	_fixtures[group_item.get_fixture()] = group_item
 
-	group_item.fixture.on_delete_requested.connect(remove_fixture.bind(group_item.fixture), CONNECT_ONE_SHOT)
+	group_item.get_fixture().on_delete_requested.connect(remove_fixture.bind(group_item.get_fixture()), CONNECT_ONE_SHOT)
 	Network.register_network_object(group_item.uuid(), group_item.settings())
 
 	if not no_signal:
@@ -124,36 +136,41 @@ func remove_fixtures(fixtures: Array) -> void:
 		on_fixtures_removed.emit(just_removed_fixtures)
 
 
-func _on_delete_request() -> void:
+## Deletes this FixtureGroup
+func delete(p_local_only: bool = false) -> void:
 	for group_item: FixtureGroupItem in _fixtures.values():
 		Network.deregister_network_object(group_item.settings())
 		group_item.delete()
+	
+	super.delete(p_local_only)
 
 
 ## Saves this FixtureGroup into a dictionary
-func _on_serialize_request(p_flags: int) -> Dictionary:
+func serialize(p_flags: int = 0) -> Dictionary:
 	var serialized_data: Dictionary = {
 		"fixtures": {}
 	}
 	
 	for fixture: Fixture in _fixtures:
-		serialized_data.fixtures[fixture.uuid] = _fixtures[fixture].serialize(p_flags)
+		serialized_data.fixtures[fixture.uuid()] = _fixtures[fixture].serialize(p_flags)
 
-	return serialized_data
+	return super.serialize(p_flags).merged(serialized_data)
 
 
 ## Loads this FixtureGroup from serialized data
-func _on_load_request(serialized_data: Dictionary) -> void:
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
+
 	var just_added_fixtures: Array[FixtureGroupItem] = []
 
-	if serialized_data.get("fixtures") is Dictionary: 
-		var fixtures: Dictionary = serialized_data.fixtures
+	if p_serialized_data.get("fixtures") is Dictionary: 
+		var fixtures: Dictionary = p_serialized_data.fixtures
 
 		for fixture_uuid: Variant in fixtures:
 			if ComponentDB.get_component(fixture_uuid) is Fixture:
 
 				var new_group_item: FixtureGroupItem = FixtureGroupItem.new()
-				new_group_item.load(fixtures[fixture_uuid])
+				new_group_item.deserialize(fixtures[fixture_uuid])
 
 				if add_group_item(new_group_item, true):
 					just_added_fixtures.append(new_group_item)

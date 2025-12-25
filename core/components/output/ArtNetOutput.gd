@@ -164,37 +164,35 @@ func output(dmx: Dictionary = dmx_data) -> void:
 	_udp_peer.put_packet(packet)
 
 
+## Called when this object is requested to be deleted
+func delete(p_local_only: bool = false) -> void:
+	stop()
+	super.delete(p_local_only)
+
+
 ## Saves this component to a dictonary
-func _on_serialize_request(p_flags: int) -> Dictionary:
-	var serialize_data: Dictionary = {
+func serialize(p_flags: int = 0) -> Dictionary:
+	return super.serialize(p_flags).merged({
 		"ip_address": _ip_address,
 		"port": _port,
 		"use_broadcast": _use_broadcast,
 		"universe_number": _universe_number,
 		"auto_start": _auto_start
-	}
-
-	if p_flags & Core.SM_NETWORK:
-		serialize_data.merge({
-			"connection_state": _connection_state,
-			"connection_note": _previous_note
-		})
-
-	return serialize_data
+	}.merged({
+		"connection_state": _connection_state,
+		"connection_note": _previous_note
+	} if p_flags & Core.SM_NETWORK else {}))
 
 
 ## Loads this component from a dictonary
-func _on_load_request(serialized_data: Dictionary) -> void:
-	_ip_address = type_convert(serialized_data.get("ip_address", _ip_address), TYPE_STRING)
-	_port = type_convert(serialized_data.get("port", _port), TYPE_INT)
-	_use_broadcast = type_convert(serialized_data.get("use_broadcast"), TYPE_BOOL)
-	_universe_number = type_convert(serialized_data.get("universe_number", _universe_number), TYPE_INT)
-	_auto_start = type_convert(serialized_data.get("auto_start", _auto_start), TYPE_BOOL)
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
+
+	_ip_address = type_convert(p_serialized_data.get("ip_address", _ip_address), TYPE_STRING)
+	_port = type_convert(p_serialized_data.get("port", _port), TYPE_INT)
+	_use_broadcast = type_convert(p_serialized_data.get("use_broadcast"), TYPE_BOOL)
+	_universe_number = type_convert(p_serialized_data.get("universe_number", _universe_number), TYPE_INT)
+	_auto_start = type_convert(p_serialized_data.get("auto_start", _auto_start), TYPE_BOOL)
 
 	if _auto_start:
 		start()	
-
-
-## Called when this object is requested to be deleted
-func _on_delete_request():
-	stop()

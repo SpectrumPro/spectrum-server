@@ -79,7 +79,7 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 		get_class_tree,
 		delete,
 		serialize,
-		load,
+		deserialize,
 	])
 
 	_settings_manager.register_networked_signals_auto([
@@ -199,7 +199,6 @@ func delete(p_local_only: bool = false) -> void:
 ## Returns serialized version of this component, change the mode to define if this object should be serialized for saving to disk, or for networking to clients
 func serialize(p_flags: int = 0) -> Dictionary:
 	var serialized_data: Dictionary = {}
-	serialized_data = _on_serialize_request(p_flags)
 
 	serialized_data.merge({
 		"name": _name,
@@ -217,7 +216,7 @@ func serialize(p_flags: int = 0) -> Dictionary:
 
 
 ## Loades this object from a serialized version
-func load(p_serialized_data: Dictionary) -> void:
+func deserialize(p_serialized_data: Dictionary) -> void:
 	_disable_signals = true
 	_name = p_serialized_data.get("name", name)
 	_self_class_name = p_serialized_data.get("class_name", _self_class_name)
@@ -227,7 +226,6 @@ func load(p_serialized_data: Dictionary) -> void:
 	if CIDManager.set_component_id(cid, self, true):
 		_cid = cid
 
-	_on_load_request(p_serialized_data)
 	_disable_signals = false
 
 
@@ -254,17 +252,6 @@ func _process(delta: float) -> void:
 ## Overide this function to handle delete requests
 func _on_delete_request() -> void:
 	return
-
-
-## Overide this function to serialize your object
-func _on_serialize_request(p_flags: int) -> Dictionary:
-	return {}
-
-
-## Overide this function to handle load requests
-func _on_load_request(p_serialized_data: Dictionary) -> void:
-	pass
-
 
 
 #region DeleteMe

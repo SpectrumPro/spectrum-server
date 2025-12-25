@@ -192,9 +192,9 @@ func _update_attribute_id() -> void:
 
 
 ## Saves this component into a dict
-func _on_serialize_request(p_flags: int) -> Dictionary:
-	return {
-		"fixture": _fixture.uuid,
+func serialize(p_flags: int = 0) -> Dictionary:
+	return super.serialize(p_flags).merged({
+		"fixture": _fixture.uuid(),
 		"zone": _zone,
 		"parameter": _parameter,
 		"function": _function,
@@ -202,19 +202,21 @@ func _on_serialize_request(p_flags: int) -> Dictionary:
 		"can_fade": _can_fade,
 		"start": _start,
 		"stop": _stop,
-	}
+	})
 
 
 ## Loads this component from a dict
-func _on_load_request(serialized_data: Dictionary) -> void:
-	_fixture = ComponentDB.get_component(type_convert((serialized_data.get("fixture", "")), TYPE_STRING))
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
 
-	_zone = type_convert((serialized_data.get("zone", "")), TYPE_STRING)
-	_parameter = type_convert((serialized_data.get("parameter", "")), TYPE_STRING)
-	_function = type_convert((serialized_data.get("function", "")), TYPE_STRING)
-	_value = type_convert((serialized_data.get("value", "")), TYPE_FLOAT)
+	_fixture = ComponentDB.get_component(type_convert((p_serialized_data.get("fixture", "")), TYPE_STRING))
 
-	_can_fade = type_convert((serialized_data.get("zone", _can_fade)), TYPE_BOOL)
+	_zone = type_convert((p_serialized_data.get("zone", "")), TYPE_STRING)
+	_parameter = type_convert((p_serialized_data.get("parameter", "")), TYPE_STRING)
+	_function = type_convert((p_serialized_data.get("function", "")), TYPE_STRING)
+	_value = type_convert((p_serialized_data.get("value", "")), TYPE_FLOAT)
 
-	_start = type_convert((serialized_data.get("start", _start)), TYPE_FLOAT)
-	_stop = type_convert((serialized_data.get("stop", _stop)), TYPE_FLOAT)
+	_can_fade = type_convert((p_serialized_data.get("zone", _can_fade)), TYPE_BOOL)
+
+	_start = type_convert((p_serialized_data.get("start", _start)), TYPE_FLOAT)
+	_stop = type_convert((p_serialized_data.get("stop", _stop)), TYPE_FLOAT)

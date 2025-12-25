@@ -266,17 +266,17 @@ func remove_all_dmx_overrides() -> void:
 	_compile_and_send()
 
 
-## Compile the dmx data, and send to the outputs
-func _compile_and_send():
-	var compiled_dmx_data: Dictionary = _dmx_data.duplicate()
-	compiled_dmx_data.merge(_dmx_overrides, true)
-
+## Called when this universe is to be deleted, see [method EngineComponent.delete]
+func delete(p_local_only: bool = false) -> void:
 	for output: DMXOutput in _outputs.values():
-		output.dmx_data = compiled_dmx_data
-		
+		output.delete(true)	
+
+	remove_fixtures(_fixtures.values())
+	super.delete(p_local_only)
+
 
 ## Serializes this universe
-func _on_serialize_request(p_flags: int) -> Dictionary:
+func serialize(p_flags: int = 0) -> Dictionary:
 	var serialized_outputs: Dictionary[String, Dictionary] = {}
 	var serialized_fixtures: Dictionary[String, Array] = {}
 
@@ -289,23 +289,16 @@ func _on_serialize_request(p_flags: int) -> Dictionary:
 		for fixture: DMXFixture in _fixture_channels[channel]:
 			serialized_fixtures[str(channel)].append(fixture.uuid())
 
-	return {
+	return super.serialize(p_flags).merged({
 		"outputs": serialized_outputs,
 		"fixtures": serialized_fixtures
-	}
-
-
-## Called when this universe is to be deleted, see [method EngineComponent.delete]
-func _on_delete_request():
-	for output: DMXOutput in _outputs.values():
-		output.delete(true)	
-
-	remove_fixtures(_fixtures.values())
+	})
 
 
 ## Loads this universe from a serialised universe
-func _on_load_request(p_serialized_data: Dictionary) -> void:
-		
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
+
 	var just_added_fixtures: Array[DMXFixture] = []
 	var just_added_output: Array[DMXOutput] = []
 
@@ -316,8 +309,7 @@ func _on_load_request(p_serialized_data: Dictionary) -> void:
 			if fixture is DMXFixture:
 				add_fixture(fixture, -1, true)
 				just_added_fixtures.append(fixture)
-			
-	
+
 	for output_uuid: String in p_serialized_data.get("outputs", {}).keys():
 		var classname: String = p_serialized_data.outputs[output_uuid].get("class_name", "")
 		if ClassList.has_class(classname, "DMXOutput"):
@@ -332,3 +324,12 @@ func _on_load_request(p_serialized_data: Dictionary) -> void:
 	
 	if just_added_output:
 		on_outputs_added.emit(just_added_output)
+
+
+## Compile the dmx data, and send to the outputs
+func _compile_and_send():
+	var compiled_dmx_data: Dictionary = _dmx_data.duplicate()
+	compiled_dmx_data.merge(_dmx_overrides, true)
+
+	for output: DMXOutput in _outputs.values():
+		output.dmx_data = compiled_dmx_data

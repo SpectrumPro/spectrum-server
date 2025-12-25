@@ -288,13 +288,13 @@ func serialize(p_flags: int = 0) -> Dictionary:
 
 
 ## Loades this object from a serialized version
-func load(p_serialized_data: Dictionary) -> void:
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
+
 	set_priority_mode_state(type_convert(p_serialized_data.get("priority_mode", _priority_mode), TYPE_INT))
 
 	_auto_start = type_convert(p_serialized_data.get("auto_start", _auto_start), TYPE_BOOL)
 	_auto_stop = type_convert(p_serialized_data.get("auto_stop", _auto_stop), TYPE_BOOL)
-
-	super.load(p_serialized_data)
 
 
 ## Deletes this component localy, with out contacting the server. Usefull when handling server side delete requests

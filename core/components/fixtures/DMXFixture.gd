@@ -570,7 +570,7 @@ func _compile_output() -> void:
 
 
 ## Saves this DMXFixture to a dictonary
-func _on_serialize_request(p_flags: int) -> Dictionary:
+func serialize(p_flags: int = 0) -> Dictionary:
 	var seralized_data: Dictionary = {
 		"channel": _channel,
 		"mode": _mode,
@@ -583,16 +583,12 @@ func _on_serialize_request(p_flags: int) -> Dictionary:
 			"active_values": get_all_values()
 		})
 
-	return seralized_data
+	return super.serialize(p_flags).merged(seralized_data)
 
 
 ## Loads this DMXFixture from a dictonary
-func _on_load_request(p_serialized_data: Dictionary) -> void:
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
+	
 	_channel = type_convert(p_serialized_data.get("channel"), TYPE_INT)
 	set_manifest(type_convert(p_serialized_data.get("manifest_uuid"), TYPE_STRING), type_convert(p_serialized_data.get("mode", ""), TYPE_STRING), true)
-	
-
-
-## Prints manifest info to console
-func dump_manifest() -> void:
-	print(_manifest._modes)
