@@ -1,48 +1,82 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name Universe extends EngineComponent
 ## Engine component for handling universes, and there outputs
 
 
-## Emited when a fixture / fixtures are added to this universe, contains a list of all fixture uuids for server-client synchronization
+## Emited when a fixture / fixtures are added to this universe
 signal on_fixtures_added(fixtures: Array[DMXFixture])
 
-## Emited when a fixture / fixtures are removed from this universe, contains a list of all fixture uuids for server-client synchronization
+## Emited when a fixture / fixtures are removed from this universe
 signal on_fixtures_removed(fixtures: Array[DMXFixture])
 
-## Emited when a output / outputs are added to this universe, contains a list of all output uuids for server-client synchronization
+## Emited when a output / outputs are added to this universe
 signal on_outputs_added(outputs: Array[DMXOutput])
 
-## Emited when a output / outputs are removed from this universe, contains a list of all output uuids for server-client synchronization
+## Emited when a output / outputs are removed from this universe
 signal on_outputs_removed(outputs: Array[DMXOutput])
 
 
 ## Dictionary containing all the fixtures in this universe, stored as channel:Array[fixture]
-var _fixture_channels: Dictionary = {} 
+var _fixture_channels: Dictionary[int, Array] = {} 
 
 ## Dictionary containing all the fixtures in this universe, stored as uuid:fixture
-var _fixtures: Dictionary = {}
+var _fixtures: Dictionary[String, DMXFixture] = {}
 
 ## Dictionary containing all the outputs in this universe
-var _outputs: Dictionary = {} 
+var _outputs: Dictionary[String, DMXOutput] = {} 
 
 ## Dictionary containing the current dmx data of this universe, this is constantly updated, so modifying this manualy will cause unexpected outcomes
-var _dmx_data: Dictionary = {} 
+var _dmx_data: Dictionary[int, int] = {} 
 
 ## Stores dmx overrides, sotred at {channel:value}. theese values will always override other data passed to this universe
-var _dmx_overrides: Dictionary = {}
+var _dmx_overrides: Dictionary[int, int] = {}
 
 
 ## Called when this EngineComponent is ready
-func _component_ready() -> void:
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
+	super._init(p_uuid, p_name)
+	
 	set_name("Universe")
-	set_self_class("Universe")
+	_set_self_class("Universe")
 
 	var zero: Dictionary
 	for i in range(1, 513):
 		zero[i] = 0
+	
 	set_data(zero)
+
+	_settings_manager.register_networked_methods_auto([
+		create_output,
+		add_output,
+		add_outputs,
+		remove_output,
+		remove_outputs,
+		add_fixture,
+		add_fixtures,
+		remove_fixture,
+		remove_fixtures,
+		get_fixture_by_channel,
+		get_outputs,
+		get_fixtures,
+		set_dmx_override,
+		remove_dmx_override,
+		remove_all_dmx_overrides,
+	])
+
+	_settings_manager.set_method_allow_deserialize(add_output)
+	_settings_manager.set_method_allow_deserialize(add_outputs)
+
+	_settings_manager.register_networked_signals_auto([
+		on_fixtures_added,
+		on_fixtures_removed,
+		on_outputs_added,
+		on_outputs_removed,
+	])
+
+	_settings_manager.set_signal_allow_serialize(on_outputs_added)
 
 
 ## Creates a new output by class name
@@ -61,7 +95,7 @@ func add_output(p_output: DMXOutput, p_no_signal: bool = false) -> bool:
 	if p_output in _outputs.values():
 		return false
 
-	_outputs[p_output.uuid] = p_output
+	_outputs[p_output.uuid()] = p_output
 	
 	p_output.on_delete_requested.connect(remove_output.bind(p_output), CONNECT_ONE_SHOT)
 	Core._output_timer.connect(p_output.output)
@@ -94,7 +128,7 @@ func remove_output(p_output: DMXOutput, p_no_signal: bool = false) -> bool:
 		return false
 	
 	ComponentDB.deregister_component(p_output)
-	_outputs.erase(p_output.uuid)
+	_outputs.erase(p_output.uuid())
 
 	if not p_no_signal:
 		on_outputs_removed.emit([p_output])
@@ -124,13 +158,14 @@ func add_fixture(p_fixture: DMXFixture, p_channel: int = -1, p_no_signal: bool =
 		return false
 
 	var fixture_channel: int = p_fixture.get_channel() if p_channel == -1 else p_channel
-	p_fixture.set_channel(fixture_channel)
+	p_fixture.set_channel(fixture_channel, p_no_signal)
+	p_fixture.set_universe_from_universe(self, p_no_signal)
 	
 	if not _fixture_channels.get(fixture_channel):
 		_fixture_channels[fixture_channel] = []
 	
 	_fixture_channels[fixture_channel].append(p_fixture)
-	_fixtures[p_fixture.uuid] = p_fixture
+	_fixtures[p_fixture.uuid()] = p_fixture
 
 	p_fixture.on_delete_requested.connect(remove_fixture.bind(p_fixture), CONNECT_ONE_SHOT)
 	p_fixture.dmx_data_updated.connect(self.set_data)
@@ -160,13 +195,14 @@ func remove_fixture(p_fixture: DMXFixture, p_no_signal: bool = false) -> bool:
 	if not p_fixture in _fixtures.values():
 		return false
 	
-	_fixtures.erase(p_fixture.uuid)
-	_fixture_channels[p_fixture.get_channel()].erase(p_fixture)
-
+	_fixtures.erase(p_fixture.uuid())
 	p_fixture.dmx_data_updated.disconnect(set_data)
 
-	if not _fixture_channels[p_fixture.get_channel()]:
-		_fixture_channels.erase(p_fixture.get_channel)
+	if _fixture_channels.has(p_fixture.get_channel()):
+		_fixture_channels[p_fixture.get_channel()].erase(p_fixture)
+		
+		if not _fixture_channels[p_fixture.get_channel()]:
+			_fixture_channels.erase(p_fixture.get_channel())
 
 	if not p_no_signal:
 		on_fixtures_removed.emit([p_fixture])
@@ -230,46 +266,39 @@ func remove_all_dmx_overrides() -> void:
 	_compile_and_send()
 
 
-## Compile the dmx data, and send to the outputs
-func _compile_and_send():
-	var compiled_dmx_data: Dictionary = _dmx_data.duplicate()
-	compiled_dmx_data.merge(_dmx_overrides, true)
-
+## Called when this universe is to be deleted, see [method EngineComponent.delete]
+func delete(p_local_only: bool = false) -> void:
 	for output: DMXOutput in _outputs.values():
-		output.dmx_data = compiled_dmx_data
-		
+		output.delete(true)	
+
+	remove_fixtures(_fixtures.values())
+	super.delete(p_local_only)
+
 
 ## Serializes this universe
-func _on_serialize_request(p_flags: int) -> Dictionary:
+func serialize(p_flags: int = 0) -> Dictionary:
 	var serialized_outputs: Dictionary[String, Dictionary] = {}
 	var serialized_fixtures: Dictionary[String, Array] = {}
 
 	for output: DMXOutput in _outputs.values():
-		serialized_outputs[output.uuid] = output.serialize(p_flags)
+		serialized_outputs[output.uuid()] = output.serialize(p_flags)
 	
 	for channel: int in _fixture_channels.keys():
 		serialized_fixtures[str(channel)] = []
 
 		for fixture: DMXFixture in _fixture_channels[channel]:
-			serialized_fixtures[str(channel)].append(fixture.uuid)
+			serialized_fixtures[str(channel)].append(fixture.uuid())
 
-	return {
+	return super.serialize(p_flags).merged({
 		"outputs": serialized_outputs,
 		"fixtures": serialized_fixtures
-	}
-
-
-## Called when this universe is to be deleted, see [method EngineComponent.delete]
-func _on_delete_request():
-	for output: DMXOutput in _outputs.values():
-		output.delete(true)	
-
-	remove_fixtures(_fixtures.values())
+	})
 
 
 ## Loads this universe from a serialised universe
-func _on_load_request(p_serialized_data: Dictionary) -> void:
-		
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
+
 	var just_added_fixtures: Array[DMXFixture] = []
 	var just_added_output: Array[DMXOutput] = []
 
@@ -280,8 +309,7 @@ func _on_load_request(p_serialized_data: Dictionary) -> void:
 			if fixture is DMXFixture:
 				add_fixture(fixture, -1, true)
 				just_added_fixtures.append(fixture)
-			
-	
+
 	for output_uuid: String in p_serialized_data.get("outputs", {}).keys():
 		var classname: String = p_serialized_data.outputs[output_uuid].get("class_name", "")
 		if ClassList.has_class(classname, "DMXOutput"):
@@ -296,3 +324,12 @@ func _on_load_request(p_serialized_data: Dictionary) -> void:
 	
 	if just_added_output:
 		on_outputs_added.emit(just_added_output)
+
+
+## Compile the dmx data, and send to the outputs
+func _compile_and_send():
+	var compiled_dmx_data: Dictionary = _dmx_data.duplicate()
+	compiled_dmx_data.merge(_dmx_overrides, true)
+
+	for output: DMXOutput in _outputs.values():
+		output.dmx_data = compiled_dmx_data

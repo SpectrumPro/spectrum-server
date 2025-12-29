@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name ArtNetOutput extends DMXOutput
 ## Art-Net DMX Output
@@ -31,11 +32,31 @@ var _universe_number: int = 0
 var _udp_peer = PacketPeerUDP.new()
 
 
-## Called when this EngineComponent is ready
-func _component_ready():
-	set_name("Art-Net Output")
-	set_self_class("ArtNetOutput")
+## Called when this object is first created
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
+	super._init(p_uuid, p_name)
+	
+	set_name("ArtNetOutput")
+	_set_self_class("ArtNetOutput")
+	
+	_settings_manager.register_setting("ip_address", Data.Type.IP, set_ip, get_ip, [on_ip_changed])
+	_settings_manager.register_setting("use_broadcast", Data.Type.BOOL, set_use_broadcast, get_use_broadcast, [on_broadcast_state_changed])
+	_settings_manager.register_setting("universe_number", Data.Type.INT, set_universe_number, get_universe_number, [on_universe_number_changed])
 
+	_settings_manager.register_networked_signals_auto([
+		on_ip_changed,
+		on_broadcast_state_changed,
+		on_universe_number_changed,
+	])
+
+	_settings_manager.register_networked_methods_auto([
+		set_ip,
+		get_ip,
+		set_use_broadcast,
+		get_use_broadcast,
+		set_universe_number,
+		get_universe_number,
+	])
 
 
 ## Sets the ip address
@@ -143,37 +164,35 @@ func output(dmx: Dictionary = dmx_data) -> void:
 	_udp_peer.put_packet(packet)
 
 
+## Called when this object is requested to be deleted
+func delete(p_local_only: bool = false) -> void:
+	stop()
+	super.delete(p_local_only)
+
+
 ## Saves this component to a dictonary
-func _on_serialize_request(p_flags: int) -> Dictionary:
-	var serialize_data: Dictionary = {
+func serialize(p_flags: int = 0) -> Dictionary:
+	return super.serialize(p_flags).merged({
 		"ip_address": _ip_address,
 		"port": _port,
 		"use_broadcast": _use_broadcast,
 		"universe_number": _universe_number,
 		"auto_start": _auto_start
-	}
-
-	if p_flags & Core.SM_NETWORK:
-		serialize_data.merge({
-			"connection_state": _connection_state,
-			"connection_note": _previous_note
-		})
-
-	return serialize_data
+	}.merged({
+		"connection_state": _connection_state,
+		"connection_note": _previous_note
+	} if p_flags & Core.SM_NETWORK else {}))
 
 
 ## Loads this component from a dictonary
-func _on_load_request(serialized_data: Dictionary) -> void:
-	_ip_address = type_convert(serialized_data.get("ip_address", _ip_address), TYPE_STRING)
-	_port = type_convert(serialized_data.get("port", _port), TYPE_INT)
-	_use_broadcast = type_convert(serialized_data.get("use_broadcast"), TYPE_BOOL)
-	_universe_number = type_convert(serialized_data.get("universe_number", _universe_number), TYPE_INT)
-	_auto_start = type_convert(serialized_data.get("auto_start", _auto_start), TYPE_BOOL)
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
+
+	_ip_address = type_convert(p_serialized_data.get("ip_address", _ip_address), TYPE_STRING)
+	_port = type_convert(p_serialized_data.get("port", _port), TYPE_INT)
+	_use_broadcast = type_convert(p_serialized_data.get("use_broadcast"), TYPE_BOOL)
+	_universe_number = type_convert(p_serialized_data.get("universe_number", _universe_number), TYPE_INT)
+	_auto_start = type_convert(p_serialized_data.get("auto_start", _auto_start), TYPE_BOOL)
 
 	if _auto_start:
 		start()	
-
-
-## Called when this object is requested to be deleted
-func _on_delete_request():
-	stop()

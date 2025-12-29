@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name Scene extends Function
 ## Function for creating and recalling saved data
@@ -23,22 +24,36 @@ var _animator: DataContainerAnimator = DataContainerAnimator.new()
 
 
 ## Called when this EngineComponent is ready
-func _component_ready() -> void:
-	set_name("New Scene")
-	set_self_class("Scene")
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
+	super._init(p_uuid, p_name)
 	
-	register_control_method("fade_in_speed", set_fade_in_speed, get_fade_in_speed, on_fade_in_speed_changed, [TYPE_FLOAT])
-	register_control_method("fade_out_speed", set_fade_out_speed, get_fade_out_speed, on_fade_out_speed_changed, [TYPE_FLOAT])
-
+	set_name("Scene")
+	_set_self_class("Scene")
+	
 	_auto_start = false
 	_auto_stop = false
 
 	_animator.set_container(_data_container)
 
-	_animator.set_layer_id(uuid)
+	_animator.set_layer_id(uuid())
 	_animator.steped.connect(_on_animator_stepped)
 	_animator.finished.connect(_on_animator_finished)
 	Core.add_child(_animator)
+
+	_settings_manager.register_setting("fade_in", Data.Type.FLOAT, set_fade_in_speed, get_fade_in_speed, [on_fade_in_speed_changed])
+	_settings_manager.register_setting("fade_out", Data.Type.FLOAT, set_fade_out_speed, get_fade_out_speed, [on_fade_out_speed_changed])
+
+	_settings_manager.register_networked_methods_auto([
+		set_fade_in_speed,
+		set_fade_out_speed,
+		get_fade_in_speed,
+		get_fade_out_speed,
+	])
+
+	_settings_manager.register_networked_signals_auto([
+		on_fade_in_speed_changed,
+		on_fade_out_speed_changed,
+	])
 
 
 ## Handles ActiveState changes
@@ -122,27 +137,28 @@ func _on_animator_finished() -> void:
 	_set_transport_state(TransportState.PAUSED)
 
 
+## Called when this scene is to be deleted
+func delete(p_local_only: bool = false) -> void:
+	_animator.delete()
+	super.delete(p_local_only)
+
+
 ## Serializes this scene and returnes it in a dictionary
-func _on_serialize_request(p_flags: int) -> Dictionary:
-	var serialized_data: Dictionary = {
+func serialize(p_flags: int = 0) -> Dictionary:
+	return super.serialize(p_flags).merged({
 		"fade_in_speed": _fade_in_speed,
 		"fade_out_speed": _fade_out_speed,
 		"save_data": _data_container.serialize(p_flags)
-	}
-
-	return serialized_data
+	})
 
 
 ## Called when this scene is to be loaded from serialized data
-func _on_load_request(serialized_data: Dictionary) -> void:	
-	_fade_in_speed = abs(type_convert(serialized_data.get("fade_in_speed", _fade_in_speed), TYPE_FLOAT))
-	_fade_out_speed = abs(type_convert(serialized_data.get("fade_out_speed", _fade_out_speed), TYPE_FLOAT))
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
+
+	_fade_in_speed = abs(type_convert(p_serialized_data.get("fade_in_speed", _fade_in_speed), TYPE_FLOAT))
+	_fade_out_speed = abs(type_convert(p_serialized_data.get("fade_out_speed", _fade_out_speed), TYPE_FLOAT))
 	
-	Server.remove_networked_object(_data_container.uuid)
-	_data_container.load(serialized_data.get("save_data", {}))
-	Server.add_networked_object(_data_container.uuid, _data_container)
-
-
-## Called when this scene is to be deleted
-func _on_delete_request() -> void:
-	_animator.delete()
+	Network.deregister_network_object(_data_container.settings())
+	_data_container.load(p_serialized_data.get("save_data", {}))
+	Network.register_network_object(_data_container.uuid(), _data_container.settings())

@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name Fixture extends EngineComponent
 ## Base class for all controlable items
@@ -29,11 +30,44 @@ static var RootZone: String = "root"
 var _ltp_layers: Dictionary[String, Variant]
 
 
-## Called when this EngineComponent is ready
-func _init(p_uuid: String = UUID_Util.v4(), p_name: String = name) -> void:
-	set_self_class("Fixture")
-
+## init
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 	super._init(p_uuid, p_name)
+	
+	set_name("Fixture")
+	_set_self_class("Fixture")
+
+	_settings_manager.register_networked_methods_auto([
+		set_override,
+		erase_override,
+		erase_all_overrides,
+		get_all_override_values,
+		get_all_values_layered,
+		get_all_values,
+		get_parameter_categories,
+		get_parameter_functions,
+		get_default,
+		get_force_default,
+		get_default_function,
+		get_current_value,
+		get_current_value_or_force_default,
+		get_current_value_layered,
+		get_current_value_layered_or_force_default,
+		get_zones,
+		has_overrides,
+		has_parameter,
+		has_force_default,
+		has_ltp_layer,
+		function_can_fade,
+	])
+
+	_settings_manager.register_networked_signals_auto([
+		on_parameter_changed,
+		on_parameter_erased,
+		on_override_changed,
+		on_override_erased,
+		on_all_override_removed,
+	])
 
 
 ## Sets a parameter to a float value
@@ -107,6 +141,11 @@ func get_current_value(p_zone: String, p_parameter: String, p_allow_default: boo
 
 
 ## Gets the current value, or the default
+func get_current_function(p_zone: String, p_parameter: String, p_allow_default: bool = true) -> String:
+	return ""
+
+
+## Gets the current value, or the default
 func get_current_value_or_force_default(p_zone: String, p_parameter: String) -> float:
 	return 0.0
 
@@ -114,6 +153,11 @@ func get_current_value_or_force_default(p_zone: String, p_parameter: String) -> 
 ## Gets a value from the given layer id, parameter, and zone
 func get_current_value_layered(p_zone: String, p_parameter: String, p_layer_id: String, p_function: String = "", p_allow_default: bool = true) -> float:
 	return 0.0
+
+
+## Gets the current value, or the default
+func get_current_function_layered(p_zone: String, p_parameter: String, p_layer_id: String, p_allow_default: bool = true) -> String:
+	return ""
 
 
 ## Gets the current value from a given layer ID, the default is none is present, or 0 if p_parameter is not a force default

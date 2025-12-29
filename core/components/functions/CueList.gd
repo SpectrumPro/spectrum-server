@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name CueList extends Function
 ## A list of cues
@@ -90,15 +91,67 @@ var _active_fixtures: Dictionary[String, Dictionary]
 var _active_trigger_timers: Array[Timer]
 
 
-func _component_ready() -> void:
+## init
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
+	super._init(p_uuid, p_name)
+	
 	set_name("CueList")
-	set_self_class("CueList")
+	_set_self_class("CueList")
+	
+	_settings_manager.register_setting("allow_triggered_looping", Data.Type.BOOL, set_allow_triggered_looping, get_allow_triggered_looping, [on_triggered_looping_changed])
+	_settings_manager.register_setting("use_global_fade", Data.Type.BOOL, set_global_fade_state, get_global_fade_state, [on_global_fade_state_changed])
+	_settings_manager.register_setting("use_global_pre_wait", Data.Type.BOOL, set_global_pre_wait_state, get_global_pre_wait_state, [on_global_pre_wait_state_changed])
+	_settings_manager.register_setting("loop_mode", Data.Type.ENUM, set_loop_mode, get_loop_mode, [on_loop_mode_changed]).set_enum_dict(LoopMode)
+	
+	_settings_manager.register_control("go_previous", Data.Type.ACTION, go_previous)
+	_settings_manager.register_control("go_next", Data.Type.ACTION, go_next)
+	_settings_manager.register_control("global_fade_speed", Data.Type.FLOAT, set_global_fade_speed, get_global_fade_speed, [on_global_fade_changed])
+	_settings_manager.register_control("global_pre_wait_speed", Data.Type.FLOAT, set_global_pre_wait_speed, get_global_pre_wait_speed, [on_global_pre_wait_changed])
 
-	register_control_method("go_previous", go_previous)
-	register_control_method("go_next", go_next)
-	register_control_method("set_global_fade_speed", set_global_fade_speed, get_global_fade_speed, on_global_fade_changed, [TYPE_FLOAT])
-	register_control_method("set_global_pre_wait_speed", set_global_pre_wait_speed, get_global_pre_wait_speed, on_global_pre_wait_changed, [TYPE_FLOAT])
+	_settings_manager.register_networked_methods_auto([
+		add_cue,
+		add_cues,
+		remove_cue,
+		remove_cues,
+		get_cues,
+		set_cue_position,
+		set_allow_triggered_looping,
+		set_loop_mode,
+		set_global_fade_state,
+		set_global_pre_wait_state,
+		set_global_fade_speed,
+		set_global_pre_wait_speed,
+		get_loop_mode,
+		get_allow_triggered_looping,
+		get_global_fade_state,
+		get_global_pre_wait_state,
+		get_global_fade_speed,
+		get_global_pre_wait_speed,
+		get_active_cue,
+		go_next,
+		go_previous,
+		seek_to,
+	])
 
+	_settings_manager.set_method_allow_serialize(get_cues)
+	_settings_manager.set_method_allow_deserialize(add_cue)
+	_settings_manager.set_method_allow_deserialize(add_cues)
+
+	_settings_manager.register_networked_signals_auto([
+		on_active_cue_changed,
+		on_global_fade_state_changed,
+		on_global_pre_wait_state_changed,
+		on_global_fade_changed,
+		on_global_pre_wait_changed,
+		on_triggered_looping_changed,
+		on_loop_mode_changed,
+		on_cues_added,
+		on_cues_removed,
+		on_cue_order_changed,
+	])
+
+	_settings_manager.set_signal_allow_serialize(on_cues_added)
+	
 
 ## Adds a cue to the list
 func add_cue(p_cue: Cue, p_no_signal: bool = false) -> bool:
@@ -107,7 +160,7 @@ func add_cue(p_cue: Cue, p_no_signal: bool = false) -> bool:
 	
 	_cues.append(p_cue)
 	p_cue.on_delete_requested.connect(remove_cue.bind(p_cue))
-	Server.register_component(p_cue)
+	Network.register_network_object(p_cue.uuid(), p_cue.settings())
 
 	if not p_no_signal:
 		on_cues_added.emit([p_cue])
@@ -133,7 +186,7 @@ func remove_cue(p_cue: Cue, p_no_signal: bool = false) -> bool:
 		return false
 	 
 	_cues.erase(p_cue)
-	Server.deregister_component(p_cue)
+	Network.deregister_network_object(p_cue.settings())
 
 	if not p_no_signal:
 		on_cues_removed.emit([p_cue])
@@ -160,7 +213,7 @@ func get_cues() -> Array[Cue]:
 
 ## Sets the posititon of a cue in the list
 func set_cue_position(p_cue: Cue, p_position: int) -> void:
-	if p_cue not in _cues or p_position > len(_cues):
+	if p_cue not in _cues or p_position > len(_cues) - 1:
 		return
 	
 	var old_index: int = _cues.find(p_cue)
@@ -296,7 +349,7 @@ func seek_to(cue: Cue) -> void:
 		_active_pos + 1
 	)
 
-	var animator: CueAnimator = _create_animator(cue.name)
+	var animator: CueAnimator = _create_animator(cue.name())
 
 	if seeking_backwards and _loop_mode == LoopMode.RESET:
 		animator.set_animated_data(_get_reset_tracks(animator))
@@ -326,7 +379,7 @@ func seek_to(cue: Cue) -> void:
 func _create_animator(p_name: String) -> CueAnimator:
 	var animator: CueAnimator = CueAnimator.new()
 
-	animator.set_layer_id(uuid)
+	animator.set_layer_id(uuid())
 	animator.set_intensity(_intensity)
 	animator.set_allowed_intensity_parameters(_allowed_intensity_parameters)
 	on_intensity_changed.connect(animator.set_intensity)
@@ -444,7 +497,7 @@ func _stop() -> void:
 	for track: Dictionary in _active_fixtures.values():
 		(track.fixture as Fixture).erase_parameter(
 			track.parameter,
-			uuid,
+			uuid(),
 			track.zone
 		)
 
@@ -507,12 +560,23 @@ func _handle_intensity_change(p_intensity: float) -> void:
 			var fixture: Fixture = data.fixture
 			var value: float = data.current * _intensity
 
-			fixture.set_parameter(data.parameter, data.function, value, uuid, data.zone)
+			fixture.set_parameter(data.parameter, data.function, value, uuid(), data.zone)
+
+
+## Called when this CueList is to be deleted
+func delete(p_local_only: bool = false) -> void:
+	_stop()
+
+	for cue: Cue in _cues:
+		remove_cue(cue, true)
+		cue.delete(p_local_only)
+	
+	super.delete(p_local_only)
 
 
 ## Saves this cue list to a Dictionary
-func _on_serialize_request(p_flags: int) -> Dictionary:
-	return {
+func serialize(p_flags: int = 0) -> Dictionary:
+	return super.serialize(p_flags).merged({
 		"use_global_fade": _use_global_fade,
 		"use_global_pre_wait": _use_global_pre_wait,
 		"global_fade": _global_fade,
@@ -521,26 +585,19 @@ func _on_serialize_request(p_flags: int) -> Dictionary:
 		"loop_mode": _loop_mode,
 		"cues": Utils.seralise_component_array(_cues, p_flags)
 	}.merged({
-		"active_cue_uuid": _active_cue.uuid if _active_cue else ""
-	} if p_flags & Core.SM_NETWORK else {})
+		"active_cue_uuid": _active_cue.uuid() if _active_cue else ""
+	} if p_flags & Core.SM_NETWORK else {}))
 
 
 ## Loads this cue list from a Dictionary
-func _on_load_request(serialized_data: Dictionary) -> void:
-	_use_global_fade = type_convert(serialized_data.get("use_global_fade", _use_global_fade), TYPE_BOOL)
-	_use_global_pre_wait = type_convert(serialized_data.get("use_global_pre_wait", _use_global_pre_wait), TYPE_BOOL)
-	_global_fade = type_convert(serialized_data.get("global_fade", _global_fade), TYPE_FLOAT)
-	_global_pre_wait = type_convert(serialized_data.get("global_pre_wait", _global_pre_wait), TYPE_FLOAT)
-	_allow_triggered_looping = type_convert(serialized_data.get("allow_triggered_looping", _allow_triggered_looping), TYPE_BOOL)
-	_loop_mode = type_convert(serialized_data.get("loop_mode", _loop_mode), TYPE_INT)
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
 
-	add_cues(Utils.deseralise_component_array(type_convert(serialized_data.get("cues", []), TYPE_ARRAY)))
+	_use_global_fade = type_convert(p_serialized_data.get("use_global_fade", _use_global_fade), TYPE_BOOL)
+	_use_global_pre_wait = type_convert(p_serialized_data.get("use_global_pre_wait", _use_global_pre_wait), TYPE_BOOL)
+	_global_fade = type_convert(p_serialized_data.get("global_fade", _global_fade), TYPE_FLOAT)
+	_global_pre_wait = type_convert(p_serialized_data.get("global_pre_wait", _global_pre_wait), TYPE_FLOAT)
+	_allow_triggered_looping = type_convert(p_serialized_data.get("allow_triggered_looping", _allow_triggered_looping), TYPE_BOOL)
+	_loop_mode = type_convert(p_serialized_data.get("loop_mode", _loop_mode), TYPE_INT)
 
-
-## Called when this CueList is to be deleted
-func _on_delete_request() -> void:
-	_stop()
-
-	for cue: Cue in _cues:
-		remove_cue(cue, true)
-		cue.delete()
+	add_cues(Utils.deseralise_component_array(type_convert(p_serialized_data.get("cues", []), TYPE_ARRAY)))

@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name Cue extends DataContainer
 ## Data container for CueLists, a Cue doesn't do anything by itself, and needs to be part of a CueList to work
@@ -44,10 +45,39 @@ var _trigger_mode: TriggerMode = TriggerMode.MANUAL
 var _tracking_mode: TrackingMode = TrackingMode.TRACKING
 
 
-## Constructor
-func _component_ready() -> void:
+## init
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
+	super._init(p_uuid, p_name)
+	
 	set_name("Cue")
-	set_self_class("Cue")
+	_set_self_class("Cue")
+	
+	_settings_manager.register_setting("qid", Data.Type.STRING, set_qid, get_qid, [on_qid_changed])
+	_settings_manager.register_setting("trigger_mode", Data.Type.ENUM, set_trigger_mode, get_trigger_mode, [on_trigger_mode_changed]).set_enum_dict(TriggerMode)
+	_settings_manager.register_setting("tracking_mode", Data.Type.ENUM, set_tracking_mode, get_tracking_mode, [on_tracking_mode_changed]).set_enum_dict(TrackingMode)
+	_settings_manager.register_control("fade_time", Data.Type.FLOAT, set_fade_time, get_fade_time, [on_fade_time_changed])
+	_settings_manager.register_control("pre_wait", Data.Type.FLOAT, set_pre_wait, get_pre_wait, [on_pre_wait_time_changed])
+
+	_settings_manager.register_networked_methods_auto([
+		set_qid,
+		set_fade_time,
+		set_pre_wait,
+		set_trigger_mode,
+		set_tracking_mode,
+		get_qid,
+		get_fade_time,
+		get_pre_wait,
+		get_trigger_mode,
+		get_tracking_mode,
+	])
+
+	_settings_manager.register_networked_signals_auto([
+		on_qid_changed,
+		on_fade_time_changed,
+		on_pre_wait_time_changed,
+		on_trigger_mode_changed,
+		on_tracking_mode_changed,
+	])
 
 
 ## Sets this Cue's QID
@@ -121,23 +151,22 @@ func get_tracking_mode() -> TrackingMode:
 
 
 ## Returnes a serialized copy of this cue
-func _on_serialize_request(p_flags: int) -> Dictionary:
-	return {
+func serialize(p_flags: int = 0) -> Dictionary:
+	return super.serialize(p_flags).merged({
 		"qid": _qid,
 		"fade_time": _fade_time,
 		"pre_wait": _pre_wait,
 		"trigger_mode": _trigger_mode,
 		"tracking_mode": _tracking_mode,
-		"stored_data": _serialize(),
-	}
+	})
 
 
 ## Loads this Cue from a dictionary
-func _on_load_request(serialized_data: Dictionary) -> void:
-	_qid = type_convert(serialized_data.get("qid", _qid), TYPE_STRING)
-	_fade_time = type_convert(serialized_data.get("fade_time", _fade_time), TYPE_FLOAT)
-	_pre_wait = type_convert(serialized_data.get("pre_wait", _pre_wait), TYPE_FLOAT)
-	_trigger_mode = type_convert(serialized_data.get("trigger_mode", _trigger_mode), TYPE_INT)
-	_tracking_mode = type_convert(serialized_data.get("tracking_mode", _tracking_mode), TYPE_INT)
-
-	_load(type_convert(serialized_data.get("stored_data", {}), TYPE_DICTIONARY))
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
+	
+	_qid = type_convert(p_serialized_data.get("qid", _qid), TYPE_STRING)
+	_fade_time = type_convert(p_serialized_data.get("fade_time", _fade_time), TYPE_FLOAT)
+	_pre_wait = type_convert(p_serialized_data.get("pre_wait", _pre_wait), TYPE_FLOAT)
+	_trigger_mode = type_convert(p_serialized_data.get("trigger_mode", _trigger_mode), TYPE_INT)
+	_tracking_mode = type_convert(p_serialized_data.get("tracking_mode", _tracking_mode), TYPE_INT)

@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name CoreFixtureLibrary extends Node
 ## The main fixture library used to manage fixture manifests
@@ -32,19 +33,37 @@ var _manifest_requests: Dictionary
 var _is_loaded: bool = false
 
 ## Contains all manifest importers keyed by the file extension 
-var _manifest_importers: Dictionary = {
+var _manifest_importers: Dictionary[String, ManifestImport] = {
 	"gdtf": GDTFImport.new()
 }
 
 ## Global LTP layers for fixtures
 var _global_ltp_layers: Dictionary[String, Variant]
 
+## The SettingsManager
+var settings_manager: SettingsManager = SettingsManager.new()
+
+
+## init
+func _init() -> void:
+	settings_manager.set_owner(self)
+	settings_manager.set_inheritance_array(["CoreFixtureLibrary"])
+	settings_manager.register_networked_methods_auto([
+		create_fixture,
+		get_manifest,
+		get_sorted_manifest_info,
+		is_loaded,
+	])
+
+	settings_manager.set_method_allow_serialize(get_sorted_manifest_info)
+	settings_manager.set_method_allow_serialize(get_manifest)
+
 
 ## Load the fixture manifests from the folders, buit in manifests will override user manifests
 func _ready() -> void:
 	await Core.ready
 
-	_user_fixture_library_path = Core.data_folder + "/fixtures"
+	_user_fixture_library_path = Core.get_data_folder() + "/fixtures"
 	Utils.ensure_folder_exists(_user_fixture_library_path)
 
 	for location: String in [_user_fixture_library_path, _built_in_library_path]:
@@ -60,20 +79,20 @@ func _ready() -> void:
 
 
 ## Creates a new fixture from a manifest
-func create_fixture(p_manifest_uuid: String, p_universe: Universe, p_config: Dictionary) -> void:
+func create_fixture(p_manifest_uuid: String, p_universe: Universe, p_channel: int, p_quantity: int, p_offset: int, p_mode: String, p_name: String, p_increment_name: bool) -> void:
 	var just_added_fixtures: Array[Fixture] = []
 	var manifest: FixtureManifest = get_manifest(p_manifest_uuid)
 
-	if manifest and manifest.has_mode(p_config.get("mode")):
-		var length: int = manifest.get_mode_length(p_config.mode)
+	if manifest and manifest.has_mode(p_mode):
+		var length: int = manifest.get_mode_length(p_mode)
 
-		for i: int in range(p_config.quantity):
+		for i: int in range(p_quantity):
 
 			var new_fixture: DMXFixture = DMXFixture.new()
 
-			new_fixture.set_channel(p_config.channel + (length * i) + (p_config.offset * i))
-			new_fixture.set_name(p_config.name + ((" " + str(i + 1)) if p_config.increment_name else ""))
-			new_fixture.set_manifest(manifest, p_config.mode)
+			new_fixture.set_channel(p_channel + (length * i) + (p_offset * i))
+			new_fixture.set_name(p_name + ((" " + str(i + 1)) if p_increment_name else ""))
+			new_fixture.set_manifest(manifest, p_mode)
 
 			just_added_fixtures.append(new_fixture)
 	
@@ -88,10 +107,10 @@ func get_manifest(p_manifest_uuid: String) -> FixtureManifest:
 		return _loaded_manifests[p_manifest_uuid]
 	
 	elif _found_manifest_info.has(p_manifest_uuid):
-		var manifest_info: FixtureManifest = _found_manifest_info[p_manifest_uuid]
+		var manifest_info: Dictionary = _found_manifest_info[p_manifest_uuid]
 
 		if manifest_info.importer in _manifest_importers:
-			var manifest: FixtureManifest = (_manifest_importers[manifest_info.importer] as ManifestImport).load_from_file(manifest_info.file_path)
+			var manifest: FixtureManifest = _manifest_importers[manifest_info.importer].load_from_file(manifest_info.file_path)
 			_loaded_manifests[p_manifest_uuid] = manifest
 
 			return manifest
@@ -146,40 +165,35 @@ func has_global_ltp_layer(p_layer_id: String) -> bool:
 
 
 ## Finds all the fixture manifetsts in the folders
-func _find_manifests(folder_path: String) -> Dictionary:
-	# var user_library: Dictionary = _get_gdtf_list_from_folder(_user_fixture_library_path, true)
-	# var built_in_libaray: Dictionary = _get_gdtf_list_from_folder(_built_in_library_path, true)
-
-	# _sorted_fixture_manifests = user_library.sorted
-	# _sorted_fixture_manifests.merge(built_in_libaray.sorted, true)
-
-	# _fixture_manifests = user_library.files
-	# _fixture_manifests.merge(built_in_libaray.files, true)
-	
-	var access = DirAccess.open(folder_path)
-	var i: int = 1
+func _find_manifests(folder_path: String) -> Dictionary:	
+	var access:DirAccess = DirAccess.open(folder_path)
+	var index: int = 1
 	var num_of_files: int = len(access.get_files())
 
 	access.list_dir_begin()
-	var file_name = access.get_next()
+
+	var file_name: String = access.get_next()
 	var result: Dictionary = {
 		"sorted": {},
 		"files": {}
 	}
 
+	print()
+
 	while file_name != "":
 		var file_type: String = file_name.split(".")[-1]
 		if not access.current_is_dir() and file_type in _manifest_importers.keys():
 			var path: String = folder_path + "/" + file_name
-			printraw(TF.auto_format(0, "\r", "Importing Fixture (", file_type, "): ", i, "/", num_of_files))
-			i += 1
+			var manifest: Dictionary = _manifest_importers[file_type].get_info(path)
 
-			var manifest: FixtureManifest =( _manifest_importers[file_type] as ManifestImport).get_info(path)
 			manifest.importer = file_type
 			manifest.file_path = path
 			
 			result.sorted.get_or_add(manifest.manufacturer, {})[manifest.name] = manifest
 			result.files[manifest.uuid] = manifest
+
+			printraw(TF.auto_format(0, "\r", "Imported Fixture (", file_type, "): ", index, "/", num_of_files))
+			index += 1
 
 		file_name = access.get_next()
 	

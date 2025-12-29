@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name TriggerBlock extends EngineComponent
 ## Block of triggers
@@ -29,9 +30,30 @@ var _triggers: Dictionary[int, Dictionary]
 
 
 ## Ready
-func _component_ready() -> void:
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
+	super._init(p_uuid, p_name)
+	
 	set_name("TriggerBlock")
-	set_self_class("TriggerBlock")
+	_set_self_class("TriggerBlock")
+
+	_settings_manager.register_networked_methods_auto([
+  	  	add_trigger,
+		remove_trigger,
+		reset_column,
+		rename_trigger,
+		call_trigger_up,
+		call_trigger_down,
+		get_triggers,
+	])
+
+	_settings_manager.register_networked_signals_auto([
+		on_trigger_added,
+		on_trigger_removed,
+		on_column_reset,
+		on_trigger_name_changed,
+		on_trigger_up,
+		on_trigger_down,
+	])
 
 
 ## Adds a trigger at the given row and column
@@ -132,7 +154,7 @@ func get_triggers() -> Dictionary[int, Dictionary]:
 
 
 ## Overide this function to serialize your object
-func _on_serialize_request(p_flags: int) -> Dictionary:
+func serialize(p_flags: int = 0) -> Dictionary:
 	var triggers: Dictionary[int, Dictionary]
 
 	for row: int in _triggers:
@@ -144,15 +166,16 @@ func _on_serialize_request(p_flags: int) -> Dictionary:
 				"name": _triggers[row][column].name,
 			}
 
-	return {
+	return super.serialize(p_flags).merged({
 		"triggers": triggers
-	}
+	})
 
 
 ## Overide this function to handle load requests
-func _on_load_request(p_serialized_data: Dictionary) -> void:
-	var triggers: Dictionary = type_convert(p_serialized_data.get("triggers", {}), TYPE_DICTIONARY)
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
 
+	var triggers: Dictionary = type_convert(p_serialized_data.get("triggers", {}), TYPE_DICTIONARY)
 
 	for row_key: Variant in triggers.keys():
 		var row_str: String = str(row_key)

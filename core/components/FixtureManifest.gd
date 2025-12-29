@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name FixtureManifest extends EngineComponent
 ## Defines a manifest for a DMXFixture, specifying its channels, capabilities, and behavior.
@@ -31,8 +32,11 @@ var _categorys: Dictionary = {}
 var _force_defaults: Array[String]
 
 
-func _component_ready() -> void:
-	set_self_class("FixtureManifest")
+## init
+func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
+	super._init(p_uuid, p_name)
+	
+	_set_self_class("FixtureManifest")
 	set_name("FixtureManifest")
 
 
@@ -222,8 +226,8 @@ func has_force_default(p_parameter) -> bool:
 
 
 ## Overide this function to serialize your object
-func _on_serialize_request(p_flags: int) -> Dictionary:
-	return {
+func serialize(p_flags: int = 0) -> Dictionary:
+	return super.serialize(p_flags).merged({
 		"type": type,
 		"manufacturer": manufacturer,
 		"importer": importer,
@@ -231,11 +235,13 @@ func _on_serialize_request(p_flags: int) -> Dictionary:
 		"modes": _modes,
 		"categorys": _categorys,
 		"force_defaults": _force_defaults
-	}
+	})
 
 
 ## Overide this function to handle load requests
-func _on_load_request(p_serialized_data: Dictionary) -> void:
+func deserialize(p_serialized_data: Dictionary) -> void:
+	super.deserialize(p_serialized_data)
+
 	type = type_convert(p_serialized_data.get("type"), TYPE_INT)
 	manufacturer = type_convert(p_serialized_data.get("manufacturer"), TYPE_STRING)
 	importer = type_convert(p_serialized_data.get("importer"), TYPE_STRING)

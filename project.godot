@@ -10,18 +10,21 @@ config_version=5
 
 [application]
 
-config/name="Spectrum Server"
+config/name="SpectrumServer"
 config/description="Spectrum Server"
-config/version="0.4.0"
+config/version="v1.0.0-beta.3"
 run/main_scene="res://Empty.tscn"
 config/use_custom_user_dir=true
-config/features=PackedStringArray("4.4")
+config/custom_user_dir_name="SpectrumServer"
+config/features=PackedStringArray("4.5")
 boot_splash/bg_color=Color(0.0901961, 0.0901961, 0.0901961, 1)
 boot_splash/fullsize=false
-boot_splash/image="res://assets/Icon_small.png"
-config/icon="res://assets/Icon.png"
-config/windows_native_icon="res://icon.ico"
+boot_splash/image="uid://bsbmpadvx8wi8"
+config/icon="uid://b25mctiamjbwy"
+config/macos_native_icon="res://assets/logos/spectrum/spectrum_dark.icns"
+config/windows_native_icon="res://assets/logos/spectrum/spectrum_dark.ico"
 boot_splash/minimum_display_time=500
+boot_splash/stretch_mode=0
 
 [audio]
 
@@ -30,14 +33,13 @@ driver/enable_input=true
 
 [autoload]
 
+Network="*res://core/global/NetworkManager.gd"
 ClassList="*res://core/global/ClassList.gd"
+NetworkClassList="*res://core/global/NetworkClassList.gd"
 FixtureLibrary="*res://core/global/FixtureLibrary.gd"
 Programmer="*res://core/global/Programmer.gd"
 CIDManager="*res://core/global/CIDManager.gd"
 Core="*res://core/engine/Engine.gd"
-MainSocketServer="*res://networking/WebSocketServer.gd"
-MainUDPSocket="*res://networking/UDPSocket.gd"
-Server="*res://core/engine/Server.gd"
 TC="*res://core/global/Timecode.gd"
 ComponentDB="*res://core/global/ComponentDB.gd"
 
