@@ -12,17 +12,19 @@ config_version=5
 
 config/name="SpectrumServer"
 config/description="Spectrum Server"
-config/version="0.4.0"
+config/version="v1.0.0-beta.3"
 run/main_scene="res://Empty.tscn"
 config/use_custom_user_dir=true
 config/custom_user_dir_name="SpectrumServer"
 config/features=PackedStringArray("4.5")
 boot_splash/bg_color=Color(0.0901961, 0.0901961, 0.0901961, 1)
 boot_splash/fullsize=false
-boot_splash/image="res://assets/Icon_small.png"
-config/icon="res://assets/Icon.png"
-config/windows_native_icon="res://icon.ico"
+boot_splash/image="uid://bsbmpadvx8wi8"
+config/icon="uid://b25mctiamjbwy"
+config/macos_native_icon="res://assets/logos/spectrum/spectrum_dark.icns"
+config/windows_native_icon="res://assets/logos/spectrum/spectrum_dark.ico"
 boot_splash/minimum_display_time=500
+boot_splash/stretch_mode=0
 
 [audio]
 

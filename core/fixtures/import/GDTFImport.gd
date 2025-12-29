@@ -175,7 +175,6 @@ static func get_info(p_file_path: String) -> Dictionary:
 					var offset_array: Array = parser.get_named_attribute_value_safe("Offset").split(",")
 					if offset_array != [""]:
 						manifest.modes[current_mode] = manifest.modes[current_mode] + len(offset_array)
-	
 	return manifest
 
 

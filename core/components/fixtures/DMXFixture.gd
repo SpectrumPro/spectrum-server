@@ -471,6 +471,13 @@ func get_current_value(p_zone: String, p_parameter: String, p_allow_default: boo
 	return _active_values.get(p_zone, {}).get(p_parameter, {}).get("value", get_default(p_zone, p_parameter) if p_allow_default else 0.0)
 
 
+
+## Gets the current function, or the default
+func get_current_function(p_zone: String, p_parameter: String, p_allow_default: bool = true) -> String:
+	return _active_values.get(p_zone, {}).get(p_parameter, {}).get("function", get_default_function(p_zone, p_parameter) if p_allow_default else "")
+
+
+
 ## Gets the current value, or the default
 func get_current_value_or_force_default(p_zone: String, p_parameter: String) -> float:
 	var value: float = _active_values.get(p_zone, {}).get(p_parameter, {}).get("value", -1)
@@ -489,6 +496,12 @@ func get_current_value_layered(p_zone: String, p_parameter: String, p_layer_id: 
 	return _raw_layers.get(p_zone, {}).get(p_parameter, {}).get(p_layer_id, {}).get("value", get_default(p_zone, p_parameter, p_function) if p_allow_default else 0.0)
 
 
+
+## Gets the current function, or the default
+func get_current_function_layered(p_zone: String, p_parameter: String, p_layer_id: String, p_allow_default: bool = true) -> String:
+	return _raw_layers.get(p_zone, {}).get(p_parameter, {}).get(p_layer_id, {}).get("function", get_default_function(p_zone, p_parameter) if p_allow_default else "")
+
+
 ## Gets the current value from a given layer ID, the default is none is present, or 0 if p_parameter is not a force default
 func get_current_value_layered_or_force_default(p_zone: String, p_parameter: String, p_layer_id: String, p_function: String = "") -> float:
 	var value: float = _raw_layers.get(p_zone, {}).get(p_parameter, {}).get(p_layer_id, {}).get("value", -1)
@@ -504,6 +517,9 @@ func get_current_value_layered_or_force_default(p_zone: String, p_parameter: Str
 
 ## Gets all the zones
 func get_zones() -> Array[String]:
+	if not _manifest:
+		return []
+	
 	return _manifest.get_zones(_mode)
 
 

@@ -32,7 +32,7 @@ signal on_items_stop_changed(items: Array, stop: float)
 var _items: Array[ContainerItem]
 
 ## All fixtures stored as { Fixture: { zone: { parameter: ContainerItem } } }
-var _fixture: Dictionary[Fixture, Dictionary]
+var _fixtures: Dictionary[Fixture, Dictionary]
 
 
 ## init
@@ -45,7 +45,7 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 	_settings_manager.register_networked_methods_auto([
 		get_items,
 		get_fixtures,
-		get_stored_fixtures,
+		get_data_for,
 		store_data,
 		erase_data,
 		store_item,
@@ -75,22 +75,42 @@ func get_items() -> Array[ContainerItem]:
 	return _items.duplicate()
 
 
-## Gets all the fixture data
-func get_fixtures() -> Dictionary[Fixture, Dictionary]:
-	return _fixture.duplicate(true)
+
+## Returns all fixture in this DataContainer
+func get_fixtures() -> Array[Fixture]:
+	var result: Array[Fixture]
+	result.assign(_fixtures.keys())
+
+	return result
 
 
-## Gets a list of all fixtures in this DataContainer
-func get_stored_fixtures() -> Array:
-	return _fixture.keys()
+## Gets an item by fixture, zone, and parameter
+func get_item(p_fixture: Fixture, p_zone: String, p_parameter: String) -> ContainerItem:
+	if not _fixtures.has(p_fixture):
+		return null
+	
+	var container: ContainerItem = _fixtures.get(p_fixture, {}).get(p_zone, {}).get(p_parameter, null)
+
+	if not is_instance_valid(container):
+		return null
+	
+	return container
+
+
+## Gets all the data for a given fixture, stored as { zone: { parameter: ContainerItem } }
+func get_data_for(p_fixture: Fixture) -> Dictionary[String, Dictionary]:
+	var result: Dictionary[String, Dictionary]
+	result.assign(_fixtures.get(p_fixture, {}).duplicate(true))
+	
+	return result
 
 
 ## Stores data into this DataContainer
 func store_data(p_fixture: Fixture, p_zone: String, p_parameter: String, p_function: String, p_value: float, p_can_fade: bool = true, p_start: float = 0.0, p_stop: float = 1.0) -> ContainerItem:
 	var item: ContainerItem
 
-	if _fixture.has(p_fixture) and _fixture[p_fixture].has(p_zone) and _fixture[p_fixture][p_zone].has(p_parameter):
-		item = _fixture[p_fixture][p_zone][p_parameter]
+	if _fixtures.has(p_fixture) and _fixtures[p_fixture].has(p_zone) and _fixtures[p_fixture][p_zone].has(p_parameter):
+		item = _fixtures[p_fixture][p_zone][p_parameter]
 
 		set_value([item], p_value)
 		set_can_fade([item], p_can_fade)
@@ -119,7 +139,7 @@ func store_data(p_fixture: Fixture, p_zone: String, p_parameter: String, p_funct
 
 ## Erases data
 func erase_data(p_fixture: Fixture, p_zone: String, p_parameter: String) -> bool:
-	var item: ContainerItem = _fixture.get(p_fixture, {}).get(p_zone, {}).get(p_parameter, null)
+	var item: ContainerItem = _fixtures.get(p_fixture, {}).get(p_zone, {}).get(p_parameter, null)
 
 	return erase_item(item)
 	
@@ -130,7 +150,7 @@ func store_item(p_item: ContainerItem, no_signal: bool = false) -> bool:
 		return false
 	
 	_items.append(p_item)
-	_fixture.get_or_add(p_item.get_fixture(), {}).get_or_add(p_item.get_zone(), {})[p_item.get_parameter()] = p_item
+	_fixtures.get_or_add(p_item.get_fixture(), {}).get_or_add(p_item.get_zone(), {})[p_item.get_parameter()] = p_item
 
 	ComponentDB.register_component(p_item)
 	p_item.on_delete_requested.connect(erase_item.bind(p_item))
@@ -160,7 +180,7 @@ func erase_item(p_item: ContainerItem, no_signal: bool = false) -> bool:
 		return false
 	
 	_items.erase(p_item)
-	_fixture[p_item.get_fixture()][p_item.get_zone()].erase(p_item.get_parameter())
+	_fixtures[p_item.get_fixture()][p_item.get_zone()].erase(p_item.get_parameter())
 
 	if not no_signal:
 		on_items_erased.emit(p_item)

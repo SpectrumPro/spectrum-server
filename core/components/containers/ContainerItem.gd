@@ -34,6 +34,23 @@ var _stop: float = 1.0
 var _attribute_id: String = ""
 
 
+## Returns a new instance of ContainerItem with the given config
+static func from(p_fixture: Fixture, p_zone: String, p_parameter: String, p_function: String, p_value: float = 1.0, p_can_fade: bool = true, p_start: float = 0.0, p_stop: float = 0.0) -> ContainerItem:
+	var item: ContainerItem = ContainerItem.new()
+
+	item.set_function(p_function)
+	item.set_zone(p_zone)
+	item.set_parameter(p_parameter)
+	item.set_function(p_function)
+	item.set_parameter(p_parameter)
+	item.set_value(p_value)
+	item.set_can_fade(p_can_fade)
+	item.set_start(p_start)
+	item.set_stop(p_stop)
+
+	return item
+
+
 ## Ready function
 func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 	super._init(p_uuid, p_name)
@@ -73,7 +90,7 @@ func set_zone(p_zone: String) -> bool:
 func set_parameter(p_parameter: String) -> bool:
 	if p_parameter == _parameter:
 		return false
-	
+
 	_parameter = p_parameter
 	_update_attribute_id()
 	return true
@@ -83,7 +100,7 @@ func set_parameter(p_parameter: String) -> bool:
 func set_function(p_function: String) -> bool:
 	if p_function == _function:
 		return false
-	
+
 	_function = p_function
 	return true
 
@@ -92,7 +109,7 @@ func set_function(p_function: String) -> bool:
 func set_value(p_value: float) -> bool:
 	if p_value == _value:
 		return false
-	
+
 	_value = p_value
 	return true
 
@@ -110,7 +127,7 @@ func set_can_fade(p_can_fade: bool) -> bool:
 func set_start(p_start: float) -> bool:
 	if p_start == _start:
 		return false
-	
+
 	_start = p_start
 	return true
 
@@ -167,7 +184,7 @@ func get_stop() -> float:
 ## Returns a copy of this ContainerItem
 func duplicate() -> ContainerItem:
 	var item: ContainerItem = ContainerItem.new()
-	
+
 	item.set_fixture(_fixture)
 	item.set_zone(_zone)
 	item.set_parameter(_parameter)
@@ -216,7 +233,7 @@ func deserialize(p_serialized_data: Dictionary) -> void:
 	_function = type_convert((p_serialized_data.get("function", "")), TYPE_STRING)
 	_value = type_convert((p_serialized_data.get("value", "")), TYPE_FLOAT)
 
-	_can_fade = type_convert((p_serialized_data.get("zone", _can_fade)), TYPE_BOOL)
+	_can_fade = type_convert((p_serialized_data.get("can_fade", _can_fade)), TYPE_BOOL)
 
 	_start = type_convert((p_serialized_data.get("start", _start)), TYPE_FLOAT)
 	_stop = type_convert((p_serialized_data.get("stop", _stop)), TYPE_FLOAT)

@@ -141,6 +141,11 @@ func get_current_value(p_zone: String, p_parameter: String, p_allow_default: boo
 
 
 ## Gets the current value, or the default
+func get_current_function(p_zone: String, p_parameter: String, p_allow_default: bool = true) -> String:
+	return ""
+
+
+## Gets the current value, or the default
 func get_current_value_or_force_default(p_zone: String, p_parameter: String) -> float:
 	return 0.0
 
@@ -148,6 +153,11 @@ func get_current_value_or_force_default(p_zone: String, p_parameter: String) -> 
 ## Gets a value from the given layer id, parameter, and zone
 func get_current_value_layered(p_zone: String, p_parameter: String, p_layer_id: String, p_function: String = "", p_allow_default: bool = true) -> float:
 	return 0.0
+
+
+## Gets the current value, or the default
+func get_current_function_layered(p_zone: String, p_parameter: String, p_layer_id: String, p_allow_default: bool = true) -> String:
+	return ""
 
 
 ## Gets the current value from a given layer ID, the default is none is present, or 0 if p_parameter is not a force default
