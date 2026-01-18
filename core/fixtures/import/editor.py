@@ -9,47 +9,69 @@ def process_json_file(filename):
     CYAN = '\033[96m'
     RESET = '\033[0m'
 
+    CONTROL_TYPES = [
+        "INTENSITY",
+        "POSITION",
+        "SELECT",
+        "VALUE",
+        "SPEED",
+        "SYSTEM",
+    ]
+
     # Load the JSON file
     with open(filename, 'r', encoding='utf-8') as file:
         data = json.load(file)
-    
+
     keys = list(data.keys())
     index = 0
-    
+
     while index < len(keys):
         key = keys[index]
         item = data[key]
-        
+
         # Clear the screen
         os.system('clear' if os.name == 'posix' else 'cls')
-        
+
         print(f"{CYAN}Key: {RESET}{key}")
         print(f"{YELLOW}Definition: {RESET}{item.get('definition', 'No definition provided')}")
-        print(f"{GREEN}Explanation: {RESET}{item.get('explanation', 'No explanation provided')}\n")
-        print(f"{RED}Remaining items: {len(keys) - index - 1}{RESET}\n")
+        print(f"{GREEN}Explanation: {RESET}{item.get('explanation', 'No explanation provided')}")
+        print(f"{CYAN}CanFade: {item.get("can_fade")}")
+        print(f"{CYAN}VDim: {item.get("vdim_effected")}\n")
         
-               # Prompt user for input
-        user_input = input(f"{RED}Should this item be able to vdim? (y/N): {RESET}").strip().lower()
+        print(f"{RED}Remaining items: {len(keys) - index - 1}{RESET}\n")
+
+        # Show control type options
+        print(f"{CYAN}Control Types:{RESET}")
+        for i, ct in enumerate(CONTROL_TYPES):
+            print(f"  [{i}] {ct}")
+
+        print("\nCommands: [number] select type | b = back | e = exit\n")
+
+        user_input = input(f"{RED}Select ControlType: {RESET}").strip().lower()
 
         if user_input == 'e':
             break
         elif user_input == 'b':
-            index = max(0, index - 1)  # Go back one item, but not before the first
+            index = max(0, index - 1)
             continue
 
-        # Assign vdim_effected based on input (default to 'n')
-        item["vdim_effected"] = user_input == 'y'
+        if not user_input.isdigit() or int(user_input) >= len(CONTROL_TYPES):
+            print(f"{RED}Invalid selection. Press Enter to retry.{RESET}")
+            input()
+            continue
 
-        
+        # Assign control type
+        item["control_type"] = CONTROL_TYPES[int(user_input)]
+
         index += 1
-    
+
     # Generate modified filename
     modified_filename = filename.replace('.json', '_modified.json')
-    
+
     # Save the modified JSON back to a file
     with open(modified_filename, 'w', encoding='utf-8') as file:
         json.dump(data, file, indent=4)
-    
+
     print(f"{GREEN}Modified JSON saved as {modified_filename}{RESET}")
 
 # Example usage
