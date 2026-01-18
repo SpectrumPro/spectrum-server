@@ -37,9 +37,9 @@ jobs:
         run: |
           cd ${{ steps.export.outputs.archive_directory }}
 
-          mv linux.x86_64.zip SpectrumClient.x86_64.linux.${{inputs.version}}.zip
-          mv windows.x86_64.zip SpectrumClient.x86_64.windows.${{inputs.version}}.zip
-          mv macOS.universal.zip SpectrumClient.universal.macOS.${{inputs.version}}.zip
+          mv linux.x86_64.zip SpectrumServer.x86_64.linux.${{inputs.version}}.zip
+          mv windows.x86_64.zip SpectrumServer.x86_64.windows.${{inputs.version}}.zip
+          mv macOS.universal.zip SpectrumServer.universal.macOS.${{inputs.version}}.zip
 
       - name: Create git tag
         run: |
