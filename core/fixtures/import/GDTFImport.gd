@@ -100,6 +100,8 @@ static func load_from_file(p_file_path: String) -> FixtureManifest:
 					var dmx_from: int = int(parser.get_named_attribute_value_safe("DMXFrom").split("/")[0])
 					var dmx_range: Array[int] = [dmx_from, [255, 65535, 16777215, 4294967295][len(c_offset) - 1]]
 
+					var clean_attribute: String = remove_number_regex.sub(attribute, "", true)
+
 					if previous_dmx_range:
 						previous_dmx_range[1] = dmx_from - 1
 					previous_dmx_range = dmx_range
@@ -112,8 +114,9 @@ static func load_from_file(p_file_path: String) -> FixtureManifest:
 						parser.get_named_attribute_value_safe("Name"),
 						int(parser.get_named_attribute_value_safe("Default").split("/")[0]),
 						dmx_range,
-						parameter_infomation.get(remove_number_regex.sub(attribute, "", true), {}).get("can_fade", false),
-						parameter_infomation.get(remove_number_regex.sub(attribute, "", true), {}).get("vdim_effected", false)
+						parameter_infomation.get(clean_attribute, {}).get("can_fade", false),
+						parameter_infomation.get(clean_attribute, {}).get("vdim_effected", false),
+						Fixture.ControlType.get(parameter_infomation.get(clean_attribute, {}).get("control_type", "VALUE"), Fixture.ControlType.VALUE)
 					)
 				
 				"ChannelSet":

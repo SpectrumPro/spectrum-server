@@ -432,6 +432,11 @@ func get_parameter_functions(p_zone: String, p_parameter: String) -> Array:
 	return _manifest.get_parameter_functions(_mode, p_zone, p_parameter)
 
 
+## Gets all the parameter functions
+func get_function_control_type(p_zone: String, p_parameter: String, p_function: String) -> ControlType:
+	return _manifest.function_control_type(_mode, p_zone, p_parameter, p_function)
+
+
 ## Gets the default value of a parameter
 func get_default(p_zone: String, p_parameter: String, p_function: String = "", p_raw_dmx: bool = false) -> float:
 	if p_function == "":
@@ -467,15 +472,19 @@ func get_default_function(p_zone: String, p_parameter: String) -> String:
 
 
 ## Gets the current value, or the default
-func get_current_value(p_zone: String, p_parameter: String, p_allow_default: bool = true) -> float:
-	return _active_values.get(p_zone, {}).get(p_parameter, {}).get("value", get_default(p_zone, p_parameter) if p_allow_default else 0.0)
-
+func get_current_value(p_zone: String, p_parameter: String, p_allow_default: bool = true, p_allow_override: bool = true) -> float:
+	if has_override(p_zone, p_parameter):
+		return _raw_override_layers[p_zone][p_parameter].value
+	else:
+		return _active_values.get(p_zone, {}).get(p_parameter, {}).get("value", get_default(p_zone, p_parameter) if p_allow_default else 0.0)
 
 
 ## Gets the current function, or the default
-func get_current_function(p_zone: String, p_parameter: String, p_allow_default: bool = true) -> String:
-	return _active_values.get(p_zone, {}).get(p_parameter, {}).get("function", get_default_function(p_zone, p_parameter) if p_allow_default else "")
-
+func get_current_function(p_zone: String, p_parameter: String, p_allow_default: bool = true, p_allow_override: bool = true) -> String:
+	if has_override(p_zone, p_parameter):
+		return _raw_override_layers[p_zone][p_parameter].function
+	else:
+		return _active_values.get(p_zone, {}).get(p_parameter, {}).get("function", get_default_function(p_zone, p_parameter) if p_allow_default else "")
 
 
 ## Gets the current value, or the default
@@ -494,7 +503,6 @@ func get_current_value_or_force_default(p_zone: String, p_parameter: String) -> 
 ## Gets a value from the given layer id, parameter, and zone
 func get_current_value_layered(p_zone: String, p_parameter: String, p_layer_id: String, p_function: String = "", p_allow_default: bool = true) -> float:
 	return _raw_layers.get(p_zone, {}).get(p_parameter, {}).get(p_layer_id, {}).get("value", get_default(p_zone, p_parameter, p_function) if p_allow_default else 0.0)
-
 
 
 ## Gets the current function, or the default
@@ -526,6 +534,11 @@ func get_zones() -> Array[String]:
 ## Checks if this DMXFixture has any overrides
 func has_overrides() -> bool:
 	return _raw_override_layers != {}
+
+
+## Returns true if this Fixture has an override value
+func has_override(p_zone: String, p_parameter: String) -> bool:
+	return _raw_override_layers.has(p_zone) and _raw_override_layers[p_zone].has(p_parameter)
 
 
 ## Checks if this fixture has a parameter

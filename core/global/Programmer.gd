@@ -60,7 +60,7 @@ func _init() -> void:
 		# save_to_new_cue,
 		# merge_into_cue,
 		# erase_from_cue,
-		# shortcut_set_color,
+		shortcut_set_color,
 	])
 
 	settings_manager.register_networked_signals_auto([

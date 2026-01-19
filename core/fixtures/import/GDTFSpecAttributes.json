@@ -10,7 +10,8 @@
         "explanation": "Use this attribute to select or engage an animation wheel for fixtures that provide animation selection on one channel and animation rotation/indexing on another channel(s). The actual animator selection way - continuous or steps (when continuous, you can freely index the animation wheel) is defined via physical properties of channel sets of this attribute. If there is more than one animation wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "AnimationSystemAudio": {
         "_ActivationGroup": "AnimationSystem(n)",
@@ -24,7 +25,8 @@
         "explanation": "When using this AnimationSystem(n)Audio as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to AnimationSystem(n). In case that AnimationSystem(n) already exists in the same geometry, you can use the AnimationSystem(n)Audio as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "AnimationSystemMacro": {
         "_feature": "Gobo.Gobo",
@@ -36,7 +38,8 @@
         "explanation": "This attribute allows for selecting a fixture's predefined macro functions for the AnimationSystem(n)",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "AnimationSystemPos": {
         "_ActivationGroup": "AnimationSystem(n)Pos",
@@ -49,7 +52,8 @@
         "explanation": "This attribute allows to set indexed position (angle) of a animation wheel and is typically used together with AnimationSystem(n) attribute which selects/engages the animation. If there is more than one animation wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "AnimationSystemPosAudio": {
         "_ActivationGroup": "AnimationSystem(n)Pos",
@@ -63,7 +67,8 @@
         "explanation": "When using this AnimationSystem(n)PosAudio as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to AnimationSystem(n)Pos. In case that AnimationSystem(n)Pos already exists in the same geometry, you can use the AnimationSystem(n)PosAudio as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "AnimationSystemPosRandom": {
         "_ActivationGroup": "AnimationSystem(n)Pos",
@@ -77,7 +82,8 @@
         "explanation": "When using this AnimationSystem(n)PosRandom as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to AnimationSystem(n)Pos. In case that AnimationSystem(n)Pos already exists in the same geometry, you can use the AnimationSystem(n)PosRandom as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "AnimationSystemPosRotate": {
         "_ActivationGroup": "AnimationSystem(n)Pos",
@@ -91,7 +97,8 @@
         "explanation": "This attribute allows to set speed and direction of continuous rotation of an animation wheel and is typically used together with AnimationSystem(n) attribute which selects/engages the animation. If there is more than one animation wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled. When using this AnimationSystem(n)PosRotate as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to AnimationSystem(n)Pos. In case that AnimationSystem(n)Pos already exists in the same geometry, you can use the AnimationSystem(n)PosRotate as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "AnimationSystemPosShake": {
         "_ActivationGroup": "AnimationSystem(n)Pos",
@@ -114,7 +121,8 @@
         "explanation": "When using this AnimationSystem(n)PosShake as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to AnimationSystem(n)Pos. In case that AnimationSystem(n)Pos already exists in the same geometry, you can use the AnimationSystem(n)PosShake as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "AnimationSystemRamp": {
         "_ActivationGroup": "AnimationSystem(n)",
@@ -151,7 +159,8 @@
         "explanation": "When using this AnimationSystem(n)Ramp as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to AnimationSystem(n). In case that AnimationSystem(n) already exists in the same geometry, you can use the AnimationSystem(n)Ramp as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "AnimationSystemRandom": {
         "_ActivationGroup": "AnimationSystem(n)",
@@ -165,7 +174,8 @@
         "explanation": "When using this AnimationSystem(n)Random as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to AnimationSystem(n). In case that AnimationSystem(n) already exists in the same geometry, you can use the AnimationSystem(n)Random as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "AnimationSystemReset": {
         "_feature": "Control.Control",
@@ -176,7 +186,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's animation wheels or elements.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "AnimationSystemShake": {
         "_ActivationGroup": "AnimationSystem(n)",
@@ -206,7 +217,8 @@
         "explanation": "When using this AnimationSystem(n)Shake as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to AnimationSystem(n). In case that AnimationSystem(n) already exists in the same geometry, you can use the AnimationSystem(n)Shake as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "AnimationWheel": {
         "_ActivationGroup": "AnimationWheel(n)",
@@ -227,7 +239,8 @@
         "explanation": "Use this attribute to select one of the possible animators on an animation wheel for fixtures that provide animation selection on one channel and animation rotation/indexing on another channel(s). The actual animator selection way - continuous or steps (when continuous, you can freely index the animation wheel) is defined via physical properties of channel sets of this attribute. If there is more than one animation wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "AnimationWheelAudio": {
         "_ActivationGroup": "AnimationWheel(n)",
@@ -249,7 +262,8 @@
         "explanation": "This attribute controls how the animation wheel will behave when responding to an audio source for use with the AnimationWheel(n). When using this AnimationWheel(n)Audio as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to AnimationWheel(n). In case that AnimationWheel(n) already exists in the same geometry, you can use the AnimationWheel(n)Audio as the Logical Channel attribute.",
         "visual": "This attribute controls how the animation wheel will behave when responding to an audio source for use with the AnimationWheel(n).",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "AnimationWheelMacro": {
         "_ActivationGroup": "AnimationWheel(n)",
@@ -262,7 +276,8 @@
         "explanation": "This attribute allows for selecting a fixture's predefined macro functions for the AnimationWheel(n). When using this AnimationWheel(n)Macro as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to AnimationWheel(n). In case that AnimationWheel(n) already exists in the same geometry, you can use the AnimationWheel(n)Macro as the Logical Channel attribute.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "AnimationWheelMode": {
         "_feature": "Control.Control",
@@ -273,7 +288,8 @@
         "explanation": "This attribute describes selecting, indexing, and rotating of slots in an animation wheel (n).",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "AnimationWheelPos": {
         "_ActivationGroup": "AnimationWheel(n)Pos",
@@ -286,7 +302,8 @@
         "explanation": "This attribute allows to set indexed position (angle) of a animation wheel and is typically used together with AnimationWheel(n) attribute which selects the animation. If there is more than one animation wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "AnimationWheelPosRotate": {
         "_ActivationGroup": "AnimationWheel(n)Pos",
@@ -300,7 +317,8 @@
         "explanation": "This attribute allows to set speed and direction of continuous rotation of an animation wheel and is typically used together with AnimationWheel(n) attribute which selects the animation. If there is more than one animation wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled. When using this AnimationWheel(n)PosRotate as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to AnimationWheel(n)Pos. In case that AnimationWheel(n)Pos already exists in the same geometry, you can use the AnimationWheel(n)PosRotate as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "AnimationWheelPosShake": {
         "_ActivationGroup": "AnimationWheel(n)Pos",
@@ -323,7 +341,8 @@
         "explanation": "This attribute allows to set frequency of shaking of an animation wheel and is typically used together with AnimationWheel(n) attribute which selects the animation. If there is more than one animation wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled. When using this AnimationWheel(n)PosShake as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to AnimationWheel(n)Pos. In case that AnimationWheel(n)Pos already exists in the same geometry, you can use the AnimationWheel(n)PosShake as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "AnimationWheelRandom": {
         "_ActivationGroup": "AnimationWheel(n)",
@@ -346,7 +365,8 @@
         "explanation": "Use this attribute to describe random effects of the Animation wheel prepared by the manufacturer of the fixture. When using this AnimationWheel(n)Random as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to AnimationWheel(n). In case that AnimationWheel(n) already exists in the same geometry, you can use the AnimationWheel(n)Random as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "POSITION"
     },
     "AnimationWheelSelectEffects": {
         "_ActivationGroup": "AnimationWheel(n)",
@@ -359,7 +379,8 @@
         "explanation": "Use this attribute to describe some effects of the AnimationWheel(n) prepared by the manufacturer of the fixture. When using this AnimationWheel(n)SelectEffects as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to AnimationWheel(n). In case that AnimationWheel(n) already exists in the same geometry, you can use the AnimationWheel(n)SelectEffects as the Logical Channel attribute.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "AnimationWheelSelectShake": {
         "_ActivationGroup": "AnimationWheel(n)",
@@ -389,7 +410,8 @@
         "explanation": "When selecting a shake of an animation wheel slot and defining the frequency of the shake withing the same channel function, choose this attribute to describe the behavior. When using this AnimationWheel(n)SelectShake as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to AnimationWheel(n). In case that AnimationWheel(n) already exists in the same geometry, you can use the AnimationWheel(n)SelectShake as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "AnimationWheelSelectSpin": {
         "_ActivationGroup": "AnimationWheel(n)",
@@ -412,7 +434,8 @@
         "explanation": "When selecting a rotation of an animation wheel slot and defining the angular speed of the rotation  withing the same channel function, choose this attribute to describe the behavior. When using this AnimationWheel(n)SelectSpin as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to AnimationWheel(n). In case that AnimationWheel(n) already exists in the same geometry, you can use the AnimationWheel(n)SelectSpin as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "AnimationWheelShortcutMode": {
         "_feature": "Control.Control",
@@ -423,7 +446,8 @@
         "explanation": "This attribute describes whether the animation wheel takes the shortest distance between two positions.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "BeamEffectIndexRotateMode": {
         "_feature": "Control.Control",
@@ -434,7 +458,8 @@
         "explanation": "Use this to describe a function that allows to change the mode of operation of beam effects.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "BeamReset": {
         "_feature": "Control.Control",
@@ -445,7 +470,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's beam lenses or elements.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "BeamShaper": {
         "_ActivationGroup": "BeamShaper",
@@ -473,7 +499,8 @@
         "explanation": "Use this attribute to describe beam shaper function of the device.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "BeamShaperMacro": {
         "_ActivationGroup": "BeamShaper",
@@ -485,7 +512,8 @@
         "explanation": "Use this attribute to describe predefined macros of the beam shaper function of the device.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "BeamShaperPos": {
         "_ActivationGroup": "BeamShaper",
@@ -498,7 +526,8 @@
         "explanation": "Use this attribute to describe indexing of the beam shaper function of the device.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "BeamShaperPosRotate": {
         "_ActivationGroup": "BeamShaper",
@@ -511,7 +540,8 @@
         "explanation": "Use this attribute to describe spinning/rotation of the beam shaper function of the device.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "BlackoutMode": {
         "_feature": "Control.Control",
@@ -522,7 +552,8 @@
         "explanation": "If the device provides a way to disable light output when gobo, color or other elements are moving or when for example movement position is being restored after external manual intervention, use this attribute to describe this behavior/settings.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "BladeA": {
         "_ActivationGroup": "Shaper",
@@ -534,7 +565,8 @@
         "explanation": "Use this attribute to describe framing shutters or barndoors of the device. When only the Blade(n)A is used, it is controlling insertion of the complete framing shutter by moving the long edge. Eventual rotation of this edge is controlled by Blade(n)Rot attribute. If both Blade(n)A and Blade(n)B are used, the Blade(n)A is controlling one corner and the Blade(n)B is controlling the second corner of the framing shutter, thus together these attributes are controlling the insertion and rotation at the same time. Use the (n) enumerator to set correct blade - when looking at the projection, 1 is bottom (from positive to negative values in Y axis), 2 is left (from negative to positive values on the X axis), 3 is top (from negative to positive values on the Y axis) and 4 is right (from positive to negative values on the X axis). (When looking into the device lens, 1 is top, 2 is left, 3 is bottom, 4 is right). The physical values describe the amount of insertion, where at 0 the blade is completely out of the beam and at 1 the blade is fully covering the diameter of the beam.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "BladeB": {
         "_ActivationGroup": "Shaper",
@@ -546,7 +578,8 @@
         "explanation": "Use this attribute to describe framing shutters or barndoors of the device in which the framing shutter is controlled by adjusting it's corners. This Blade(n)B is used in conjunction with the Blade(n)A attribute, where the Blade(n)A is controlling one corner and the Blade(n)B is controlling the second corner of the framing shutter, thus together these attributes are controlling the insertion and rotation at the same time. Use the (n) enumerator to set correct blade - when looking at the projection, 1 is bottom (from positive to negative values in Y axis), 2 is left (from negative to positive values on the X axis), 3 is top (from negative to positive values on the Y axis) and 4 is right (from positive to negative values on the X axis). (When looking into the device lens, 1 is top, 2 is left, 3 is bottom, 4 is right). The physical values describe the amount of insertion, where at 0 the blade is completely out of the beam and at 1 the blade is fully covering the diameter of the beam.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "BladeRot": {
         "_ActivationGroup": "Shaper",
@@ -559,7 +592,8 @@
         "explanation": "Use this attribute to describe rotation of the blades of framing shutters or barndoors. Use the (n) enumerator to set correct blade, when looking at the projection, 1 is bottom, 2 is left, 3 is top and 4 is right. (When looking into the device lens, 1 is top, 2 is left, 3 is bottom, 4 is right).",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "BladeSoftA": {
         "_feature": "Shapers.Shapers",
@@ -571,7 +605,8 @@
         "explanation": "Use this attribute to describe soft edge framing shutters or barndoors of the device. When only the Blade(n)A is used, it is controlling insertion of the complete framing shutter by moving the long edge. If both Blade(n)A and Blade(n)B are used, the Blade(n)A is controlling one corner and the Blade(n)B is controlling the second corner of the framing shutter. Use the (n) enumerator to set correct blade - when looking at the projection, 1 is bottom (from positive to negative values in Y axis), 2 is left (from negative to positive values on the X axis), 3 is top (from negative to positive values on the Y axis) and 4 is right (from positive to negative values on the X axis). (When looking into the device lens, 1 is top, 2 is left, 3 is bottom, 4 is right). The physical values describe the amount of insertion, where at 0 the blade is completely out of the beam and at 1 the blade is fully covering the diameter of the beam.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "BladeSoftB": {
         "_feature": "Shapers.Shapers",
@@ -583,7 +618,8 @@
         "explanation": "Use this attribute to describe soft edge framing shutters or barndoors of the device in which the framing shutter in controlled by adjusting it's corners. This Blade(n)B is used in conjunction with the Blade(n)A attribute, where the Blade(n)A is controlling one corner and the Blade(n)B is controlling the second corner of the framing shutter. Use the (n) enumerator to set correct blade - when looking at the projection, 1 is bottom (from positive to negative values in Y axis), 2 is left (from negative to positive values on the X axis), 3 is top (from negative to positive values on the Y axis) and 4 is right (from positive to negative values on the X axis). (When looking into the device lens, 1 is top, 2 is left, 3 is bottom, 4 is right). The physical values describe the amount of insertion, where at 0 the blade is completely out of the beam and at 1 the blade is fully covering the diameter of the beam.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "Blower": {
         "_feature": "Control.Control",
@@ -594,7 +630,8 @@
         "explanation": "Use this attribute to describe a blower function.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "CIE_Brightness": {
         "_ActivationGroup": "ColorCIE",
@@ -607,7 +644,8 @@
         "explanation": "Use this attribute to describe a feature that sets the brightness of chromaticity of CIE 1931 based color definition.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "CIE_X": {
         "_ActivationGroup": "ColorCIE",
@@ -619,7 +657,8 @@
         "explanation": "Use this attribute to describe a feature that sets the x parameter of chromaticity of CIE 1931 based color definition.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "CIE_Y": {
         "_ActivationGroup": "ColorCIE",
@@ -631,7 +670,8 @@
         "explanation": "Use this attribute to describe a feature that sets the y parameter of chromaticity of CIE 1931 based color definition.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "CRIMode": {
         "_feature": "Control.Control",
@@ -642,7 +682,8 @@
         "explanation": "Use this attribute to describe a function that allows to choose a color mixing mode which is prioritizing higher Color Rendering Index.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "CTB": {
         "_feature": "Color.Color",
@@ -654,7 +695,8 @@
         "explanation": "Choose this attribute to control a function that modifies the Color Temperature of a fixture's light output. CTB increases the Color Temperature from its default. Physical values describe the resulting Color Temperature.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "CTBReset": {
         "_feature": "Control.Control",
@@ -665,7 +707,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's CTB flags or elements.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "CTC": {
         "_feature": "Color.Color",
@@ -677,7 +720,8 @@
         "explanation": "Choose this attribute to control a function that modifies the Color Temperature of a fixture's light output. CTC either increases or decreases the Color Temperature from its default. Physical values describe the resulting Color Temperature.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "CTCReset": {
         "_feature": "Control.Control",
@@ -688,7 +732,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's CTC flags or elements.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "CTO": {
         "_feature": "Color.Color",
@@ -700,7 +745,8 @@
         "explanation": "Choose this attribute to control a function that modifies the Color Temperature of a fixture's light output. CTO decreases the Color Temperature from its default. Physical values describe the resulting Color Temperature.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "CTOReset": {
         "_feature": "Control.Control",
@@ -711,7 +757,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's CTO flags or elements.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "ChromaticMode": {
         "_feature": "Control.Control",
@@ -722,7 +769,8 @@
         "explanation": "Use this attribute to describe a function that defines if CCT related channels (CTC, CTO, CTB...) influence only white colors or whether CCT is applied also to mixed colors.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "Color": {
         "_ActivationGroup": "ColorRGB",
@@ -743,7 +791,8 @@
         "explanation": "Any device that can create colors by changing a mechanical color wheel inside the device uses this attribute to describe the different colors possible. If there is more than one color wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ColorAdd_B": {
         "_ActivationGroup": "ColorRGB",
@@ -757,7 +806,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Blue color/emitter/flag with direct access to the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorAdd_BC": {
         "_ActivationGroup": "ColorRGB",
@@ -771,7 +821,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Light Blue color/emitter/flag with direct access to the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorAdd_BM": {
         "_ActivationGroup": "ColorRGB",
@@ -785,7 +836,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Purple (Deep Blue) color/emitter/flag with direct access to the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorAdd_C": {
         "_ActivationGroup": "ColorRGB",
@@ -799,7 +851,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Cyan color/emitter/flag with direct access to the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorAdd_CW": {
         "_ActivationGroup": "ColorRGB",
@@ -813,7 +866,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Cool White color/emitter/flag with direct access to the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorAdd_G": {
         "_ActivationGroup": "ColorRGB",
@@ -827,7 +881,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Green color/emitter/flag with direct access to the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorAdd_GC": {
         "_ActivationGroup": "ColorRGB",
@@ -841,7 +896,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Blue-Green color/emitter/flag with direct access to the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorAdd_GY": {
         "_ActivationGroup": "ColorRGB",
@@ -855,7 +911,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Lime color/emitter/flag with direct access to the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorAdd_M": {
         "_ActivationGroup": "ColorRGB",
@@ -869,7 +926,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Magenta color/emitter/flag with direct access to the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorAdd_R": {
         "_ActivationGroup": "ColorRGB",
@@ -883,7 +941,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Red color/emitter/flag with direct access to the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorAdd_RM": {
         "_ActivationGroup": "ColorRGB",
@@ -897,7 +956,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Pink color/emitter/flag with direct access to the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorAdd_RY": {
         "_ActivationGroup": "ColorRGB",
@@ -911,7 +971,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Amber color/emitter/flag with direct access to the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorAdd_UV": {
         "_ActivationGroup": "ColorRGB",
@@ -925,7 +986,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive UV color/emitter/flag with direct access to the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorAdd_W": {
         "_ActivationGroup": "ColorRGB",
@@ -939,7 +1001,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive White color/emitter with direct access to the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorAdd_WW": {
         "_ActivationGroup": "ColorRGB",
@@ -953,7 +1016,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Warm White color/emitter/flag with direct access to the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorAdd_Y": {
         "_ActivationGroup": "ColorRGB",
@@ -967,7 +1031,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Yellow color/emitter/flag with direct access to the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorCalibrationMode": {
         "_feature": "Control.Control",
@@ -978,7 +1043,8 @@
         "explanation": "Use this attribute to describe a feature that enable or disable color calibrations of the device.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ColorConsistency": {
         "_feature": "Control.Control",
@@ -989,7 +1055,8 @@
         "explanation": "Some devices allow to eliminate inconsistencies of color mixing output due to intensity drop caused by thermal management. In devices that allow to enable/disable internal color consistency setting, use this attribute to describe a such function.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "ColorControl": {
         "_feature": "Control.Control",
@@ -1000,7 +1067,8 @@
         "explanation": "Use this to describe some color related control functions of the device.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ColorEffects": {
         "_feature": "Color.Color",
@@ -1011,7 +1079,8 @@
         "explanation": "Use this attribute to control selecting predefined color effects built into the fixture",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ColorMacro": {
         "_feature": "Color.RGB",
@@ -1022,7 +1091,8 @@
         "explanation": "Choose this attribute to control the selection of predefined fixed colors, like Color Presets or Swatchbook Colors. The individual colors are defined by linking wheel slots to channel sets. If there is more than one color macro the wild-card (n) will be incremented and the number then indicates which color macro will be controlled.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ColorMacroRate": {
         "_feature": "Color.RGB",
@@ -1033,7 +1103,8 @@
         "explanation": "Use this attribute to describe a function which is setting the time or speed of the Color Macro steps.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "ColorMixMSpeed": {
         "_feature": "Control.Control",
@@ -1044,7 +1115,8 @@
         "explanation": "Use this attribute to set a speed of movement for color mixing elements.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "ColorMixMode": {
         "_feature": "Control.Control",
@@ -1055,7 +1127,8 @@
         "explanation": "For devices, that allow setting of mode of operation or relationship of elements of the color mixing system of the fixture, for example color wheel selection modes, or additive/subtractive/... relationship of color mixing systems within the fixture. ",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ColorMixReset": {
         "_feature": "Control.Control",
@@ -1066,7 +1139,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's color mixing system.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "ColorMode": {
         "_feature": "Control.Control",
@@ -1077,7 +1151,8 @@
         "explanation": "This attribute describes between selecting, continuous selection, half selection, random selection, color spinning, etc. of colors in a color wheel (n).",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ColorModelMode": {
         "_feature": "Control.Control",
@@ -1088,7 +1163,8 @@
         "explanation": "In devices that have a function to allow switching between various ways of color mixing (CMY, RGB, HSV...), this attribute is used to describe this function.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ColorRGB_Blue": {
         "_ActivationGroup": "ColorIndirect",
@@ -1100,7 +1176,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Blue color/emitter/flag, where the device is making internal adjustments of the color and the operator thus has an indirect control of the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorRGB_Cyan": {
         "_ActivationGroup": "ColorIndirect",
@@ -1112,7 +1189,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Cyan color/emitter/flag, where the device is making internal adjustments of the color and the operator thus has an indirect control of the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorRGB_Green": {
         "_ActivationGroup": "ColorIndirect",
@@ -1124,7 +1202,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Green color/emitter/flag, where the device is making internal adjustments of the color and the operator thus has an indirect control of the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorRGB_Magenta": {
         "_ActivationGroup": "ColorIndirect",
@@ -1136,7 +1215,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Magenta color/emitter/flag, where the device is making internal adjustments of the color and the operator thus has an indirect control of the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorRGB_Quality": {
         "_ActivationGroup": "ColorIndirect",
@@ -1148,7 +1228,8 @@
         "explanation": "Use this attribute to describe a function of the device that allows the operator to control the quality parameter of the device's color mixing.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ColorRGB_Red": {
         "_ActivationGroup": "ColorIndirect",
@@ -1160,7 +1241,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive Red color/emitter/flag, where the device is making internal adjustments of the color and the operator thus has an indirect control of the color. Physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorRGB_Yellow": {
         "_ActivationGroup": "ColorIndirect",
@@ -1172,7 +1254,8 @@
         "explanation": "Gradual (fading) change of intensity or saturation of an additive yellow color/emitter/flag, where the device is making internal adjustments of the color and the operator thus has an indirect control of the color. physical values go from 0 = no output, to 1 = full output/saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "ColorSettingsReset": {
         "_feature": "Control.Control",
@@ -1183,7 +1266,8 @@
         "explanation": "Use this attribute to describe a function which allows to set various color related settings back to the default state.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "ColorSub_B": {
         "_ActivationGroup": "ColorRGB",
@@ -1197,7 +1281,8 @@
         "explanation": "Gradual (fading) change of insertion or saturation of a subtractive Blue color flag/filter with direct access to the color. The color is the resulting color when the filter is fully inserted. Physical values go from 0 = no insertion/no color, to 1 = full insertion/full color saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ColorSub_C": {
         "_ActivationGroup": "ColorRGB",
@@ -1211,7 +1296,8 @@
         "explanation": "Gradual (fading) change of insertion or saturation of a subtractive Cyan color flag/filter/emitter with direct access to the color. The color is the resulting color when the filter is fully inserted. Physical values go from 0 = no insertion/no color, to 1 = full insertion/full color saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ColorSub_G": {
         "_ActivationGroup": "ColorRGB",
@@ -1225,7 +1311,8 @@
         "explanation": "Gradual (fading) change of insertion or saturation of a subtractive Green color flag/filter with direct access to the color. The color is the resulting color when the filter is fully inserted. Physical values go from 0 = no insertion/no color, to 1 = full insertion/full color saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ColorSub_M": {
         "_ActivationGroup": "ColorRGB",
@@ -1239,7 +1326,8 @@
         "explanation": "Gradual (fading) change of insertion or saturation of a subtractive Magenta color flag/filter/emitter with direct access to the color. The color is the resulting color when the filter is fully inserted. Physical values go from 0 = no insertion/no color, to 1 = full insertion/full color saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ColorSub_R": {
         "_ActivationGroup": "ColorRGB",
@@ -1253,7 +1341,8 @@
         "explanation": "Gradual (fading) change of insertion or saturation of a subtractive Red color flag/filter with direct access to the color. The color is the resulting color when the filter is fully inserted. Physical values go from 0 = no insertion/no color, to 1 = full insertion/full color saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ColorSub_Y": {
         "_ActivationGroup": "ColorRGB",
@@ -1267,7 +1356,8 @@
         "explanation": "Gradual (fading) change of insertion or saturation of a subtractive Yellow color flag/filter/emitter with direct access to the color. The color is the resulting color when the filter is fully inserted. Physical values go from 0 = no insertion/no color, to 1 = full insertion/full color saturation.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ColorUniformity": {
         "_feature": "Control.Control",
@@ -1278,7 +1368,8 @@
         "explanation": "In devices that allow to set a color uniformity between multiple fixtures use this attribute to describe a such function.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "ColorWheelAudio": {
         "_ActivationGroup": "ColorRGB",
@@ -1300,7 +1391,8 @@
         "explanation": "The device internal audio-based color wheel selection frequency will be controlled by this attribute. If there is more than one color wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled. When using this Color(n)WheelAudio as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Color(n). In case that Color(n) already exists in the same geometry, you can use the Color(n)WheelAudio as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ColorWheelIndex": {
         "_ActivationGroup": "ColorRGB",
@@ -1323,7 +1415,8 @@
         "explanation": "The color wheel index describes an agle of rotation of the color wheel to exactly reproduce any mixture/position of the color wheel itself. The wild card will identify which color wheel will be indexed. When using this Color(n)WheelIndex as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Color(n). In case that Color(n) already exists in the same geometry, you can use the Color(n)WheelIndex as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ColorWheelRandom": {
         "_ActivationGroup": "ColorRGB",
@@ -1346,7 +1439,8 @@
         "explanation": "The device internal random color wheel selection frequency will be controlled by this attribute. If there is more than one color wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled. When using this Color(n)WheelRandom as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Color(n). In case that Color(n) already exists in the same geometry, you can use the Color(n)WheelRandom as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ColorWheelReset": {
         "_feature": "Control.Control",
@@ -1357,7 +1451,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's color wheels.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "ColorWheelSelectMSpeed": {
         "_feature": "Control.Control",
@@ -1368,7 +1463,8 @@
         "explanation": "Use this attribute to set a speed of movement of color wheel(s).",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "ColorWheelShortcutMode": {
         "_feature": "Control.Control",
@@ -1379,7 +1475,8 @@
         "explanation": "This attribute describes whether the color wheel takes the shortest distance between two colors.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ColorWheelSpin": {
         "_ActivationGroup": "ColorRGB",
@@ -1402,7 +1499,8 @@
         "explanation": "For special effects of a continuous rotating color wheel this attribute controls the direction of ration and the speed of rotation. If there is more than one color wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled. When using this Color(n)WheelSpin as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Color(n). In case that Color(n) already exists in the same geometry, you can use the Color(n)WheelSpin as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "Control": {
         "_feature": "Control.Control",
@@ -1413,7 +1511,8 @@
         "explanation": "Use this attribute do describe a function (typically a DMX channel) which provides access to settings and to controls allowing changes of the behavior of the device, like striking and dousing of the lamp and so on. These individual settings or for example lamp controls are then described by their specific attributes. If there is more than one control channel the wild-card (n) will be incremented and the number then indicates which control channel will be controlled.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "CustomColor": {
         "_feature": "Control.Control",
@@ -1424,7 +1523,8 @@
         "explanation": "Use this attribute to describe a function that allows to save a custom color into the lighting device.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "CyanMode": {
         "_feature": "Control.Control",
@@ -1435,7 +1535,8 @@
         "explanation": "Use this attribute to describe the mode of operation of the Cyan.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "DMXInput": {
         "_feature": "Control.Control",
@@ -1446,7 +1547,8 @@
         "explanation": "Use this attribute to describe behavior that allows changing the source of the DMX signal. ",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "DigitalZoom": {
         "_feature": "Focus.Focus",
@@ -1458,7 +1560,8 @@
         "explanation": "Use this to describe a zoom of for example a digital projector, where the image changes size but the beam angle remains the same.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "Dimmer": {
         "_feature": "Dimmer.Dimmer",
@@ -1469,7 +1572,8 @@
         "explanation": "Gradual (fading) change of intensity or brightness or in some cases even opacity shall be controlled with this attribute. Physical values go from 0 = no output, to 1 = full output. If a software makes use of an overall intensity control such as a grandmaster, it is important for the application to understand which attribute to change. In that scenario the dimmer attribute shall be the main intensity, brightness or opacity change.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "DimmerCurve": {
         "_feature": "Control.Control",
@@ -1480,7 +1584,8 @@
         "explanation": "Switching between different types of dimming curves provided by the device is described with this attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "DimmerMode": {
         "_feature": "Control.Control",
@@ -1491,7 +1596,8 @@
         "explanation": "Switching between different types of dimming modes is described with this attribute.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "DimmerReset": {
         "_feature": "Control.Control",
@@ -1502,7 +1608,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's dimmer, dimmer flags or other dimming elements.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "DisplayIntensity": {
         "_feature": "Control.Control",
@@ -1513,7 +1620,8 @@
         "explanation": "For fixtures with the possibility to adjust the brightness of their menu display screen, use this attribute to describe such functionality.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "Dummy": {
         "_feature": "Control.Control",
@@ -1524,7 +1632,8 @@
         "explanation": "Use this attribute for functions that do not define any functions. They might be for example reserved for later use.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "Effects": {
         "_feature": "Beam.Beam",
@@ -1535,7 +1644,8 @@
         "explanation": "Use this attribute to describe some effects and macros that are not possible to describe with some specific attribute.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "EffectsAdjust": {
         "_feature": "Beam.Beam",
@@ -1546,7 +1656,8 @@
         "explanation": "Use this to set some parameter of some generic effect.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "EffectsFade": {
         "_feature": "Beam.Beam",
@@ -1557,7 +1668,8 @@
         "explanation": "Use this attribute to set fade of some unspecified, generic effects.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "EffectsPos": {
         "_feature": "Beam.Beam",
@@ -1569,7 +1681,8 @@
         "explanation": "Use this to set angle parameter of some generic effect.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "EffectsPosRotate": {
         "_MainAttribute": "Effects(n)Pos",
@@ -1582,7 +1695,8 @@
         "explanation": "When using this Effects(n)PosRotate as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Effects(n)Pos. In case that Effects(n)Pos already exists in the same geometry, you can use the Effects(n)PosRotate as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "EffectsRate": {
         "_feature": "Beam.Beam",
@@ -1594,7 +1708,8 @@
         "explanation": "Use this attribute to set frequency of some unspecified, generic effects.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "EffectsSync": {
         "_feature": "Beam.Beam",
@@ -1605,7 +1720,8 @@
         "explanation": "Use this attribute to describe offsets between some generic effects.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "Fan": {
         "_feature": "Control.Control",
@@ -1616,7 +1732,8 @@
         "explanation": "Use this to describe a function that controls a fan of a device.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "FanMode": {
         "_feature": "Control.Control",
@@ -1627,7 +1744,8 @@
         "explanation": "Use this attribute to switch between different types of fan control modes (for example auto, high, silent).",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "Fans": {
         "_feature": "Control.Control",
@@ -1638,7 +1756,8 @@
         "explanation": "For devices that allow to set a fan speed, use this attribute to describe this function.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "FieldOfView": {
         "_feature": "Video.Video",
@@ -1650,7 +1769,8 @@
         "explanation": "Use this attribute to describe features controlling field of view of video projection.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "FixtureCalibrationReset": {
         "_feature": "Control.Control",
@@ -1661,7 +1781,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's calibrations.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "FixtureGlobalReset": {
         "_feature": "Control.Control",
@@ -1672,7 +1793,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger a complete internal reset of the fixture.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "Focus": {
         "_feature": "Focus.Focus",
@@ -1683,7 +1805,8 @@
         "explanation": "Use this attribute to describe the sharpening/focusing function of the device. Some may call it the Edge.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "FocusAdjust": {
         "_feature": "Focus.Focus",
@@ -1694,7 +1817,8 @@
         "explanation": "Use this attribute to describe a function which sets some parameters or behaviors that make the optical system of the device to automatically keep the projection focused.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "FocusDistance": {
         "_feature": "Focus.Focus",
@@ -1706,7 +1830,8 @@
         "explanation": "Use this attribute to describe a function which sets a distance at which the optical system of the device will automatically keep the projection focused.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "FocusMSpeed": {
         "_feature": "Control.Control",
@@ -1717,7 +1842,8 @@
         "explanation": "Use this attribute to set a speed of movement of focus.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "FocusMode": {
         "_feature": "Control.Control",
@@ -1728,7 +1854,8 @@
         "explanation": "Use this to describe a function that allows to change the mode of the focus.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "FocusReset": {
         "_feature": "Control.Control",
@@ -1739,7 +1866,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's framing shutter or focus lenses or elements.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "Fog": {
         "_feature": "Control.Control",
@@ -1750,7 +1878,8 @@
         "explanation": "A function that controls fog/haze function of a fog machine.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "FollowSpotMode": {
         "_feature": "Control.Control",
@@ -1761,7 +1890,8 @@
         "explanation": "For fixtures that allow remote enabling/disabling various types of follow spot related features, use this attribute to describe the behavior. ",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "FrameMSpeed": {
         "_feature": "Control.Control",
@@ -1772,7 +1902,8 @@
         "explanation": "Use this attribute to set a speed of movement of framing.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "FrameReset": {
         "_feature": "Control.Control",
@@ -1783,7 +1914,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's framing shutter or framing elements.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "Frost": {
         "_feature": "Beam.Beam",
@@ -1794,7 +1926,8 @@
         "explanation": "For devices that allow to control insertion of frost lens or flag into the beam, to soften it, use this attribute to describe this function.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "FrostMSpeed": {
         "_feature": "Control.Control",
@@ -1805,7 +1938,8 @@
         "explanation": "Use this attribute to set a speed of movement of frost. If there is more than one frost the wild-card (n) will be incremented and the number then indicates which frost will be controlled.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "FrostPulseClose": {
         "_MainAttribute": "Frost(n)",
@@ -1834,7 +1968,8 @@
         "explanation": "Use this attribute do describe a function that allows to set to frost into a mode where the frost pulses with slower closing and faster opening behavior. When using this Frost(n)PulseClose as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Frost(n). In case that Frost(n) already exists in the same geometry, you can use the Frost(n)PulseClose as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "FrostPulseOpen": {
         "_MainAttribute": "Frost(n)",
@@ -1863,7 +1998,8 @@
         "explanation": "Use this attribute do describe a function that allows to set to frost into a mode where the frost pulses with slower opening and faster closing behavior. When using this Frost(n)PulseOpen as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Frost(n). In case that Frost(n) already exists in the same geometry, you can use the Frost(n)PulseOpen as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "FrostRamp": {
         "_MainAttribute": "Frost(n)",
@@ -1892,7 +2028,8 @@
         "explanation": "When using this Frost(n)Ramp as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Frost(n). In case that Frost(n) already exists in the same geometry, you can use the Frost(n)Ramp as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "Function": {
         "_feature": "Control.Control",
@@ -1903,7 +2040,8 @@
         "explanation": "If you cannot find other attribute that would describe a feature of the Power/Control channel, use this generic attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "GlobalMSpeed": {
         "_feature": "Control.Control",
@@ -1914,7 +2052,8 @@
         "explanation": "Use this attribute to set a speed of movement which is used on elements of the device.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "Gobo": {
         "_ActivationGroup": "Gobo(n)",
@@ -1935,7 +2074,8 @@
         "explanation": "Use this attribute to select gobo in a gobo wheel for fixtures that provide gobo selection on one channel and gobo rotation/indexing on another channel(s). The actual gobo selection way - continuous or steps (when continuous, you can freely index the gobo wheel) is defined via physical properties of channel sets of this attribute. If there is more than one gobo wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "GoboPos": {
         "_ActivationGroup": "Gobo(n)Pos",
@@ -1948,7 +2088,8 @@
         "explanation": "This attribute allows to set indexed position (angle) of a gobo in a gobo wheel and is typically used together with Gobo(n) attribute which selects the gobo. If there is more than one gobo wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "GoboPosRotate": {
         "_ActivationGroup": "Gobo(n)Pos",
@@ -1962,7 +2103,8 @@
         "explanation": "This attribute allows to set speed and direction of continuous rotation of a gobo in a gobo wheel and is typically used together with Gobo(n) attribute which selects the gobo. If there is more than one gobo wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled. When using this Gobo(n)PosRotate as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Gobo(n)Pos. In case that Gobo(n)Pos already exists in the same geometry, you can use the Gobo(n)PosRotate as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "GoboPosShake": {
         "_ActivationGroup": "Gobo(n)Pos",
@@ -1985,7 +2127,8 @@
         "explanation": "This attribute allows to set frequency of shaking of a gobo in a gobo wheel and is typically used together with Gobo(n) attribute which selects the gobo. If there is more than one gobo wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled. When using this Gobo(n)PosShake as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Gobo(n)Pos. In case that Gobo(n)Pos already exists in the same geometry, you can use the Gobo(n)PosShake as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "GoboSelectEffects": {
         "_ActivationGroup": "Gobo(n)",
@@ -1998,7 +2141,8 @@
         "explanation": "Use this attribute for manufacturer defined fixture specific effects on a gobo wheel. If there is more than one gobo wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled. When using this Gobo(n)SelectEffects as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Gobo(n). In case that Gobo(n) already exists in the same geometry, you can use the Gobo(n)SelectEffects as the Logical Channel attribute.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "GoboSelectShake": {
         "_ActivationGroup": "Gobo(n)",
@@ -2028,7 +2172,8 @@
         "explanation": "Use this attribute to control selection and shake speed of gobos, with gobo shake effect in gobo wheel, within the same channel function When using this Gobo(n)SelectShake as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Gobo(n). In case that Gobo(n) already exists in the same geometry, you can use the Gobo(n)SelectShake as the Logical Channel attribute.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "GoboSelectSpin": {
         "_ActivationGroup": "Gobo(n)",
@@ -2051,7 +2196,8 @@
         "explanation": "Use this attribute to control selection and spin speed of gobos, with continuous rotation in gobo wheel, within the same channel function. When there is more than one gobo wheel a wild card (numerical identifier (n)) will be automatically added to indicate which wheel is being controlled. When using this Gobo(n)SelectSpin as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Gobo(n). In case that Gobo(n) already exists in the same geometry, you can use the Gobo(n)SelectSpin as the Logical Channel attribute.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "GoboWheelAudio": {
         "_ActivationGroup": "Gobo(n)",
@@ -2073,7 +2219,8 @@
         "explanation": "Use this attribute to turn on audio based gobo functions, like random gobo selection in the beat of the music. If there is more than one gobo wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled. When using this Gobo(n)WheelAudio as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Gobo(n). In case that Gobo(n) already exists in the same geometry, you can use the Gobo(n)WheelAudio as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "GoboWheelIndex": {
         "_ActivationGroup": "Gobo(n)",
@@ -2096,7 +2243,8 @@
         "explanation": "Use this attribute to define indexed rotation angle of the gobo wheel for the gobos on the wheel When using this Gobo(n)WheelIndex as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Gobo(n). In case that Gobo(n) already exists in the same geometry, you can use the Gobo(n)WheelIndex as the Logical Channel attribute.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "GoboWheelMSpeed": {
         "_feature": "Control.Control",
@@ -2106,7 +2254,8 @@
         "explanation": "Use this attribute to set a speed of movement of color wheel(s). If there is more than one gobo wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "GoboWheelMode": {
         "_feature": "Control.Control",
@@ -2117,7 +2266,8 @@
         "explanation": "This attribute describes selecting, indexing, and rotating of gobos in a gobo wheel (n).",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "GoboWheelRandom": {
         "_ActivationGroup": "Gobo(n)",
@@ -2140,7 +2290,8 @@
         "explanation": "Use this attribute to set the frequency of a random gobo selection. If there is more than one gobo wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled. When using this Gobo(n)WheelRandom as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Gobo(n). In case that Gobo(n) already exists in the same geometry, you can use the Gobo(n)WheelRandom as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "GoboWheelReset": {
         "_feature": "Control.Control",
@@ -2151,7 +2302,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's gobo wheels.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "GoboWheelShake": {
         "_ActivationGroup": "Gobo(n)",
@@ -2181,7 +2333,8 @@
         "explanation": "For gobo wheel that provides wheel shaking function, this attribute allows to set the frequency of the shake. If there is more than one gobo wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled. When using this Gobo(n)WheelShake as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Gobo(n). In case that Gobo(n) already exists in the same geometry, you can use the Gobo(n)WheelShake as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "GoboWheelShortcutMode": {
         "_feature": "Control.Control",
@@ -2192,7 +2345,8 @@
         "explanation": "This attribute describes whether the gobo wheel takes the shortest distance between two positions.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "GoboWheelSpin": {
         "_ActivationGroup": "Gobo(n)",
@@ -2215,7 +2369,8 @@
         "explanation": "Speed and direction of a continuous rotation of a gobo wheel ('gobo rainbow effect') is control with this attribute. If there is more than one gobo wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled. When using this Gobo(n)WheelSpin as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Gobo(n). In case that Gobo(n) already exists in the same geometry, you can use the Gobo(n)WheelSpin as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "HSB_Brightness": {
         "_ActivationGroup": "ColorHSB",
@@ -2228,7 +2383,8 @@
         "explanation": "Use this attribute to control a fixture's color Brightness",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "HSB_Hue": {
         "_ActivationGroup": "ColorHSB",
@@ -2241,7 +2397,8 @@
         "explanation": "Use this attribute to control the fixture's Hue (color)",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "HSB_Quality": {
         "_ActivationGroup": "ColorHSB",
@@ -2254,7 +2411,8 @@
         "explanation": "For devices that allow to adjust quality of HSB colors, use this attribute to describe this feature.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "HSB_Saturation": {
         "_ActivationGroup": "ColorHSB",
@@ -2267,7 +2425,8 @@
         "explanation": "Use this attribute to control a fixture's color Saturation (richness)",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "Haze": {
         "_feature": "Control.Control",
@@ -2278,7 +2437,8 @@
         "explanation": "A function that controls fog/haze function of a haze machine.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "InputSource": {
         "_feature": "Video.Video",
@@ -2290,7 +2450,8 @@
         "explanation": "This attribute allows to set a video input source.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "IntensityMSpeed": {
         "_feature": "Control.Control",
@@ -2301,7 +2462,8 @@
         "explanation": "Use this attribute to set a speed of dimming behavior. ",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "IntensityReset": {
         "_feature": "Control.Control",
@@ -2312,7 +2474,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's intensity",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "Iris": {
         "_feature": "Beam.Beam",
@@ -2323,7 +2486,8 @@
         "explanation": "An iris diaphragm made of movable leaves which allows to gradually change the diameter of the beam is described with this attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "IrisMSpeed": {
         "_feature": "Control.Control",
@@ -2334,7 +2498,8 @@
         "explanation": "Use this attribute to set a speed of movement of iris(s).",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "IrisMode": {
         "_feature": "Control.Control",
@@ -2345,7 +2510,8 @@
         "explanation": "Use this to describe a function that allows to change the mode of the iris.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "IrisPulseClose": {
         "_MainAttribute": "Iris",
@@ -2381,7 +2547,8 @@
         "explanation": "A function that allows to adjust frequency of an iris based strobing where the iris pulses with slower closing and faster opening behavior. When using this IrisPulseClose as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Iris. In case that Iris already exists in the same geometry, you can use the IrisPulseClose as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "IrisPulseOpen": {
         "_MainAttribute": "Iris",
@@ -2417,7 +2584,8 @@
         "explanation": "A function that allows to adjust frequency of an iris based strobing where the iris pulses with slower opening and faster closing behavior. When using this IrisPulseOpen as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Iris. In case that Iris already exists in the same geometry, you can use the IrisPulseOpen as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "IrisRandomPulseClose": {
         "_MainAttribute": "Iris",
@@ -2439,7 +2607,8 @@
         "explanation": "A function that allows to enable an iris based strobing in random intervals where the iris pulses with slower opening and faster closing behavior. When using this IrisRandomPulseClose as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Iris. In case that Iris already exists in the same geometry, you can use the IrisRandomPulseClose as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "IrisRandomPulseOpen": {
         "_MainAttribute": "Iris",
@@ -2461,7 +2630,8 @@
         "explanation": "A function that allows to enable an iris based strobing in random intervals where the iris pulses with slower closing and faster opening behavior. When using this IrisRandomPulseOpen as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Iris. In case that Iris already exists in the same geometry, you can use the IrisRandomPulseOpen as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "IrisReset": {
         "_feature": "Control.Control",
@@ -2472,7 +2642,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's iris.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "IrisStrobe": {
         "_MainAttribute": "Iris",
@@ -2508,7 +2679,8 @@
         "explanation": "Strobing function created by fast movements of an iris is described with this attribute. When using this IrisStrobe as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Iris. In case that Iris already exists in the same geometry, you can use the IrisStrobe as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "IrisStrobeRandom": {
         "_MainAttribute": "Iris",
@@ -2537,7 +2709,8 @@
         "explanation": "Strobing in random intervals created by fast movements of an iris is described with this attribute. When using this IrisStrobeRandom as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Iris. In case that Iris already exists in the same geometry, you can use the IrisStrobeRandom as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "KeyStoneA": {
         "_feature": "Shapers.Shapers",
@@ -2549,7 +2722,8 @@
         "explanation": "This attribute describes a behavior typically used on video projection, to adjust parallax correction.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "KeyStoneB": {
         "_feature": "Shapers.Shapers",
@@ -2561,7 +2735,8 @@
         "explanation": "This attribute describes a behavior typically used on video projection, to adjust parallax correction.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "LEDFrequency": {
         "_feature": "Control.Control",
@@ -2573,7 +2748,8 @@
         "explanation": "Use this attribute to describe a function which allows to change frequency of LEDs.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "LEDZoneMode": {
         "_feature": "Control.Control",
@@ -2584,7 +2760,8 @@
         "explanation": "For multipixel LED devices that allow to choose which zones of LEDs are being used, use this attribute to describe this function.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "LampControl": {
         "_feature": "Control.Control",
@@ -2595,7 +2772,8 @@
         "explanation": "Use this attribute to describe functionality that allows to strike and douse the lamp of the fixture.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "LampPowerMode": {
         "_feature": "Control.Control",
@@ -2606,7 +2784,8 @@
         "explanation": "For devices that allow to set different lamp modes (Low Power mode, Eco mode...), use this attribute to describe this function.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "MagentaMode": {
         "_feature": "Control.Control",
@@ -2617,7 +2796,8 @@
         "explanation": "Use this attribute to describe the mode of operation of the Magenta.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "MediaContent": {
         "_feature": "Gobo.Media",
@@ -2628,7 +2808,8 @@
         "explanation": "This attribute selects content that usually is located in one of the folders selected. Any content selection process is possible with this attribute.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "MediaFolder": {
         "_feature": "Gobo.Media",
@@ -2639,7 +2820,8 @@
         "explanation": "This attribute selects one of multiple folders that (usually) contain media. Any folder selection process is possible with this attribute.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ModelContent": {
         "_feature": "Gobo.Media",
@@ -2651,7 +2833,8 @@
         "explanation": "This attribute selects a 3D model that usually is located in one of the 3D folders selected. Any content selection process is possible with this attribute. If there is more than one content folder the wild-card (n) will be incremented and the number then indicates which wheel will be controlled.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ModelFolder": {
         "_feature": "Gobo.Media",
@@ -2663,7 +2846,8 @@
         "explanation": "This attribute is selects specifically one of multiple folders for 3D content. Any folder selection process is possible with this attribute. If there is more than one folder the wild-card (n) will be incremented and the number then indicates which wheel will be controlled.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "NoFeature": {
         "_feature": "Control.Control",
@@ -2674,7 +2858,8 @@
         "explanation": "Use this attribute for functions that do not define any functions. They might be for example reserved for later use.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "Pan": {
         "_ActivationGroup": "PanTilt",
@@ -2688,7 +2873,8 @@
         "visual": "",
         "can_fade": true,
         "vdim_effected": false,
-        "force_default": true
+        "force_default": true,
+        "control_type": "POSITION"
     },
     "PanMode": {
         "_feature": "Control.Control",
@@ -2699,7 +2885,8 @@
         "explanation": "For devices that allow different modes of pan behavior, use this attribute to describe the behavior.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "PanReset": {
         "_feature": "Control.Control",
@@ -2710,7 +2897,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's pan.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "PanRotate": {
         "_feature": "Position.PanTilt",
@@ -2722,7 +2910,8 @@
         "explanation": "For fixtures with the ability to have a continuous pan rotation, the \u201cPan Rotate\u201d control defines how fast (speed) a fixture can rotate about the pan axis. Usually, the horizontal axis.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "PanTiltMode": {
         "_feature": "Control.Control",
@@ -2733,7 +2922,8 @@
         "explanation": "For devices that allow different modes of behavior of pan and tilt, use this attribute to describe the behavior.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "PixelMode": {
         "_feature": "Control.Control",
@@ -2744,7 +2934,8 @@
         "explanation": "For multipixel devices that allow to set behavior of pixel control (for example order of LEDs), use this attribute to describe such behavior/settings.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "PlayBegin": {
         "_feature": "Gobo.Media",
@@ -2756,7 +2947,8 @@
         "explanation": "Use this attribute to describe a function that allows to set the starting time of media content playback.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "PlayEnd": {
         "_feature": "Gobo.Media",
@@ -2768,7 +2960,8 @@
         "explanation": "Use this attribute to describe a function that allows to set the end time of media content playback.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "PlaySpeed": {
         "_feature": "Gobo.Media",
@@ -2780,7 +2973,8 @@
         "explanation": "Use this attribute to control the speed of media content playback",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "Playmode": {
         "_feature": "Gobo.Media",
@@ -2791,7 +2985,8 @@
         "explanation": "For devices that allow to set a mode of media playback, for example play and loop, play and stop..., use  this attribute to describe this behavior.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "PositionEffect": {
         "_feature": "Position.PanTilt",
@@ -2802,7 +2997,8 @@
         "explanation": "Effects which are built into the fixture, are based on movement and are of manufacturer specific nature so they cannot really be visualized are described with this attribute.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "PositionEffectFade": {
         "_feature": "Position.PanTilt",
@@ -2813,7 +3009,8 @@
         "explanation": "Use this attribute to describe functions that are adjusting fading or snapping behavior of some movement effects.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "PositionEffectRate": {
         "_feature": "Position.PanTilt",
@@ -2824,7 +3021,8 @@
         "explanation": "Adjusting speed of some predefined movement effects is described with this attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "PositionMSpeed": {
         "_feature": "Control.Control",
@@ -2835,7 +3033,8 @@
         "explanation": "Use this attribute to set a speed of movement for pan/tilt.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "PositionModes": {
         "_feature": "Control.Control",
@@ -2846,7 +3045,8 @@
         "explanation": "For devices that allow different modes of behavior of their positioning system, use this attribute to describe the behavior.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "PositionReset": {
         "_feature": "Control.Control",
@@ -2857,7 +3057,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's positional system",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "Prism": {
         "_ActivationGroup": "Prism",
@@ -2869,7 +3070,8 @@
         "explanation": "Use this attribute to select a prism in a prism wheel for fixtures that provide prism selection on one channel and prism rotation/indexing on another channel(s). If there is more than one prism wheel or carousel, the wild-card (n) will be incremented and the number then indicates which wheel will be controlled.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "PrismMSpeed": {
         "_feature": "Control.Control",
@@ -2880,7 +3082,8 @@
         "explanation": "Use this attribute to set a speed of movement of prism(s). If there is more than one prism or prism wheel the wild-card (n) will be incremented and the number then indicates which prism/wheel will be controlled.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "PrismMacro": {
         "_ActivationGroup": "Prism",
@@ -2893,7 +3096,8 @@
         "explanation": "Use this attribute for manufacturer defined fixture specific effects on a prisms. If there is more than one prism wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled. When using this Prism(n)Macro as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Prism(n). In case that Prism(n) already exists in the same geometry, you can use the Prism(n)Macro as the Logical Channel attribute.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "PrismPos": {
         "_feature": "Beam.Beam",
@@ -2905,7 +3109,8 @@
         "explanation": "This attribute allows to set indexed position (angle) of a prism in a prism wheel and is typically used together with Prism(n) attribute which selects the prism. If there is more than one prism wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "PrismPosRotate": {
         "_ActivationGroup": "Prism",
@@ -2919,7 +3124,8 @@
         "explanation": "This attribute allows to set speed and direction of continuous rotation of a prism in a prism wheel and is typically used together with Prism(n) attribute which selects the prism. If there is more than one prism wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled. When using this Prism(n)PosRotate as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Prism(n)Pos. In case that Prism(n)Pos already exists in the same geometry, you can use the Prism(n)PosRotate as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "PrismSelectSpin": {
         "_ActivationGroup": "Prism",
@@ -2933,7 +3139,8 @@
         "explanation": "Selects prism whose rotation is continuous in prism wheel (n) and controls the angular speed of the prism\u2019s spin within the same channel function. If there is more than one prism wheel the wild-card (n) will be incremented and the number then indicates which wheel will be controlled. When using this Prism(n)SelectSpin as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Prism(n). In case that Prism(n) already exists in the same geometry, you can use the Prism(n)SelectSpin as the Logical Channel attribute.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ReflectorAdjust": {
         "_feature": "Control.Control",
@@ -2944,7 +3151,8 @@
         "explanation": "Adjustment of the reflector of the device (for example setting it to a hot-spot output or a flat-field output) is described with this attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "Rot_X": {
         "_ActivationGroup": "Rot_XYZ",
@@ -2957,7 +3165,8 @@
         "explanation": "Devices that can be rotated around the X-axis in space use this attribute. A typical usage is horizontal rotation of a video-layer in space (pitch axis).",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "POSITION"
     },
     "Rot_Y": {
         "_ActivationGroup": "Rot_XYZ",
@@ -2970,7 +3179,8 @@
         "explanation": "Devices that can be rotated around the Y-axis in space use this attribute. A typical usage is rolling of a video-layer in space (roll axis).",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "POSITION"
     },
     "Rot_Z": {
         "_ActivationGroup": "Rot_XYZ",
@@ -2983,7 +3193,8 @@
         "explanation": "Devices that can be rotated around the Z-axis in space use this attribute. A typical usage is vertical rotation of a video-layer in space (yaw axis).",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "POSITION"
     },
     "Scale_X": {
         "_ActivationGroup": "Scale_XYZ",
@@ -2996,7 +3207,8 @@
         "explanation": "Use this attribute to describe a function that scales the percentage of movement on an X axis.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "POSITION"
     },
     "Scale_XYZ": {
         "_ActivationGroup": "Scale_XYZ",
@@ -3009,7 +3221,8 @@
         "explanation": "Use this attribute to describe a function that scales the percentage of movement on all X, Y and Z axes.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "POSITION"
     },
     "Scale_Y": {
         "_ActivationGroup": "Scale_XYZ",
@@ -3022,7 +3235,8 @@
         "explanation": "Use this attribute to describe a function that scales the percentage of movement on an Y axis.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "POSITION"
     },
     "Scale_Z": {
         "_ActivationGroup": "Scale_XYZ",
@@ -3035,7 +3249,8 @@
         "explanation": "Use this attribute to describe a function that scales the percentage of movement on an Z axis.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "POSITION"
     },
     "ShaperMacros": {
         "_feature": "Shapers.Shapers",
@@ -3046,7 +3261,8 @@
         "explanation": "This attribute allows for selecting a fixture's predefined macro functions for the Blades/Shapers.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ShaperMacrosSpeed": {
         "_feature": "Shapers.Shapers",
@@ -3057,7 +3273,8 @@
         "explanation": "Use this attribute to control the speed of effects of shapers",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "ShaperRot": {
         "_ActivationGroup": "Shaper",
@@ -3070,7 +3287,8 @@
         "explanation": "This attribute allows you to describe a function which rotates the complete carousel of framing shutters or barndors.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "Shutter": {
         "_feature": "Beam.Beam",
@@ -3081,7 +3299,8 @@
         "explanation": "Open/close style of change of intensity or brightness. Physical values go between 0 = closed, to 1 = open. If there is more than one shutter the wild-card (n) will be incremented and the number then indicates which shutter will be controlled.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ShutterReset": {
         "_feature": "Control.Control",
@@ -3092,7 +3311,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's shutter flags or elements.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "ShutterStrobe": {
         "_MainAttribute": "Shutter(n)",
@@ -3121,7 +3341,8 @@
         "explanation": "When using this Shutter(n)Strobe as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Shutter(n). In case that Shutter(n) already exists in the same geometry, you can use the Shutter(n)Strobe as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ShutterStrobeEffect": {
         "_MainAttribute": "Shutter(n)",
@@ -3134,7 +3355,8 @@
         "explanation": "When using this Shutter(n)StrobeEffect as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Shutter(n). In case that Shutter(n) already exists in the same geometry, you can use the Shutter(n)StrobeEffect as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ShutterStrobePulse": {
         "_MainAttribute": "Shutter(n)",
@@ -3163,7 +3385,8 @@
         "explanation": "When using this Shutter(n)StrobePulse as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Shutter(n). In case that Shutter(n) already exists in the same geometry, you can use the Shutter(n)StrobePulse as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ShutterStrobePulseClose": {
         "_MainAttribute": "Shutter(n)",
@@ -3192,7 +3415,8 @@
         "explanation": "When using this Shutter(n)StrobePulseClose as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Shutter(n). In case that Shutter(n) already exists in the same geometry, you can use the Shutter(n)StrobePulseClose as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ShutterStrobePulseOpen": {
         "_MainAttribute": "Shutter(n)",
@@ -3221,7 +3445,8 @@
         "explanation": "When using this Shutter(n)StrobePulseOpen as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Shutter(n). In case that Shutter(n) already exists in the same geometry, you can use the Shutter(n)StrobePulseOpen as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ShutterStrobeRandom": {
         "_MainAttribute": "Shutter(n)",
@@ -3243,7 +3468,8 @@
         "explanation": "When using this Shutter(n)StrobeRandom as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Shutter(n). In case that Shutter(n) already exists in the same geometry, you can use the Shutter(n)StrobeRandom as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ShutterStrobeRandomPulse": {
         "_MainAttribute": "Shutter(n)",
@@ -3256,7 +3482,8 @@
         "explanation": "When using this Shutter(n)StrobeRandomPulse as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Shutter(n). In case that Shutter(n) already exists in the same geometry, you can use the Shutter(n)StrobeRandomPulse as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ShutterStrobeRandomPulseClose": {
         "_MainAttribute": "Shutter(n)",
@@ -3269,7 +3496,8 @@
         "explanation": "When using this Shutter(n)StrobeRandomPulseClose as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Shutter(n). In case that Shutter(n) already exists in the same geometry, you can use the Shutter(n)StrobeRandomPulseClose as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "ShutterStrobeRandomPulseOpen": {
         "_MainAttribute": "Shutter(n)",
@@ -3282,7 +3510,8 @@
         "explanation": "When using this Shutter(n)StrobeRandomPulseOpen as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to Shutter(n). In case that Shutter(n) already exists in the same geometry, you can use the Shutter(n)StrobeRandomPulseOpen as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "StrobeDuration": {
         "_feature": "Beam.Beam",
@@ -3294,7 +3523,8 @@
         "explanation": "Use this attribute to describe a function that can adjust the duration of an individual flash.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "StrobeFrequency": {
         "_feature": "Beam.Beam",
@@ -3306,7 +3536,8 @@
         "explanation": "Setting the frequency of strobing is described with this attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "StrobeMode": {
         "_feature": "Control.Control",
@@ -3317,7 +3548,8 @@
         "explanation": "Use this attribute to describe strobe, pulse, random strobe and other modes of the shutter attribute.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "StrobeModeEffect": {
         "_MainAttribute": "StrobeModeShutter",
@@ -3329,7 +3561,8 @@
         "explanation": "When using this StrobeModeEffect as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to StrobeModeShutter. In case that StrobeModeShutter already exists in the same geometry, you can use the StrobeModeEffect as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "StrobeModePulse": {
         "_MainAttribute": "StrobeModeShutter",
@@ -3341,7 +3574,8 @@
         "explanation": "Use this attribute do describe a function that allows to set to shutter/strobe into a Pulsing Strobe Mode. When using this StrobeModePulse as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to StrobeModeShutter. In case that StrobeModeShutter already exists in the same geometry, you can use the StrobeModePulse as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "StrobeModePulseClose": {
         "_MainAttribute": "StrobeModeShutter",
@@ -3353,7 +3587,8 @@
         "explanation": "Use this attribute do describe a function that allows to set to shutter/strobe into a mode where the shutter pulses with slower closing and faster opening behavior. When using this StrobeModePulseClose as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to StrobeModeShutter. In case that StrobeModeShutter already exists in the same geometry, you can use the StrobeModePulseClose as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "StrobeModePulseOpen": {
         "_MainAttribute": "StrobeModeShutter",
@@ -3365,7 +3600,8 @@
         "explanation": "Use this attribute do describe a function that allows to set to shutter/strobe into a mode where the shutter pulses with slower opening and faster closing behavior. When using this StrobeModePulseOpen as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to StrobeModeShutter. In case that StrobeModeShutter already exists in the same geometry, you can use the StrobeModePulseOpen as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "StrobeModeRandom": {
         "_MainAttribute": "StrobeModeShutter",
@@ -3377,7 +3613,8 @@
         "explanation": "Use this attribute do describe a function that allows to set to shutter/strobe into a mode where the shutter into a mode of random strobing. When using this StrobeModeRandom as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to StrobeModeShutter. In case that StrobeModeShutter already exists in the same geometry, you can use the StrobeModeRandom as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "StrobeModeRandomPulse": {
         "_MainAttribute": "StrobeModeShutter",
@@ -3389,7 +3626,8 @@
         "explanation": "Use this attribute do describe a function that allows to set to shutter/strobe into a mode where the shutter into a mode of random pulse based strobing. When using this StrobeModeRandomPulse as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to StrobeModeShutter. In case that StrobeModeShutter already exists in the same geometry, you can use the StrobeModeRandomPulse as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "StrobeModeRandomPulseClose": {
         "_MainAttribute": "StrobeModeShutter",
@@ -3401,7 +3639,8 @@
         "explanation": "Use this attribute do describe a function that allows to set to shutter/strobe into a mode where the shutter pulses in random intervals with slower closing and faster opening behavior. When using this StrobeModeRandomPulseClose as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to StrobeModeShutter. In case that StrobeModeShutter already exists in the same geometry, you can use the StrobeModeRandomPulseClose as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "StrobeModeRandomPulseOpen": {
         "_MainAttribute": "StrobeModeShutter",
@@ -3413,7 +3652,8 @@
         "explanation": "Use this attribute do describe a function that allows to set to shutter/strobe into a mode where the shutter pulses in random intervals with slower opening and faster closing behavior. When using this StrobeModeRandomPulseOpen as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to StrobeModeShutter. In case that StrobeModeShutter already exists in the same geometry, you can use the StrobeModeRandomPulseOpen as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "StrobeModeShutter": {
         "_feature": "Beam.Beam",
@@ -3424,7 +3664,8 @@
         "explanation": "Use this attribute do describe a function that allows to set to shutter/strobe into a Shutter Mode.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "StrobeModeStrobe": {
         "_MainAttribute": "StrobeModeShutter",
@@ -3436,7 +3677,8 @@
         "explanation": "Use this attribute do describe a function that allows to set to shutter/strobe into a Strobe Mode. When using this StrobeModeStrobe as a Channel Function attribute, make sure that the attribute for the Logical Channel is set to StrobeModeShutter. In case that StrobeModeShutter already exists in the same geometry, you can use the StrobeModeStrobe as the Logical Channel attribute.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "StrobeRate": {
         "_feature": "Beam.Beam",
@@ -3447,7 +3689,8 @@
         "explanation": "Use this attribute to describe a function that can adjust the time between individual flashes.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "Tilt": {
         "_ActivationGroup": "PanTilt",
@@ -3461,7 +3704,8 @@
         "visual": "",
         "can_fade": true,
         "vdim_effected": false,
-        "force_default": true
+        "force_default": true,
+        "control_type": "POSITION"
     },
     "TiltMode": {
         "_feature": "Control.Control",
@@ -3472,7 +3716,8 @@
         "explanation": "For devices that allow different modes of tilt behavior, use this attribute to describe the behavior.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "TiltReset": {
         "_feature": "Control.Control",
@@ -3483,7 +3728,8 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's tilt.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     },
     "TiltRotate": {
         "_feature": "Position.PanTilt",
@@ -3495,7 +3741,8 @@
         "explanation": "For fixtures with the ability to have a continuous tilt rotation, the \u201cTilt Rotate\u201d control defines how fast (speed) a fixture can rotate about the tilt axis. Usually, the vertical axis.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "Tint": {
         "_feature": "Color.Color",
@@ -3506,7 +3753,8 @@
         "explanation": "Choose this attribute to control a function that adjusts the Green/Magenta shift of a fixture's light output.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "UVStability": {
         "_feature": "Control.Control",
@@ -3517,7 +3765,8 @@
         "explanation": "Use this attribute to describe a function that allows to choose a color mixing mode which is prioritizing color stability and suppresses UV color.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "Video": {
         "_feature": "Video.Video",
@@ -3528,7 +3777,8 @@
         "explanation": "Use this attribute to describe generic functions related to video controls.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "VideoBlendMode": {
         "_feature": "Video.Video",
@@ -3540,7 +3790,8 @@
         "explanation": "Use this attribute to describe a function that allows to choose a mode of blending of a video output.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "VideoBoost_B": {
         "_Color": "0.15,0.06,7.2",
@@ -3553,7 +3804,8 @@
         "explanation": "Use this attribute to describe a function that allows to raise up intensity of green color in the media content.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "VideoBoost_G": {
         "_Color": "0.3,0.6,71.5",
@@ -3566,7 +3818,8 @@
         "explanation": "Use this attribute to describe a function that allows to raise up intensity of green color in the media content.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "VideoBoost_R": {
         "_Color": "0.64,0.33,21.3",
@@ -3579,7 +3832,8 @@
         "explanation": "Use this attribute to describe a function that allows to raise up intensity of red color in the media content.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "VideoBrightness": {
         "_feature": "Color.HSBC_Shift",
@@ -3591,7 +3845,8 @@
         "explanation": "Use this attribute to describe a function that allows to set brightness of media content.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "VideoCamera": {
         "_feature": "Video.Video",
@@ -3602,7 +3857,8 @@
         "explanation": "Use this attribute to describe features related to a video camera.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "VideoColorKey_B": {
         "_Color": "0.15,0.06,7.2",
@@ -3615,7 +3871,8 @@
         "explanation": "Use this attribute to describe a function that provides media content color keying by blue color.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "VideoContrast": {
         "_feature": "Color.HSBC_Shift",
@@ -3627,7 +3884,8 @@
         "explanation": "Use this attribute to describe a function that allows to set contrast of media content.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "VideoEffectParameter": {
         "_feature": "Video.Video",
@@ -3638,7 +3896,8 @@
         "explanation": "Use this attribute to describe generic video effects parameters.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "VideoEffectType": {
         "_feature": "Video.Video",
@@ -3649,7 +3908,8 @@
         "explanation": "Use this attribute to describe generic video effects.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "VideoHueShift": {
         "_feature": "Color.HSBC_Shift",
@@ -3661,7 +3921,8 @@
         "explanation": "Use this attribute to describe a function that allows to set color hue shift of media content.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "VideoKeyColor_G": {
         "_Color": "0.3,0.6,71.5",
@@ -3674,7 +3935,8 @@
         "explanation": "Use this attribute to describe a function that provides media content color keying by green color.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "VideoKeyColor_R": {
         "_Color": "0.64,0.33,21.3",
@@ -3687,7 +3949,8 @@
         "explanation": "Use this attribute to describe a function that provides media content color keying by red color.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "VideoKeyIntensity": {
         "_feature": "Color.ColorKey",
@@ -3699,7 +3962,8 @@
         "explanation": "Use this attribute to describe a function that adjusts the intensity of color keying.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "VideoKeyTolerance": {
         "_feature": "Color.ColorKey",
@@ -3711,7 +3975,8 @@
         "explanation": "Use this attribute to describe a function that adjusts the tolerance value of color keying.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "VideoSaturation": {
         "_feature": "Color.HSBC_Shift",
@@ -3723,7 +3988,8 @@
         "explanation": "Use this attribute to describe a function that allows to set saturation of media content.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "INTENSITY"
     },
     "VideoSoundVolume": {
         "_feature": "Video.Video",
@@ -3735,7 +4001,8 @@
         "explanation": "Describes the audio volume function of a device.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": true
+        "vdim_effected": true,
+        "control_type": "INTENSITY"
     },
     "WaveLengthCorrection": {
         "_feature": "Control.Control",
@@ -3746,7 +4013,8 @@
         "explanation": "Use this attribute to describe a function that allows to adjust color mixing according to corresponding wavelengths in order to achieve same colors from multiple fixtures.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "WhiteCount": {
         "_feature": "Control.Control",
@@ -3757,7 +4025,8 @@
         "explanation": "Some devices allow internal automatic intensity control of White LED  by the device, based on proportions of intensity of remaining LED emitters. Use this attribute to describe this behavior.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "XYZ_X": {
         "_ActivationGroup": "XYZ",
@@ -3771,7 +4040,8 @@
         "visual": "",
         "can_fade": true,
         "vdim_effected": false,
-        "force_default": true
+        "force_default": true,
+        "control_type": "POSITION"
     },
     "XYZ_Y": {
         "_ActivationGroup": "XYZ",
@@ -3785,7 +4055,8 @@
         "visual": "",
         "can_fade": true,
         "vdim_effected": false,
-        "force_default": true
+        "force_default": true,
+        "control_type": "POSITION"
     },
     "XYZ_Z": {
         "_ActivationGroup": "XYZ",
@@ -3799,7 +4070,8 @@
         "visual": "",
         "can_fade": true,
         "vdim_effected": false,
-        "force_default": true
+        "force_default": true,
+        "control_type": "POSITION"
     },
     "YellowMode": {
         "_feature": "Control.Control",
@@ -3810,7 +4082,8 @@
         "explanation": "Use this attribute to describe the mode of operation of the Yellow.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "Zoom": {
         "_feature": "Focus.Focus",
@@ -3822,7 +4095,8 @@
         "explanation": "This attribute is used to adjust the beam angle of the light source.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "VALUE"
     },
     "ZoomMSpeed": {
         "_feature": "Control.Control",
@@ -3833,7 +4107,8 @@
         "explanation": "Use this attribute to set a speed of movement of zoom.",
         "visual": "",
         "can_fade": true,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SPEED"
     },
     "ZoomMode": {
         "_feature": "Control.Control",
@@ -3844,7 +4119,8 @@
         "explanation": "Use this to describe the possibility to set different zoom modes, like beam mode or a spot mode.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ZoomModeBeam": {
         "_feature": "Focus.Focus",
@@ -3856,7 +4132,8 @@
         "explanation": "On devices with a Zoom which can be set to various types of projections, use this attribute to describe a Zoom mode with a beamy, hot-spoty type of projection.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ZoomModeSpot": {
         "_feature": "Focus.Focus",
@@ -3868,7 +4145,8 @@
         "explanation": "On devices with a Zoom which can be set to various types of projections, use this attribute to describe a Zoom mode with a flat projection field definition.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SELECT"
     },
     "ZoomReset": {
         "_feature": "Control.Control",
@@ -3879,6 +4157,7 @@
         "explanation": "This attribute is describing a function that allows the operator to trigger an internal reset of the fixture's zoom lenses or elements.",
         "visual": "",
         "can_fade": false,
-        "vdim_effected": false
+        "vdim_effected": false,
+        "control_type": "SYSTEM"
     }
 }
