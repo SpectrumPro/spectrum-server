@@ -19,10 +19,9 @@ config/custom_user_dir_name="SpectrumServer"
 config/features=PackedStringArray("4.5")
 boot_splash/bg_color=Color(0.0901961, 0.0901961, 0.0901961, 1)
 boot_splash/fullsize=false
-boot_splash/image="uid://bsbmpadvx8wi8"
-config/icon="uid://b25mctiamjbwy"
-config/macos_native_icon="res://assets/logos/spectrum/spectrum_dark.icns"
-config/windows_native_icon="res://assets/logos/spectrum/spectrum_dark.ico"
+config/icon="uid://2v45pcvc2xlm"
+config/macos_native_icon="res://assets/logos/spectrum_server/spectrum_server_dark.icns"
+config/windows_native_icon="res://assets/logos/spectrum_server/spectrum_server_dark.ico"
 boot_splash/minimum_display_time=500
 boot_splash/stretch_mode=0
 
