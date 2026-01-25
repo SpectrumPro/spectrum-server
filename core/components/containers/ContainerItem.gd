@@ -182,7 +182,7 @@ func get_stop() -> float:
 
 
 ## Returns a copy of this ContainerItem
-func duplicate() -> ContainerItem:
+func create_copy() -> ContainerItem:
 	var item: ContainerItem = ContainerItem.new()
 
 	item.set_fixture(_fixture)

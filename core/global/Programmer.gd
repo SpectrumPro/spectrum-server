@@ -61,6 +61,7 @@ func _init() -> void:
 		# merge_into_cue,
 		# erase_from_cue,
 		shortcut_set_color,
+		store_into,
 	])
 
 	settings_manager.register_networked_signals_auto([
@@ -104,18 +105,20 @@ func erase_parameter(p_fixtures: Array, p_parameter: String, p_zone: String) -> 
 
 
 ## Stores data into a function
-func store_data_to_container(p_container: DataContainer, p_store_mode: StoreMode, p_store_filter: StoreFilter = StoreFilter.MODIFIED, p_fixtures: Array = []) -> void:
-	if not is_instance_valid(p_container):
+func store_data_to_container(p_source: DataContainer, p_destination: DataContainer, p_store_mode: StoreMode, p_store_filter: StoreFilter = StoreFilter.MODIFIED, p_fixtures: Array = []) -> void:
+	if not is_instance_valid(p_source) or not is_instance_valid(p_destination):
 		return
+
+	if p_fixtures == []:
+		p_fixtures = p_source.get_fixtures()
 
 	for fixture: Variant in p_fixtures:
 		if not fixture is Fixture:
 			continue
 		
-
 		match p_store_filter:
 			StoreFilter.MODIFIED:
-				_store_mode_modified(p_container, fixture, p_store_mode)
+				_store_mode_modified(p_source, p_destination, fixture, p_store_mode)
 			
 			StoreFilter.ALL:
 				pass
@@ -141,10 +144,35 @@ func shortcut_set_color(p_fixtures: Array, p_color: Color, p_mix_mode: MixMode) 
 			set_parameter(p_fixtures, "ColorSub_Y", "ColorSub_Y", 1 - p_color.b, "root")
 
 
+## Attempts to store the current data into the given component the best way possable
+func store_into(p_component: EngineComponent, p_store_mode: StoreMode = StoreMode.INSERT, p_store_filter: StoreFilter = StoreFilter.MODIFIED) -> EngineComponent:
+	if not is_instance_valid(p_component):
+		return null
+	
+	if p_component is CueList:
+			var new_cue: Cue = Cue.new()
+			store_data_to_container(_container, new_cue, p_store_mode, p_store_filter)
+
+			p_component.add_cue(new_cue)
+			p_component.seek_to(new_cue)
+
+			return new_cue
+	
+	elif p_component is Cue:
+			store_data_to_container(_container, p_component, p_store_mode, p_store_filter)
+			return p_component
+
+	elif p_component is Function:
+			store_data_to_container(_container, p_component.get_data_container(), p_store_mode, p_store_filter)
+			return p_component
+	
+	return null
+
+
 ## Handles StoreFilter.ALL
-func _store_mode_modified(p_container: DataContainer, p_fixture: Fixture, p_store_mode: StoreMode) -> void:
+func _store_mode_modified(p_source: DataContainer, p_destination: DataContainer, p_fixture: Fixture, p_store_mode: StoreMode) -> void:
 	var items: Array[ContainerItem]
-	var fixture_data: Dictionary[String, Dictionary] = _container.get_data_for(p_fixture)
+	var fixture_data: Dictionary[String, Dictionary] = p_source.get_data_for(p_fixture)
 
 	for zone: String in fixture_data.keys():
 		for item: ContainerItem in fixture_data[zone].values():
@@ -153,15 +181,14 @@ func _store_mode_modified(p_container: DataContainer, p_fixture: Fixture, p_stor
 					items.append(item.duplicate())
 				
 				StoreMode.ERASE:
-					items.append(p_container.get_item(p_fixture, item.get_zone(), item.get_parameter()))
-					p_container.erase_data(p_fixture, item.get_zone(), item.get_parameter())
+					items.append(p_destination.get_item(p_fixture, item.get_zone(), item.get_parameter()))
 
 	match p_store_mode:
 		StoreMode.INSERT:
-			p_container.store_items(items)
+			p_destination.store_items(items)
 		
 		StoreMode.ERASE:
-			p_container.erase_items(items)
+			p_destination.erase_items(items)
 
 
 ## Sets the data on a single fixture at a time

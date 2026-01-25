@@ -185,6 +185,14 @@ func get_class_tree() -> Array[String]:
 	return _class_tree.duplicate()
 
 
+## Returns a copy of this EngineComponent
+func duplicate(p_serialize_flags: int = 0) -> EngineComponent:
+	var new_component: EngineComponent = ClassList.get_class_script(_self_class_name).new()
+
+	new_component.deserialize(serialize(p_serialize_flags | Core.SM_DUPLICATE))
+	return new_component
+
+
 ## Always call this function when you want to delete this component.
 ## As godot uses reference counting, this object will not truly be deleted untill no other script holds a refernce to it.
 func delete(p_local_only: bool = false) -> void:
