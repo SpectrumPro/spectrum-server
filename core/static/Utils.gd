@@ -23,7 +23,12 @@ static func save_json_to_file(file_path: String, file_name: String, json: Dictio
 ## Ensures a folder exists on the file system, if not one will be created
 static func ensure_folder_exists(folder_path: String) -> void:
 	if not DirAccess.dir_exists_absolute(folder_path):
-		print(TF.auto_format(TF.AUTO_MODE.INFO, "The folder \"",folder_path ,"\" does not exist, creating one now, errcode: ", DirAccess.make_dir_recursive_absolute(folder_path)))
+		var errcode: Error = DirAccess.make_dir_recursive_absolute(folder_path)
+
+		if errcode:
+			TF.print_error("The folder \"",folder_path ,"\" did not exist, failed to create with errcode: ", TF.bold(error_string(errcode)))
+		else:
+			TF.print_info("The folder \"",folder_path ,"\" did not exist, one has been created")
 
 
 
