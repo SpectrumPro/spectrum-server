@@ -314,7 +314,7 @@ func deserialize(p_serialized_data: Dictionary) -> void:
 		var classname: String = p_serialized_data.outputs[output_uuid].get("class_name", "")
 		if ClassList.has_class(classname, "DMXOutput"):
 			var new_output: DMXOutput = ClassList.get_class_script(classname).new(output_uuid)
-			new_output.load(p_serialized_data.outputs[output_uuid])
+			new_output.deserialize(p_serialized_data.outputs[output_uuid])
 			
 			add_output(new_output, true)
 			just_added_output.append(new_output)
