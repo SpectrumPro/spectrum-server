@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2026 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name TF extends RefCounted
 ## A utility class for adding color and text effects using ANSI escape codes.
@@ -61,32 +62,31 @@ const BG_BRIGHT_CYAN = "\u001b[106m"  ## Bright cyan background color.
 const BG_BRIGHT_WHITE = "\u001b[107m"  ## Bright white background color.
 
 
-enum AUTO_MODE {NORMAL, SUCCESS, INFO, WARNING, ERROR}
+## Enum for AutoMode
+enum AutoMode {NORMAL, SUCCESS, INFO, WARNING, ERROR}
+
 
 ## Configuration for automatic formatting based on mode.
 static var auto_config: Dictionary = {
-    AUTO_MODE.NORMAL: {
+    AutoMode.NORMAL: {
         TYPE_STRING: FG_DEFAULT,
         TYPE_INT: FG_BLUE + BOLD,
         TYPE_FLOAT: FG_BLUE + BOLD,
         0: FG_WHITE
     },
-    AUTO_MODE.SUCCESS: {
+    AutoMode.SUCCESS: {
         TYPE_STRING: FG_GREEN,
     },
-    AUTO_MODE.INFO: {
+    AutoMode.INFO: {
         TYPE_STRING: FG_BRIGHT_MAGENTA,
     },
-    AUTO_MODE.WARNING: {
+    AutoMode.WARNING: {
         TYPE_STRING: FG_YELLOW,
     },
-    AUTO_MODE.ERROR: {
+    AutoMode.ERROR: {
         TYPE_STRING: FG_RED + BOLD,
     }
 }
-
-## Default placeholder string used in auto_format function. Any data type can be passed to the autoformat function, but i don't think anyone will use this one... 
-static var _n: String = "⊙Ⲷ⧍"
 
 
 ## Adds a rainbow gradient to the given text with a specified size.
@@ -137,30 +137,61 @@ static func default(original_string: String) -> String: return wrap_string(origi
 
 
 ## Applies automatic formatting to the given arguments based on the specified mode.
-static func auto_format(mode: AUTO_MODE = AUTO_MODE.NORMAL, arg1=_n, arg2=_n, arg3=_n, arg4=_n, arg5=_n, arg6=_n, arg7=_n, arg8=_n) -> String:
-    var args: Array = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8]
-
+static func auto_format(mode: AutoMode = AutoMode.NORMAL, ...p_args: Array) -> String:
     var result: String = ""
 
-    for arg: Variant in args:
-        if str(arg) != _n:
-            var ansi: String = auto_config[mode].get(typeof(arg), auto_config[AUTO_MODE.NORMAL].get(typeof(arg), auto_config[0][0]))
-            
-            result += wrap_string(str(arg), ansi)
+    for arg: Variant in p_args:
+        var ansi: String = auto_config[mode].get(typeof(arg), auto_config[AutoMode.NORMAL].get(typeof(arg), auto_config[0][0]))
+        result += wrap_string(str(arg), ansi)
 
     return result
 
 
-## Shorthand for auto_format(TF.AUTO_MODE.ERROR)
-static func error(arg1=_n, arg2=_n, arg3=_n, arg4=_n, arg5=_n, arg6=_n, arg7=_n, arg8=_n) -> String: 
-    return auto_format(AUTO_MODE.ERROR, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+## Shorthand for auto_format(TF.AutoMode.NORMAL)
+static func normal(...p_args: Array) -> String: 
+    return auto_format.callv([AutoMode.NORMAL] + p_args)
 
 
-## Shorthand for auto_format(TF.AUTO_MODE.INFO)
-static func info(arg1=_n, arg2=_n, arg3=_n, arg4=_n, arg5=_n, arg6=_n, arg7=_n, arg8=_n) -> String: 
-    return auto_format(AUTO_MODE.INFO, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+## Shorthand for auto_format(TF.AutoMode.SUCCESS)
+static func sucess(...p_args: Array) -> String: 
+    return auto_format.callv([AutoMode.SUCCESS] + p_args)
 
 
-## Prints auto_format()
-static func print_auto(arg1=_n, arg2=_n, arg3=_n, arg4=_n, arg5=_n, arg6=_n, arg7=_n, arg8=_n) -> void: 
-    print(auto_format(AUTO_MODE.NORMAL, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8))
+## Shorthand for auto_format(TF.AutoMode.INFO)
+static func info(...p_args: Array) -> String: 
+    return auto_format.callv([AutoMode.INFO] + p_args)
+
+
+## Shorthand for auto_format(TF.AutoMode.WARNING)
+static func warning(...p_args: Array) -> String: 
+    return auto_format.callv([AutoMode.WARNING] + p_args)
+
+
+## Shorthand for auto_format(TF.AutoMode.ERROR)
+static func error(...p_args: Array) -> String: 
+    return auto_format.callv([AutoMode.ERROR] + p_args)
+
+
+## Prints AutoMode.NORMAL formatted text to the console
+static func print_normal(...p_args: Array) -> void: 
+    print(auto_format.callv([AutoMode.NORMAL] + p_args))
+
+
+## Prints AutoMode.SUCCESS formatted text to the console
+static func print_sucess(...p_args: Array) -> void: 
+    print(auto_format.callv([AutoMode.SUCCESS] + p_args))
+
+
+## Prints AutoMode.INFO formatted text to the console
+static func print_info(...p_args: Array) -> void: 
+    print(auto_format.callv([AutoMode.INFO] + p_args))
+
+
+## Prints AutoMode.WARNING formatted text to the console
+static func print_warning(...p_args: Array) -> void: 
+    print(auto_format.callv([AutoMode.WARNING] + p_args))
+
+
+## Prints AutoMode.ERROR formatted text to the console
+static func print_error(...p_args: Array) -> void: 
+    print(auto_format.callv([AutoMode.ERROR] + p_args))

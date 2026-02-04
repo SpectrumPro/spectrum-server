@@ -255,9 +255,9 @@ func load_from_file(p_file_name: String, p_no_signal: bool = false) -> Error:
 	var schema_version: int = int(serialized_data.get("schema_version", 0))
 	if schema_version:
 		if schema_version != Details.schema_version:
-			print(TF.auto_format(TF.AUTO_MODE.WARNING, TF.bold("WARNING:"), " Save file: \"", p_file_name, "\" Is schema version: ", schema_version, " How ever version: ", Details.schema_version, " Is expected. Errors may occur loading this file"))
+			TF.print_warning(TF.bold("WARNING:"), " Save file: \"", p_file_name, "\" Is schema version: ", schema_version, " How ever version: ", Details.schema_version, " Is expected. Errors may occur loading this file")
 	else:
-		print(TF.auto_format(TF.AUTO_MODE.WARNING, TF.bold("WARNING:"), " Save file: \"", p_file_name, "\" Does not have a schema version. Errors may occur loading this file"))
+		TF.print_warning(TF.bold("WARNING:"), " Save file: \"", p_file_name, "\" Does not have a schema version. Errors may occur loading this file")
 
 
 	set_file_name(p_file_name)
@@ -497,7 +497,7 @@ func _reload_scripts() -> void:
 ## Uh Oh
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_CRASH:
-		print(TF.auto_format(TF.AUTO_MODE.ERROR, "OH SHIT!"))
+		TF.print_error("OH SHIT!")
 		Details.shit()
 		print()
 
