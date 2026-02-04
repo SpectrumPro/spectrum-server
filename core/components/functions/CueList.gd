@@ -109,6 +109,7 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 	_settings_manager.register_control("global_pre_wait_speed", Data.Type.FLOAT, set_global_pre_wait_speed, get_global_pre_wait_speed, [on_global_pre_wait_changed])
 
 	_settings_manager.register_networked_methods_auto([
+		create_cue,
 		add_cue,
 		add_cues,
 		remove_cue,
@@ -151,7 +152,15 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 	])
 
 	_settings_manager.set_signal_allow_serialize(on_cues_added)
-	
+
+
+## Creates a new empty cue
+func create_cue() -> Cue:
+	var new_cue: Cue = Cue.new()
+
+	add_cue(new_cue)
+	return new_cue
+
 
 ## Adds a cue to the list
 func add_cue(p_cue: Cue, p_no_signal: bool = false) -> bool:
@@ -186,7 +195,7 @@ func remove_cue(p_cue: Cue, p_no_signal: bool = false) -> bool:
 		return false
 	 
 	_cues.erase(p_cue)
-	Network.deregister_component(p_cue.settings())
+	Network.deregister_network_object(p_cue.settings())
 
 	if not p_no_signal:
 		on_cues_removed.emit([p_cue])
