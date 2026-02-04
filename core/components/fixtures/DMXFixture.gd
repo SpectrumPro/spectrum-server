@@ -173,7 +173,7 @@ func set_manifest(p_manifest: Variant, p_mode: String, p_no_signal: bool = false
 	if p_manifest is not FixtureManifest:
 		p_manifest = FixtureLibrary.get_manifest(type_convert(p_manifest, TYPE_STRING))
 	
-	if not is_instance_valid(p_manifest):
+	if not is_instance_valid(p_manifest) or not p_manifest.has_mode(p_mode):
 		return false
 
 	zero_channels()
