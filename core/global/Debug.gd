@@ -1,7 +1,8 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2026 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
-class_name Debug extends RefCounted
+class_name CoreDebug extends CoreGlobal
 ## Used to debug the engine
 
 
@@ -11,15 +12,13 @@ var home_path: String = OS.get_environment("USERPROFILE") if OS.has_feature("win
 ## Debug file location
 var debug_file_location: String = home_path + "/.spectrum/debug/"
 
-## The SettingsManager for Debug
-var settings_manager: SettingsManager = SettingsManager.new()
 
-
-## Init
-func _init() -> void:
-	settings_manager.set_owner(self)
-	settings_manager.set_inheritance_array(["Debug"])
-	settings_manager.register_networked_methods_auto([
+## init
+func _init(p_uuid: String = "", ...p_args: Array[Variant]) -> void:
+	super._init(p_uuid, p_args)
+	_set_class_name("CoreDebug")
+	
+	_settings.register_networked_methods_auto([
 		reset,
 		quit,
 		crash,
@@ -27,7 +26,7 @@ func _init() -> void:
 		dump_networked_objects,
 		dump_fixture_data,
 	])
-
+	
 	Utils.ensure_folder_exists(debug_file_location)
 
 
@@ -56,14 +55,14 @@ func dump_networked_objects() -> String:
 	var networked_objects: Dictionary = Network._registered_network_objects.get_as_dict()
 
 	var file_name: String = Time.get_datetime_string_from_system() + "_dumped_network_objects"
-	Utils.save_json_to_file(debug_file_location, file_name, Utils.objects_to_uuids(networked_objects, true))
+	Utils.save_json_to_file(debug_file_location, file_name, Network.serialize_objects(networked_objects, true))
 
 	return debug_file_location + file_name
 
 
 ## Dumps all fixture data to a files
 func dump_fixture_data(fixture: Fixture) -> String:
-	var path: String = debug_file_location + "fixture_" + fixture.uuid() + "/"
+	var path: String = debug_file_location + "fixture_" + fixture.get_uuid() + "/"
 
 	if fixture is DMXFixture:
 		Utils.save_json_to_file(path, "_active_ltp_parameters", fixture._active_ltp_parameters)

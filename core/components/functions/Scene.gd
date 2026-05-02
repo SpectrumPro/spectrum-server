@@ -7,10 +7,10 @@ class_name Scene extends Function
 
 
 ## Emitted when the fade in time has changed
-signal on_fade_in_speed_changed(fade_in_time: float)
+signal fade_in_speed_changed(fade_in_time: float)
 
 ## Emitted when the fade out time has changed
-signal on_fade_out_speed_changed(fade_out_time: float)
+signal fade_out_speed_changed(fade_out_time: float)
 
 
 ## Fade in time in seconds, defaults to 2 seconds
@@ -24,35 +24,35 @@ var _animator: DataContainerAnimator = DataContainerAnimator.new()
 
 
 ## Called when this EngineComponent is ready
-func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
-	super._init(p_uuid, p_name)
+func _init(p_uuid: String = UUID.v4(), ...p_args: Array[Variant]) -> void:
+	super._init(p_uuid, p_args)
 	
+	_set_class_name("Scene")
 	set_name("Scene")
-	_set_self_class("Scene")
 	
 	_auto_start = false
 	_auto_stop = false
 
 	_animator.set_container(_data_container)
 
-	_animator.set_layer_id(uuid())
-	_animator.steped.connect(_on_animator_stepped)
-	_animator.finished.connect(_on_animator_finished)
+	_animator.set_layer_id(get_uuid())
+	_animator.steped.connect(_animator_stepped)
+	_animator.finished.connect(_animator_finished)
 	Core.add_child(_animator)
 
-	_settings_manager.register_setting("fade_in", Data.Type.FLOAT, set_fade_in_speed, get_fade_in_speed, [on_fade_in_speed_changed])
-	_settings_manager.register_setting("fade_out", Data.Type.FLOAT, set_fade_out_speed, get_fade_out_speed, [on_fade_out_speed_changed])
+	_settings.register_setting("FadeIn", Data.Type.FLOAT, set_fade_in_speed, get_fade_in_speed, [fade_in_speed_changed])
+	_settings.register_setting("FadeOut", Data.Type.FLOAT, set_fade_out_speed, get_fade_out_speed, [fade_out_speed_changed])
 
-	_settings_manager.register_networked_methods_auto([
+	_settings.register_networked_methods_auto([
 		set_fade_in_speed,
 		set_fade_out_speed,
 		get_fade_in_speed,
 		get_fade_out_speed,
 	])
 
-	_settings_manager.register_networked_signals_auto([
-		on_fade_in_speed_changed,
-		on_fade_out_speed_changed,
+	_settings.register_networked_signals_auto([
+		fade_in_speed_changed,
+		fade_out_speed_changed,
 	])
 
 
@@ -108,13 +108,13 @@ func _handle_intensity_change(p_intensity: float) -> void:
 ## Sets the fade in speed in seconds
 func set_fade_in_speed(speed: float) -> void:
 	_fade_in_speed = abs(speed)
-	on_fade_in_speed_changed.emit(_fade_in_speed)
+	fade_in_speed_changed.emit(_fade_in_speed)
 
 
 ## Sets the fade out speed in seconds
 func set_fade_out_speed(speed: float) -> void:
 	_fade_out_speed = abs(speed)
-	on_fade_out_speed_changed.emit(_fade_out_speed)
+	fade_out_speed_changed.emit(_fade_out_speed)
 
 
 ## Gets the current fade speed
@@ -128,23 +128,23 @@ func get_fade_out_speed() -> float:
 
 
 ## Called when the animator steps
-func _on_animator_stepped(step: float) -> void:
+func _animator_stepped(step: float) -> void:
 	_set_intensity(step)
 
 
 ## Called when the animator is finished
-func _on_animator_finished() -> void:
+func _animator_finished() -> void:
 	_set_transport_state(TransportState.PAUSED)
 
 
 ## Called when this scene is to be deleted
 func delete(p_local_only: bool = false) -> void:
 	_animator.delete()
-	super.delete(p_local_only)
+	super.delete()
 
 
 ## Serializes this scene and returnes it in a dictionary
-func serialize(p_flags: int = 0) -> Dictionary:
+func serialize(p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> Dictionary:
 	return super.serialize(p_flags).merged({
 		"fade_in_speed": _fade_in_speed,
 		"fade_out_speed": _fade_out_speed,
@@ -153,12 +153,12 @@ func serialize(p_flags: int = 0) -> Dictionary:
 
 
 ## Called when this scene is to be loaded from serialized data
-func deserialize(p_serialized_data: Dictionary) -> void:
-	super.deserialize(p_serialized_data)
+func deserialize(p_serialized_data: Dictionary, p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> void:
+	super.deserialize(p_serialized_data, p_flags)
 
 	_fade_in_speed = abs(type_convert(p_serialized_data.get("fade_in_speed", _fade_in_speed), TYPE_FLOAT))
 	_fade_out_speed = abs(type_convert(p_serialized_data.get("fade_out_speed", _fade_out_speed), TYPE_FLOAT))
 	
-	Network.deregister_network_object(_data_container.settings())
+	Network.deregister_network_object(_data_container.get_settings())
 	_data_container.load(p_serialized_data.get("save_data", {}))
-	Network.register_network_object(_data_container.uuid(), _data_container.settings())
+	Network.register_network_object(_data_container.get_uuid(), _data_container.get_settings())

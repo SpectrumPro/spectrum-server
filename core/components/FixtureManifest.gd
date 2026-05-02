@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# Copyright (c) 2026 Liam Sherwin. All rights reserved.
 # This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
 # See the LICENSE file for details.
 
@@ -34,10 +34,10 @@ var _force_defaults: Array[String]
 
 
 ## init
-func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
-	super._init(p_uuid, p_name)
+func _init(p_uuid: String = UUID.v4(), ...p_args: Array[Variant]) -> void:
+	super._init(p_uuid, p_args)
 	
-	_set_self_class("FixtureManifest")
+	_set_class_name("FixtureManifest")
 	set_name("FixtureManifest")
 
 
@@ -233,7 +233,7 @@ func has_force_default(p_parameter) -> bool:
 
 
 ## Overide this function to serialize your object
-func serialize(p_flags: int = 0) -> Dictionary:
+func serialize(p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> Dictionary:
 	return super.serialize(p_flags).merged({
 		"type": type,
 		"manufacturer": manufacturer,
@@ -246,8 +246,8 @@ func serialize(p_flags: int = 0) -> Dictionary:
 
 
 ## Overide this function to handle load requests
-func deserialize(p_serialized_data: Dictionary) -> void:
-	super.deserialize(p_serialized_data)
+func deserialize(p_serialized_data: Dictionary, p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> void:
+	super.deserialize(p_serialized_data, p_flags)
 
 	type = type_convert(p_serialized_data.get("type"), TYPE_INT)
 	manufacturer = type_convert(p_serialized_data.get("manufacturer"), TYPE_STRING)

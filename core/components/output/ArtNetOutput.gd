@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# Copyright (c) 2026 Liam Sherwin. All rights reserved.
 # This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
 # See the LICENSE file for details.
 
@@ -7,13 +7,13 @@ class_name ArtNetOutput extends DMXOutput
 
 
 ## Emitted when the ip is changed
-signal on_ip_changed(ip: String)
+signal ip_changed(ip: String)
 
 ## Emitted when the broadcast state is changed
-signal on_broadcast_state_changed(use_broadcast: bool)
+signal broadcast_state_changed(use_broadcast: bool)
 
 ## Emitted when the universe number is changed
-signal on_universe_number_changed(universe_number: int)
+signal universe_number_changed(universe_number: int)
 
 
 ## IP address of node to connect to
@@ -33,23 +33,23 @@ var _udp_peer = PacketPeerUDP.new()
 
 
 ## Called when this object is first created
-func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
-	super._init(p_uuid, p_name)
+func _init(p_uuid: String = UUID.v4(), ...p_args: Array[Variant]) -> void:
+	super._init(p_uuid, p_args)
 	
+	_set_class_name("ArtNetOutput")
 	set_name("ArtNetOutput")
-	_set_self_class("ArtNetOutput")
 	
-	_settings_manager.register_setting("ip_address", Data.Type.IP, set_ip, get_ip, [on_ip_changed])
-	_settings_manager.register_setting("use_broadcast", Data.Type.BOOL, set_use_broadcast, get_use_broadcast, [on_broadcast_state_changed])
-	_settings_manager.register_setting("universe_number", Data.Type.INT, set_universe_number, get_universe_number, [on_universe_number_changed])
+	_settings.register_setting("IpAddress", Data.Type.IP, set_ip, get_ip, [ip_changed])
+	_settings.register_setting("UseBroadcast", Data.Type.BOOL, set_use_broadcast, get_use_broadcast, [broadcast_state_changed])
+	_settings.register_setting("UniverseNumber", Data.Type.INT, set_universe_number, get_universe_number, [universe_number_changed])
 
-	_settings_manager.register_networked_signals_auto([
-		on_ip_changed,
-		on_broadcast_state_changed,
-		on_universe_number_changed,
+	_settings.register_networked_signals_auto([
+		ip_changed,
+		broadcast_state_changed,
+		universe_number_changed,
 	])
 
-	_settings_manager.register_networked_methods_auto([
+	_settings.register_networked_methods_auto([
 		set_ip,
 		get_ip,
 		set_use_broadcast,
@@ -63,7 +63,7 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 func set_ip(p_ip: String) -> void:
 	_ip_address = p_ip
 
-	on_ip_changed.emit(_ip_address)
+	ip_changed.emit(_ip_address)
 
 	if _connection_state:
 		start()
@@ -80,7 +80,7 @@ func set_use_broadcast(p_use_broadcast: bool) -> void:
 	_use_broadcast = p_use_broadcast
 	_udp_peer.set_broadcast_enabled(_use_broadcast)
 	
-	on_broadcast_state_changed.emit(_use_broadcast)
+	broadcast_state_changed.emit(_use_broadcast)
 
 	if _connection_state:
 		start()
@@ -95,7 +95,7 @@ func get_use_broadcast() -> bool:
 func set_universe_number(p_universe_number: int) -> void:
 	output({})
 	_universe_number = p_universe_number
-	on_universe_number_changed.emit()
+	universe_number_changed.emit()
 
 
 ## Gets the universe number
@@ -110,18 +110,18 @@ func start():
 	var err: Error = _udp_peer.set_dest_address(_ip_address, _port)
 
 	if err:
-		on_connection_state_changed.emit(false, error_string(err))
+		connection_state_changed.emit(false, error_string(err))
 
 	else:
 		_connection_state = true
-		on_connection_state_changed.emit(true, "Art-Net Connected")
+		connection_state_changed.emit(true, "Art-Net Connected")
 
 
 ## Called when this output is stoped
 func stop():
 	output({})
 	_connection_state = false
-	on_connection_state_changed.emit(false, "Art-Net Disconnected")
+	connection_state_changed.emit(false, "Art-Net Disconnected")
 	_udp_peer.close()
 
 
@@ -167,11 +167,11 @@ func output(dmx: Dictionary = dmx_data) -> void:
 ## Called when this object is requested to be deleted
 func delete(p_local_only: bool = false) -> void:
 	stop()
-	super.delete(p_local_only)
+	super.delete()
 
 
 ## Saves this component to a dictonary
-func serialize(p_flags: int = 0) -> Dictionary:
+func serialize(p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> Dictionary:
 	return super.serialize(p_flags).merged({
 		"ip_address": _ip_address,
 		"port": _port,
@@ -181,12 +181,12 @@ func serialize(p_flags: int = 0) -> Dictionary:
 	}.merged({
 		"connection_state": _connection_state,
 		"connection_note": _previous_note
-	} if p_flags & Core.SM_NETWORK else {}))
+	} if p_flags & Data.SerializationFlags.REALTIME else {}))
 
 
 ## Loads this component from a dictonary
-func deserialize(p_serialized_data: Dictionary) -> void:
-	super.deserialize(p_serialized_data)
+func deserialize(p_serialized_data: Dictionary, p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> void:
+	super.deserialize(p_serialized_data, p_flags)
 
 	_ip_address = type_convert(p_serialized_data.get("ip_address", _ip_address), TYPE_STRING)
 	_port = type_convert(p_serialized_data.get("port", _port), TYPE_INT)
@@ -195,4 +195,4 @@ func deserialize(p_serialized_data: Dictionary) -> void:
 	_auto_start = type_convert(p_serialized_data.get("auto_start", _auto_start), TYPE_BOOL)
 
 	if _auto_start:
-		start()	
+		start()

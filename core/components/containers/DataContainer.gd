@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# Copyright (c) 2026 Liam Sherwin. All rights reserved.
 # This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
 # See the LICENSE file for details.
 
@@ -7,25 +7,25 @@ class_name DataContainer extends EngineComponent
 
 
 ## Emitted when ContainerItems are stored
-signal on_items_stored(items: Array)
+signal items_stored(items: Array)
 
 ## Emitted when ContainerItems are erased
-signal on_items_erased(items: Array)
+signal items_erased(items: Array)
 
 ## Emitted when the function is changed in mutiple ContainerItems
-signal on_items_function_changed(items: Array, function: String)
+signal items_function_changed(items: Array, function: String)
 
 ## Emitted when the value is changed in mutiple ContainerItems
-signal on_items_value_changed(items: Array, value: float)
+signal items_value_changed(items: Array, value: float)
 
 ## Emitted when the can_fade state is changed in mutiple ContainerItems
-signal on_items_can_fade_changed(items: Array, can_fade: bool)
+signal items_can_fade_changed(items: Array, can_fade: bool)
 
 ## Emitted when the start point is changed in mutiple ContainerItems
-signal on_items_start_changed(items: Array, start: float)
+signal items_start_changed(items: Array, start: float)
 
 ## Emitted when the stop point is changed in mutiple ContainerItems
-signal on_items_stop_changed(items: Array, stop: float)
+signal items_stop_changed(items: Array, stop: float)
 
 
 ## All ContainerItems
@@ -36,13 +36,13 @@ var _fixtures: Dictionary[Fixture, Dictionary]
 
 
 ## init
-func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
-	super._init(p_uuid, p_name)
+func _init(p_uuid: String = UUID.v4(), ...p_args: Array[Variant]) -> void:
+	super._init(p_uuid, p_args)
 	
+	_set_class_name("DataContainer")
 	set_name("DataContainer")
-	_set_self_class("DataContainer")
 
-	_settings_manager.register_networked_methods_auto([
+	_settings.register_networked_methods_auto([
 		get_items,
 		get_fixtures,
 		get_data_for,
@@ -59,23 +59,23 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 		set_stop,
 	])
 
-	_settings_manager.set_method_allow_serialize(get_items)
-	_settings_manager.set_method_allow_serialize(get_data_for)
+	_settings.set_method_allow_serialize(get_items)
+	_settings.set_method_allow_serialize(get_data_for)
 
-	_settings_manager.set_method_allow_deserialize(store_item)
-	_settings_manager.set_method_allow_deserialize(store_items)
+	_settings.set_method_allow_deserialize(store_item)
+	_settings.set_method_allow_deserialize(store_items)
 
-	_settings_manager.register_networked_signals_auto([
-		on_items_stored,
-		on_items_erased,
-		on_items_function_changed,
-		on_items_value_changed,
-		on_items_can_fade_changed,
-		on_items_start_changed,
-		on_items_stop_changed,
+	_settings.register_networked_signals_auto([
+		items_stored,
+		items_erased,
+		items_function_changed,
+		items_value_changed,
+		items_can_fade_changed,
+		items_start_changed,
+		items_stop_changed,
 	])
 
-	_settings_manager.set_signal_allow_serialize(on_items_stored)
+	_settings.set_signal_allow_serialize(items_stored)
 
 
 ## Gets all the ContainerItems
@@ -161,10 +161,10 @@ func store_item(p_item: ContainerItem, no_signal: bool = false) -> bool:
 	_fixtures.get_or_add(p_item.get_fixture(), {}).get_or_add(p_item.get_zone(), {})[p_item.get_parameter()] = p_item
 
 	ComponentDB.register_component(p_item)
-	p_item.on_delete_requested.connect(erase_item.bind(p_item))
+	p_item.delete_requested.connect(erase_item.bind(p_item))
 
 	if not no_signal:
-		on_items_stored.emit([p_item])
+		items_stored.emit([p_item])
 	
 	return true
 
@@ -179,7 +179,7 @@ func store_items(p_items: Array) -> void:
 				just_added_items.append(item)
 	
 	if just_added_items:
-		on_items_stored.emit(just_added_items)
+		items_stored.emit(just_added_items)
 
 
 ## Erases an item
@@ -197,7 +197,7 @@ func erase_item(p_item: ContainerItem, no_signal: bool = false) -> bool:
 			_fixtures.erase(p_item.get_fixture())
 
 	if not no_signal:
-		on_items_erased.emit(p_item)
+		items_erased.emit(p_item)
 	
 	return true
 
@@ -212,7 +212,7 @@ func erase_items(p_items: Array) -> void:
 				just_erased_items.append(item)
 	
 	if just_erased_items:
-		on_items_erased.emit(just_erased_items)
+		items_erased.emit(just_erased_items)
 
 
 ## Sets the function of mutiple items
@@ -225,7 +225,7 @@ func set_function(p_items: Array, p_function: String) -> void:
 				changed_items.append(item)
 	
 	if changed_items:
-		on_items_function_changed.emit(changed_items, p_function)
+		items_function_changed.emit(changed_items, p_function)
 
 
 ## Sets the value of mutiple items
@@ -238,7 +238,7 @@ func set_value(p_items: Array, p_value: float) -> void:
 				changed_items.append(item)
 	
 	if changed_items:
-		on_items_value_changed.emit(changed_items, p_value)
+		items_value_changed.emit(changed_items, p_value)
 
 
 ## Sets the value of mutiple items
@@ -251,7 +251,7 @@ func set_can_fade(p_items: Array, p_can_fade: bool) -> void:
 				changed_items.append(item)
 	
 	if changed_items:
-		on_items_can_fade_changed.emit(changed_items, p_can_fade)
+		items_can_fade_changed.emit(changed_items, p_can_fade)
 
 
 ## Sets the value of mutiple items
@@ -264,7 +264,7 @@ func set_start(p_items: Array, p_start: float) -> void:
 				changed_items.append(item)
 	
 	if changed_items:
-		on_items_start_changed.emit(changed_items, p_start)
+		items_start_changed.emit(changed_items, p_start)
 
 
 ## Sets the value of mutiple items
@@ -277,39 +277,35 @@ func set_stop(p_items: Array, p_stop: float) -> void:
 				changed_items.append(item)
 	
 	if changed_items:
-		on_items_stop_changed.emit(changed_items, p_stop)
+		items_stop_changed.emit(changed_items, p_stop)
 
 
 ## Serializes this DataContainer and returnes it in a dictionary
 func _serialize() -> Dictionary:
 	return {
-		"items": Utils.seralise_component_array(_items)
+		"items": seralise_component_array(_items)
 	}
 
 
 ## Called when this DataContainer is to be loaded from serialized data
 func _load(serialized_data: Dictionary) -> void:
-	store_items(Utils.deseralise_component_array(type_convert(serialized_data.get("items", []), TYPE_ARRAY)))
+	store_items(deseralise_component_array(type_convert(serialized_data.get("items", []), TYPE_ARRAY)))
 
 
 ## Handles delete requests
-func _delete() -> void:
+func delete() -> void:
 	for item: ContainerItem in _items:
-		item.delete(true)
-
-
-## Handles delete requests
-func delete(p_local_only: bool = false) -> void:
-	_delete()
-	super.delete(p_local_only)
+		item.delete()
+	
+	super.delete()
 
 
 ## Serializes this Datacontainer and returnes it in a dictionary
-func serialize(p_flags: int = 0) -> Dictionary:
+func serialize(p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> Dictionary:
 	return super.serialize(p_flags).merged(_serialize())
 
 
 ## Loads this DataContainer from a dictonary
-func deserialize(p_serialized_data: Dictionary) -> void:
-	super.deserialize(p_serialized_data)
+func deserialize(p_serialized_data: Dictionary, p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> void:
+	super.deserialize(p_serialized_data, p_flags)
 	_load(p_serialized_data)

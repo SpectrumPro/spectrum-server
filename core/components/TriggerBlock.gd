@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# Copyright (c) 2026 Liam Sherwin. All rights reserved.
 # This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
 # See the LICENSE file for details.
 
@@ -7,22 +7,22 @@ class_name TriggerBlock extends EngineComponent
 
 
 ## Emitted when a trigger is added
-signal on_trigger_added(component: EngineComponent, id: String, name: String, row: int, column: int)
+signal trigger_added(component: EngineComponent, id: String, name: String, row: int, column: int)
 
 ## Emitted when a trigger is added
-signal on_trigger_removed(row: int, column: int)
+signal trigger_removed(row: int, column: int)
 
 ## Emitted when a column is reset
-signal on_column_reset(column: int)
+signal column_reset(column: int)
 
 ## Emitted when a trigger name is changes
-signal on_trigger_name_changed(row: int, column: int, name: String)
+signal trigger_name_changed(row: int, column: int, name: String)
 
 ## Emitted when a trigger is triggred
-signal on_trigger_up(row: int, column: int)
+signal trigger_up(row: int, column: int)
 
 ## Emitted when a trigger is triggred
-signal on_trigger_down(row: int, column: int)
+signal trigger_down(row: int, column: int)
 
 
 ## All triggeres stores as { row: { column: {trigger...} } }
@@ -30,14 +30,14 @@ var _triggers: Dictionary[int, Dictionary]
 
 
 ## Ready
-func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
-	super._init(p_uuid, p_name)
+func _init(p_uuid: String = UUID.v4(), ...p_args: Array[Variant]) -> void:
+	super._init(p_uuid, p_args)
 	
+	_set_class_name("TriggerBlock")
 	set_name("TriggerBlock")
-	_set_self_class("TriggerBlock")
 
-	_settings_manager.register_networked_methods_auto([
-  	  	add_trigger,
+	_settings.register_networked_methods_auto([
+		add_trigger,
 		remove_trigger,
 		reset_column,
 		rename_trigger,
@@ -46,13 +46,13 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 		get_triggers,
 	])
 
-	_settings_manager.register_networked_signals_auto([
-		on_trigger_added,
-		on_trigger_removed,
-		on_column_reset,
-		on_trigger_name_changed,
-		on_trigger_up,
-		on_trigger_down,
+	_settings.register_networked_signals_auto([
+		trigger_added,
+		trigger_removed,
+		column_reset,
+		trigger_name_changed,
+		trigger_up,
+		trigger_down,
 	])
 
 
@@ -68,7 +68,7 @@ func add_trigger(p_component: EngineComponent, p_id: String, p_name: String, p_r
 	}
 
 	if not no_signal:
-		on_trigger_added.emit(p_component, p_id, p_name, p_row, p_column)
+		trigger_added.emit(p_component, p_id, p_name, p_row, p_column)
 
 	return true
 
@@ -81,7 +81,7 @@ func remove_trigger(p_row: int, p_column: int, no_signal: bool = false) -> bool:
 	_triggers.get(p_row, {}).erase(p_column)
 
 	if not no_signal:
-		on_trigger_removed.emit(p_row, p_column)
+		trigger_removed.emit(p_row, p_column)
 
 	return true
 
@@ -92,7 +92,7 @@ func reset_column(p_column: int) -> void:
 		if p_column in _triggers[row]:
 			remove_trigger(row, p_column, true)
 	
-	on_column_reset.emit(p_column)
+	column_reset.emit(p_column)
 
 
 ## Renames a trigger
@@ -103,7 +103,7 @@ func rename_trigger(p_row: int, p_column: int, p_name: String, no_signal: bool =
 	_triggers[p_row][p_column].name = p_name
 
 	if not no_signal:
-		on_trigger_name_changed.emit(p_row, p_column, no_signal)
+		trigger_name_changed.emit(p_row, p_column, no_signal)
 
 	return true
 
@@ -125,7 +125,7 @@ func call_trigger_up(p_row: int, p_column: int, p_value: Variant = null) -> void
 	elif not config.args:
 		config.up.call()
 
-	on_trigger_up.emit(p_row, p_column, p_value)
+	trigger_up.emit(p_row, p_column, p_value)
 
 
 ## Triggers a trigger
@@ -145,7 +145,7 @@ func call_trigger_down(p_row: int, p_column: int, p_value: Variant = null) -> vo
 	elif not config.args:
 		config.down.call()
 
-	on_trigger_down.emit(p_row, p_column, p_value)
+	trigger_down.emit(p_row, p_column, p_value)
 
 
 ## Gets all the triggers
@@ -154,7 +154,7 @@ func get_triggers() -> Dictionary[int, Dictionary]:
 
 
 ## Overide this function to serialize your object
-func serialize(p_flags: int = 0) -> Dictionary:
+func serialize(p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> Dictionary:
 	var triggers: Dictionary[int, Dictionary]
 
 	for row: int in _triggers:
@@ -172,8 +172,8 @@ func serialize(p_flags: int = 0) -> Dictionary:
 
 
 ## Overide this function to handle load requests
-func deserialize(p_serialized_data: Dictionary) -> void:
-	super.deserialize(p_serialized_data)
+func deserialize(p_serialized_data: Dictionary, p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> void:
+	super.deserialize(p_serialized_data, p_flags)
 
 	var triggers: Dictionary = type_convert(p_serialized_data.get("triggers", {}), TYPE_DICTIONARY)
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# Copyright (c) 2026 Liam Sherwin. All rights reserved.
 # This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
 # See the LICENSE file for details.
 
@@ -7,19 +7,19 @@ class_name Cue extends DataContainer
 
 
 ## Emitted when the QID is changed
-signal on_qid_changed(qid: String)
+signal qid_changed(qid: String)
 
 ## Emitted when the fade time it changed
-signal on_fade_time_changed(new_fade_time: float)
+signal fade_time_changed(new_fade_time: float)
 
 ## Emitted when the pre_wait time is changed
-signal on_pre_wait_time_changed(pre_wait: float)
+signal pre_wait_time_changed(pre_wait: float)
 
 ## Emitted when the trigger mode it changed
-signal on_trigger_mode_changed(trigger_mode: TriggerMode)
+signal trigger_mode_changed(trigger_mode: TriggerMode)
 
 ## Emitted when the tracking state is changed
-signal on_tracking_mode_changed(tracking_mode: TrackingMode)
+signal tracking_mode_changed(tracking_mode: TrackingMode)
 
 
 ## Enumeration for the trigger modes
@@ -46,19 +46,19 @@ var _tracking_mode: TrackingMode = TrackingMode.TRACKING
 
 
 ## init
-func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
-	super._init(p_uuid, p_name)
+func _init(p_uuid: String = UUID.v4(), ...p_args: Array[Variant]) -> void:
+	super._init(p_uuid, p_args)
 	
+	_set_class_name("Cue")
 	set_name("Cue")
-	_set_self_class("Cue")
 	
-	_settings_manager.register_setting("qid", Data.Type.STRING, set_qid, get_qid, [on_qid_changed])
-	_settings_manager.register_setting("trigger_mode", Data.Type.ENUM, set_trigger_mode, get_trigger_mode, [on_trigger_mode_changed]).set_enum_dict(TriggerMode)
-	_settings_manager.register_setting("tracking_mode", Data.Type.ENUM, set_tracking_mode, get_tracking_mode, [on_tracking_mode_changed]).set_enum_dict(TrackingMode)
-	_settings_manager.register_control("fade_time", Data.Type.FLOAT, set_fade_time, get_fade_time, [on_fade_time_changed])
-	_settings_manager.register_control("pre_wait", Data.Type.FLOAT, set_pre_wait, get_pre_wait, [on_pre_wait_time_changed])
+	_settings.register_setting("QID", Data.Type.STRING, set_qid, get_qid, [qid_changed])
+	_settings.register_setting("TriggerMode", Data.Type.ENUM, set_trigger_mode, get_trigger_mode, [trigger_mode_changed]).set_enum_dict(TriggerMode)
+	_settings.register_setting("TrackingMode", Data.Type.ENUM, set_tracking_mode, get_tracking_mode, [tracking_mode_changed]).set_enum_dict(TrackingMode)
+	_settings.register_control("FadeTime", Data.Type.FLOAT, set_fade_time, get_fade_time, [fade_time_changed])
+	_settings.register_control("PreWait", Data.Type.FLOAT, set_pre_wait, get_pre_wait, [pre_wait_time_changed])
 
-	_settings_manager.register_networked_methods_auto([
+	_settings.register_networked_methods_auto([
 		set_qid,
 		set_fade_time,
 		set_pre_wait,
@@ -71,12 +71,12 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 		get_tracking_mode,
 	])
 
-	_settings_manager.register_networked_signals_auto([
-		on_qid_changed,
-		on_fade_time_changed,
-		on_pre_wait_time_changed,
-		on_trigger_mode_changed,
-		on_tracking_mode_changed,
+	_settings.register_networked_signals_auto([
+		qid_changed,
+		fade_time_changed,
+		pre_wait_time_changed,
+		trigger_mode_changed,
+		tracking_mode_changed,
 	])
 
 
@@ -86,7 +86,7 @@ func set_qid(p_qid: String) -> void:
 		return
 	
 	_qid = p_qid
-	on_qid_changed.emit(_qid)
+	qid_changed.emit(_qid)
 
 
 ## Sets the fade time in seconds
@@ -95,7 +95,7 @@ func set_fade_time(p_fade_time: float) -> void:
 		return
 	
 	_fade_time = p_fade_time
-	on_fade_time_changed.emit(_fade_time)
+	fade_time_changed.emit(_fade_time)
 
 
 ## Sets the pre-wait time in seconds
@@ -104,7 +104,7 @@ func set_pre_wait(p_pre_wait: float) -> void:
 		return
 	
 	_pre_wait = p_pre_wait
-	on_pre_wait_time_changed.emit(_pre_wait)
+	pre_wait_time_changed.emit(_pre_wait)
 
 
 ## Sets the trigger mode
@@ -113,7 +113,7 @@ func set_trigger_mode(p_trigger_mode: TriggerMode) -> void:
 		return
 	
 	_trigger_mode = p_trigger_mode
-	on_trigger_mode_changed.emit(_trigger_mode)
+	trigger_mode_changed.emit(_trigger_mode)
 
 
 ## Sets the tracking mode state
@@ -122,7 +122,7 @@ func set_tracking_mode(p_tracking_mode: TrackingMode) -> void:
 		return
 	
 	_tracking_mode = p_tracking_mode
-	on_tracking_mode_changed.emit(_tracking_mode)
+	tracking_mode_changed.emit(_tracking_mode)
 
 
 ## Returns the QID
@@ -151,7 +151,7 @@ func get_tracking_mode() -> TrackingMode:
 
 
 ## Returnes a serialized copy of this cue
-func serialize(p_flags: int = 0) -> Dictionary:
+func serialize(p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> Dictionary:
 	return super.serialize(p_flags).merged({
 		"qid": _qid,
 		"fade_time": _fade_time,
@@ -162,8 +162,8 @@ func serialize(p_flags: int = 0) -> Dictionary:
 
 
 ## Loads this Cue from a dictionary
-func deserialize(p_serialized_data: Dictionary) -> void:
-	super.deserialize(p_serialized_data)
+func deserialize(p_serialized_data: Dictionary, p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> void:
+	super.deserialize(p_serialized_data, p_flags)
 	
 	_qid = type_convert(p_serialized_data.get("qid", _qid), TYPE_STRING)
 	_fade_time = type_convert(p_serialized_data.get("fade_time", _fade_time), TYPE_FLOAT)

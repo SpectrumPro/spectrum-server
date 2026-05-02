@@ -1,7 +1,8 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2026 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
-class_name CoreProgrammer extends Node
+class_name CoreProgrammer extends CoreGlobal
 ## Engine class for programming lights, colors, positions, etc.
 
 
@@ -38,16 +39,13 @@ enum MixMode {
 ## Current data in the programmer
 var _container: DataContainer = DataContainer.new()
 
-## The SettingsManager for this Programmer
-var settings_manager: SettingsManager = SettingsManager.new()
-
 
 ## init
-func _init() -> void:
-	settings_manager.set_owner(self)
-	settings_manager.set_inheritance_array(["Programmer"])
-
-	settings_manager.register_networked_methods_auto([
+func _init(p_uuid: String = "", ...p_args: Array[Variant]) -> void:
+	super._init(p_uuid, p_args)
+	_set_class_name("CoreProgrammer")
+	
+	_settings.register_networked_methods_auto([
 		clear,
 		set_parameter,
 		erase_parameter,
@@ -63,8 +61,8 @@ func _init() -> void:
 		shortcut_set_color,
 		store_into,
 	])
-
-	settings_manager.register_networked_signals_auto([
+	
+	_settings.register_networked_signals_auto([
 		on_cleared
 	])
 

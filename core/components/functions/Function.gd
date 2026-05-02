@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# Copyright (c) 2026 Liam Sherwin. All rights reserved.
 # This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.0 or later.
 # See the LICENSE file for details
 
@@ -7,22 +7,22 @@ class_name Function extends EngineComponent
 
 
 ## Emitted when the current intensity of this function changes, eg the fade position of a scene
-signal on_intensity_changed(intensity: float)
+signal intensity_changed(intensity: float)
 
 ## Emitted when the active state changes
-signal on_active_state_changed(state: ActiveState)
+signal active_state_changed(state: ActiveState)
 
 ## Emitted when the transport state changes
-signal on_transport_state_changed(state: TransportState)
+signal transport_state_changed(state: TransportState)
 
 ## Emitted when the PriorityMode state changes
-signal on_priority_mode_state_changed(state: PriorityMode)
+signal priority_mode_state_changed(state: PriorityMode)
 
 ## Emitted when auto start is changed
-signal on_auto_start_changed(auto_start: bool)
+signal auto_start_changed(auto_start: bool)
 
 ## Emitted when auto stop is changed
-signal on_auto_stop_changed(auto_stop: bool)
+signal auto_stop_changed(auto_stop: bool)
 
 
 ## Active State
@@ -71,31 +71,33 @@ var _auto_stop: bool = true
 var _data_container: DataContainer = DataContainer.new()
 
 
-## Constructor
-func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
-	super._init(p_uuid, p_name)
+## init
+func _init(p_uuid: String = UUID.v4(), ...p_args: Array[Variant]) -> void:
+	super._init(p_uuid, p_args)
 
+	_set_class_name("Function")
 	set_name("Function")
-	_set_self_class("Function")
 
-	_settings_manager.register_setting("auto_start", Data.Type.BOOL, set_auto_start, get_auto_start, [on_auto_start_changed])
-	_settings_manager.register_setting("auto_stop", Data.Type.BOOL, set_auto_stop, get_auto_stop, [on_auto_stop_changed])
-	_settings_manager.register_setting("active_state", Data.Type.ENUM, set_active_state, get_active_state, [on_active_state_changed]).set_enum_dict(ActiveState)
-	_settings_manager.register_setting("transport_state", Data.Type.ENUM, set_transport_state, get_transport_state, [on_transport_state_changed]).set_enum_dict(TransportState)
-	_settings_manager.register_setting("priority_mode", Data.Type.ENUM, set_priority_mode_state, get_priority_mode_state, [on_priority_mode_state_changed]).set_enum_dict(PriorityMode)
+	_settings.register_setting("AutoStart", Data.Type.BOOL, set_auto_start, get_auto_start, [auto_start_changed])
+	_settings.register_setting("AutoStop", Data.Type.BOOL, set_auto_stop, get_auto_stop, [auto_stop_changed])
+	_settings.register_setting("ActiveState", Data.Type.ENUM, set_active_state, get_active_state, [active_state_changed]).set_enum_dict(ActiveState)
+	_settings.register_setting("TransportState", Data.Type.ENUM, set_transport_state, get_transport_state, [transport_state_changed]).set_enum_dict(TransportState)
+	_settings.register_setting("PriorityMode", Data.Type.ENUM, set_priority_mode_state, get_priority_mode_state, [priority_mode_state_changed]).set_enum_dict(PriorityMode)
 	
-	_settings_manager.register_control("intensity", Data.Type.FLOAT, set_intensity, get_intensity, [on_intensity_changed])
-	_settings_manager.register_control("on",		Data.Type.ACTION, on)
-	_settings_manager.register_control("off",		Data.Type.ACTION, off)
-	_settings_manager.register_control("toggle",	Data.Type.ACTION, toggle).action_mode_toggle()
-	_settings_manager.register_control("play",		Data.Type.ACTION, play)
-	_settings_manager.register_control("pause",		Data.Type.ACTION, pause)
-	_settings_manager.register_control("temp",		Data.Type.ACTION, full).action_mode_hold(blackout)
-	_settings_manager.register_control("flash",		Data.Type.ACTION, on).action_mode_hold(off)
-	_settings_manager.register_control("full",		Data.Type.ACTION, full)
-	_settings_manager.register_control("blackout",	Data.Type.ACTION, blackout)
+	_settings.register_control("Intensity", Data.Type.FLOAT, set_intensity, get_intensity, [intensity_changed])
+	_settings.register_control("On",		Data.Type.ACTION, on)
+	_settings.register_control("Off",		Data.Type.ACTION, off)
+	_settings.register_control("Toggle",	Data.Type.ACTION, toggle).set_action_mode(SettingsModule.ActionMode.TOGGLE)
+	_settings.register_control("Play",		Data.Type.ACTION, play)
+	_settings.register_control("Pause",		Data.Type.ACTION, pause)
+	_settings.register_control("Temp",		Data.Type.ACTION, on)\
+	.set_action_mode(SettingsModule.ActionMode.HOLD).set_hold_release_callable(off)
+	_settings.register_control("Flash",		Data.Type.ACTION, full)\
+	.set_action_mode(SettingsModule.ActionMode.HOLD).set_hold_release_callable(blackout)
+	_settings.register_control("Full",		Data.Type.ACTION, full)
+	_settings.register_control("Blackout",	Data.Type.ACTION, blackout)
 
-	_settings_manager.register_networked_methods_auto([
+	_settings.register_networked_methods_auto([
 		on,
 		off,
 		toggle,
@@ -120,16 +122,16 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 		get_data_container
 	])
 
-	_settings_manager.register_networked_signals_auto([
-		on_intensity_changed,
-		on_active_state_changed,
-		on_transport_state_changed,
-		on_priority_mode_state_changed,
-		on_auto_start_changed,
-		on_auto_stop_changed
+	_settings.register_networked_signals_auto([
+		intensity_changed,
+		active_state_changed,
+		transport_state_changed,
+		priority_mode_state_changed,
+		auto_start_changed,
+		auto_stop_changed
 	])
 	
-	Network.register_network_object(_data_container.uuid(), _data_container.settings())
+	Network.register_network_object(_data_container.get_uuid(), _data_container.get_settings())
 
 
 ## Gets the ActiveState
@@ -204,7 +206,7 @@ func set_priority_mode_state(p_priority_mode: PriorityMode) -> void:
 		return
 	
 	_priority_mode = p_priority_mode
-	on_priority_mode_state_changed.emit(_priority_mode)
+	priority_mode_state_changed.emit(_priority_mode)
 	_handle_priority_mode_change(_priority_mode)
 
 
@@ -214,7 +216,7 @@ func set_auto_start(p_auto_start: bool) -> void:
 		return
 	
 	_auto_start = p_auto_start
-	on_auto_start_changed.emit(_auto_start)
+	auto_start_changed.emit(_auto_start)
 
 
 ## Sets the auto stop state
@@ -223,7 +225,7 @@ func set_auto_stop(p_auto_stop: bool) -> void:
 		return
 	
 	_auto_stop = p_auto_stop
-	on_auto_stop_changed.emit(_auto_stop)
+	auto_stop_changed.emit(_auto_stop)
 
 
 ## Enables this Function
@@ -275,7 +277,7 @@ func full() -> void:
 
 
 ## Returns serialized version of this component, change the mode to define if this object should be serialized for saving to disk, or for networking to clients
-func serialize(p_flags: int = 0) -> Dictionary:
+func serialize(p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> Dictionary:
 	return super.serialize(p_flags).merged({
 		"priority_mode": _priority_mode,
 		"auto_start": _auto_start,
@@ -284,12 +286,12 @@ func serialize(p_flags: int = 0) -> Dictionary:
 		"intensity": _intensity,
 		"active_state": _active_state,
 		"transport_state": _transport_state,
-	} if p_flags & Core.SM_NETWORK else {}))
+	} if p_flags & Data.SerializationFlags.REALTIME else {}))
 
 
 ## Loades this object from a serialized version
-func deserialize(p_serialized_data: Dictionary) -> void:
-	super.deserialize(p_serialized_data)
+func deserialize(p_serialized_data: Dictionary, p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> void:
+	super.deserialize(p_serialized_data, p_flags)
 
 	set_priority_mode_state(type_convert(p_serialized_data.get("priority_mode", _priority_mode), TYPE_INT))
 
@@ -298,15 +300,15 @@ func deserialize(p_serialized_data: Dictionary) -> void:
 
 
 ## Deletes this component localy, with out contacting the server. Usefull when handling server side delete requests
-func delete(p_local_only: bool = false) -> void:
-	Network.deregister_network_object(_data_container.settings())
-	super.delete(p_local_only)
+func delete() -> void:
+	Network.deregister_network_object(_data_container.get_settings())
+	super.delete()
 
 
 ## Internal: Sets this scenes ActiveState
 func _set_active_state(active_state: ActiveState) -> void:
 	_active_state = active_state
-	on_active_state_changed.emit(_active_state)
+	active_state_changed.emit(_active_state)
 
 
 ## Override this function to handle ActiveState changes
@@ -320,7 +322,7 @@ func _set_transport_state(transport_state: TransportState) -> void:
 		_previous_transport_state = _transport_state
 	
 	_transport_state = transport_state
-	on_transport_state_changed.emit(_transport_state)
+	transport_state_changed.emit(_transport_state)
 
 
 ## Override this function to handle TransportState changes
@@ -331,7 +333,7 @@ func _handle_transport_state_change(transport_state: TransportState) -> void:
 ## Internal: Sets the intensity of this function, from 0.0 to 1.0
 func _set_intensity(p_intensity: float) -> void:
 	_intensity = p_intensity
-	on_intensity_changed.emit(_intensity)
+	intensity_changed.emit(_intensity)
 
 
 ## Override this function to handle intensity changes
@@ -343,7 +345,7 @@ func _handle_intensity_change(p_intensity: float) -> void:
 func _handle_priority_mode_change(p_priority_mode: PriorityMode) -> void:
 	match p_priority_mode:
 		PriorityMode.HTP:
-			FixtureLibrary.remove_global_ltp_layer(uuid())
+			FixtureLibrary.remove_global_ltp_layer(get_uuid())
 		
 		PriorityMode.LTP:
-			FixtureLibrary.add_global_ltp_layer(uuid())
+			FixtureLibrary.add_global_ltp_layer(get_uuid())

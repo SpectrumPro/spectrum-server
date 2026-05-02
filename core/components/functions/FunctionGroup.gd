@@ -7,13 +7,13 @@ class_name FunctionGroup extends Function
 
 
 ## Emitted when functions are added
-signal on_functions_added(functions: Array)
+signal functions_added(functions: Array)
 
 ## Emitted when functions are removed
-signal on_functions_removed(functions: Array)
+signal functions_removed(functions: Array)
 
 ## Emitted when a Function's index is changed
-signal on_functions_index_changed(function: Function, index: int)
+signal functions_index_changed(function: Function, index: int)
 
 
 ## Refmap for storing functions
@@ -21,24 +21,24 @@ var _functions: Array[Function]
 
 
 ## init
-func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
-	super._init(p_uuid, p_name)
+func _init(p_uuid: String = UUID.v4(), ...p_args: Array[Variant]) -> void:
+	super._init(p_uuid, p_args)
 	
+	_set_class_name("FunctionGroup")
 	set_name("FunctionGroup")
-	_set_self_class("FunctionGroup")
 
-	_settings_manager.register_networked_signals_auto([
-		on_functions_added,
-		on_functions_removed,
-		on_functions_index_changed,
+	_settings.register_networked_signals_auto([
+		functions_added,
+		functions_removed,
+		functions_index_changed,
 	])
 
-	_settings_manager.register_networked_methods_auto([
+	_settings.register_networked_methods_auto([
 		add_function,
 		add_functions,
 		remove_function,
 		remove_functions,
-		set_function_index,
+		set_functiindex,
 		move_up,
 		move_down,
 		get_functions,
@@ -51,11 +51,11 @@ func add_function(p_function: Function, no_signal: bool = false) -> bool:
 	if not p_function or p_function in _functions or p_function is FunctionGroup:
 		return false
 
-	p_function.on_delete_requested.connect(remove_function.bind(p_function))
+	p_function.delete_requested.connect(remove_function.bind(p_function))
 	_functions.append(p_function)
 
 	if not no_signal:
-		on_functions_added.emit([p_function])
+		functions_added.emit([p_function])
 
 	return true
 
@@ -70,7 +70,7 @@ func add_functions(p_functions: Array) -> void:
 				just_added_functions.append(function)
 
 	if just_added_functions:
-		on_functions_added.emit(just_added_functions)
+		functions_added.emit(just_added_functions)
 
 
 ## Removes a function
@@ -81,7 +81,7 @@ func remove_function(p_function: Function, no_signal: bool = false) -> bool:
 	_functions.erase(p_function)
 
 	if not no_signal:
-		on_functions_removed.emit([p_function])
+		functions_removed.emit([p_function])
 
 	return true
 
@@ -96,18 +96,18 @@ func remove_functions(p_functions: Array) -> void:
 				just_removed_functions.append(function)
 
 	if just_removed_functions:
-		on_functions_removed.emit(just_removed_functions)
+		functions_removed.emit(just_removed_functions)
 
 
 ## Sets the indes of a function
-func set_function_index(p_function: Function, p_index: int) -> bool:
+func set_functiindex(p_function: Function, p_index: int) -> bool:
 	if p_function not in _functions or p_index > _functions.size() - 1:
 		return false
 
 	_functions.erase(p_function)
 	_functions.insert(p_index, p_function)
 
-	on_functions_index_changed.emit(p_function, p_index)
+	functions_index_changed.emit(p_function, p_index)
 
 	return true
 
@@ -117,7 +117,7 @@ func move_up(p_function: Function) -> void:
 	if p_function not in _functions:
 		return
 
-	set_function_index(p_function, clamp(_functions.find(p_function) - 1, 0, _functions.size()))
+	set_functiindex(p_function, clamp(_functions.find(p_function) - 1, 0, _functions.size()))
 
 
 ## Moves a Function down an index
@@ -125,7 +125,7 @@ func move_down(p_function: Function) -> void:
 	if p_function not in _functions:
 		return
 
-	set_function_index(p_function, clamp(_functions.find(p_function) + 1, 0, _functions.size()))
+	set_functiindex(p_function, clamp(_functions.find(p_function) + 1, 0, _functions.size()))
 
 
 ## Gets all the functions
@@ -157,23 +157,24 @@ func _handle_intensity_change(p_intensity: float) -> void:
 
 
 ## Overide this function to serialize your object
-func serialize(p_flags: int = 0) -> Dictionary:
+func serialize(p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> Dictionary:
 	var function_uuids: Array[String]
 
 	for function: Function in _functions:
 		function_uuids.append(function.uuid)
+	
 	return super.serialize(p_flags).merged({
 		"functions": function_uuids,
 	})
 
 
 ## Overide this function to handle load requests
-func deserialize(p_serialized_data: Dictionary) -> void:
-	super.deserialize(p_serialized_data)
+func deserialize(p_serialized_data: Dictionary, p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> void:
+	super.deserialize(p_serialized_data, p_flags)
 
-	var function_uuids: Array = type_convert(p_serialized_data.get("functions", []), TYPE_ARRAY)
+	var functiuuids: Array = type_convert(p_serialized_data.get("functions", []), TYPE_ARRAY)
 
-	for uuid: Variant in function_uuids:
+	for uuid: Variant in functiuuids:
 		if not uuid is String:
 			return
 		

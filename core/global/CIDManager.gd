@@ -1,7 +1,8 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2026 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
-class_name ComponentIDManager extends Node
+class_name CoreCIDManager extends CoreGlobal
 ## Manages CIDs (Component ID Numbers)
 
 
@@ -11,6 +12,12 @@ signal on_componend_id_changed(cid: int, component: EngineComponent)
 
 ## Stores all components's CID numbers sepreated by classnames
 var _cids_by_classname: Dictionary[String, RefMap]
+
+
+## init
+func _init(p_uuid: String = "", ...p_args: Array[Variant]) -> void:
+	super._init(p_uuid, p_args)
+	_set_class_name("CoreCIDManager")
 
 
 ## Connect reset signal

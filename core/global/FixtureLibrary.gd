@@ -1,8 +1,8 @@
-# Copyright (c) 2025 Liam Sherwin. All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.0 or later.
+# Copyright (c) 2026 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
 # See the LICENSE file for details.
 
-class_name CoreFixtureLibrary extends Node
+class_name CoreFixtureLibrary extends CoreGlobal
 ## The main fixture library used to manage fixture manifests
 
 
@@ -40,23 +40,21 @@ var _manifest_importers: Dictionary[String, ManifestImport] = {
 ## Global LTP layers for fixtures
 var _global_ltp_layers: Dictionary[String, Variant]
 
-## The SettingsManager
-var settings_manager: SettingsManager = SettingsManager.new()
-
 
 ## init
-func _init() -> void:
-	settings_manager.set_owner(self)
-	settings_manager.set_inheritance_array(["CoreFixtureLibrary"])
-	settings_manager.register_networked_methods_auto([
+func _init(p_uuid: String = "", ...p_args: Array[Variant]) -> void:
+	super._init(p_uuid, p_args)
+	_set_class_name("CoreFixtureLibrary")
+
+	_settings.register_networked_methods_auto([
 		create_fixture,
 		get_manifest,
 		get_sorted_manifest_info,
 		is_loaded,
 	])
 
-	settings_manager.set_method_allow_serialize(get_sorted_manifest_info)
-	settings_manager.set_method_allow_serialize(get_manifest)
+	_settings.set_method_allow_serialize(get_sorted_manifest_info)
+	_settings.set_method_allow_serialize(get_manifest)
 
 
 ## Load the fixture manifests from the folders, buit in manifests will override user manifests
@@ -111,8 +109,10 @@ func get_manifest(p_manifest_uuid: String) -> FixtureManifest:
 
 		if manifest_info.importer in _manifest_importers:
 			var manifest: FixtureManifest = _manifest_importers[manifest_info.importer].load_from_file(manifest_info.file_path)
+			
 			_loaded_manifests[p_manifest_uuid] = manifest
-
+			ComponentDB.register_component(manifest)
+			
 			return manifest
 
 	return null
@@ -192,7 +192,7 @@ func _find_manifests(folder_path: String) -> Dictionary:
 			result.sorted.get_or_add(manifest.manufacturer, {})[manifest.name] = manifest
 			result.files[manifest.uuid] = manifest
 
-			printraw(TF.auto_format(0, "\r", "Imported Fixture (", file_type, "): ", index, "/", num_of_files))
+			printraw("\r", "Imported Fixture (", file_type, "): ", index, "/", num_of_files)
 			index += 1
 
 		file_name = access.get_next()

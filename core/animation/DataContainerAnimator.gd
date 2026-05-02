@@ -1,5 +1,6 @@
-# Copyright (c) 2024 Liam Sherwin, All rights reserved.
-# This file is part of the Spectrum Lighting Engine, licensed under the GPL v3.
+# Copyright (c) 2026 Liam Sherwin. All rights reserved.
+# This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
+# See the LICENSE file for details.
 
 class_name DataContainerAnimator extends Node
 ## A replacement for Godots Tween system. designed for animating fixtures
@@ -34,10 +35,10 @@ var _container: DataContainer
 var _container_track_ids: Dictionary[Fixture, Dictionary]
 
 ## Signals to connect to the container
-var _container_signals: Dictionary[String, Callable] = {
+var _container_signals: SignalGroup = SignalGroup.new([], {
 	"on_items_stored": _on_items_stored,
 	"on_items_erased": _on_items_erased,
-}
+})
 
 
 ## Set process to false on start
@@ -58,14 +59,13 @@ func _process(delta: float) -> void:
 
 ## Sets the data container to use for storage
 func set_container(p_container: DataContainer) -> void:
-	if is_instance_valid(_container):	
-		Utils.disconnect_signals(_container_signals, _container)
-
+	_container_signals.disconnect_object(_container)
+	
 	remove_all_data()
 	_container = p_container
+	
+	_container_signals.connect_object(_container)
 
-	if is_instance_valid(_container):
-		Utils.connect_signals(_container_signals, _container)
 
 
 ## Sets the layer id

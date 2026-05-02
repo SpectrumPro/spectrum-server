@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# Copyright (c) 2026 Liam Sherwin. All rights reserved.
 # This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
 # See the LICENSE file for details.
 
@@ -52,11 +52,11 @@ static func from(p_fixture: Fixture, p_zone: String, p_parameter: String, p_func
 
 
 ## Ready function
-func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
+func _init(p_uuid: String = UUID.v4(), p_name: String = _name) -> void:
 	super._init(p_uuid, p_name)
 
+	_set_class_name("ContainerItem")
 	set_name("ContainerItem")
-	_set_self_class("ContainerItem")
 
 
 ## Checks if this ContainerItem is valid
@@ -205,13 +205,13 @@ func get_attribute_id() -> String:
 
 ## Updates the attribute id
 func _update_attribute_id() -> void:
-	_attribute_id = (_fixture.uuid() if _fixture else "") + _zone + _parameter
+	_attribute_id = (_fixture.get_uuid() if _fixture else "") + _zone + _parameter
 
 
 ## Saves this component into a dict
-func serialize(p_flags: int = 0) -> Dictionary:
+func serialize(p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> Dictionary:
 	return super.serialize(p_flags).merged({
-		"fixture": _fixture.uuid(),
+		"fixture": _fixture.get_uuid(),
 		"zone": _zone,
 		"parameter": _parameter,
 		"function": _function,
@@ -223,8 +223,8 @@ func serialize(p_flags: int = 0) -> Dictionary:
 
 
 ## Loads this component from a dict
-func deserialize(p_serialized_data: Dictionary) -> void:
-	super.deserialize(p_serialized_data)
+func deserialize(p_serialized_data: Dictionary, p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> void:
+	super.deserialize(p_serialized_data, p_flags)
 
 	_fixture = ComponentDB.get_component(type_convert((p_serialized_data.get("fixture", "")), TYPE_STRING))
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# Copyright (c) 2026 Liam Sherwin. All rights reserved.
 # This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
 # See the LICENSE file for details.
 
@@ -7,19 +7,19 @@ class_name Fixture extends EngineComponent
 
 
 ## Emitted when a parameter is changed
-signal on_parameter_changed(zone: String, parameter: String, function: String, value: Variant)
+signal parameter_changed(zone: String, parameter: String, function: String, value: Variant)
 
 ## Emitted when a parameter is erased
-signal on_parameter_erased(zone: String, parameter: String)
+signal parameter_erased(zone: String, parameter: String)
 
 ## Emited when a parameter override is changed or added
-signal on_override_changed(zone: String, parameter: String, function: String, value: Variant)
+signal override_changed(zone: String, parameter: String, function: String, value: Variant)
 
 ## Emitted when a parameter override is removed
-signal on_override_erased(zone: String, parameter: String)
+signal override_erased(zone: String, parameter: String)
 
 ## Emitted when all overrides are removed
-signal on_all_override_removed()
+signal all_override_removed()
 
 
 ## Enum for ControlType
@@ -42,13 +42,13 @@ var _ltp_layers: Dictionary[String, Variant]
 
 
 ## init
-func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
-	super._init(p_uuid, p_name)
+func _init(p_uuid: String = UUID.v4(), ...p_args: Array[Variant]) -> void:
+	super._init(p_uuid, p_args)
 	
+	_set_class_name("Fixture")
 	set_name("Fixture")
-	_set_self_class("Fixture")
 
-	_settings_manager.register_networked_methods_auto([
+	_settings.register_networked_methods_auto([
 		set_override,
 		erase_override,
 		erase_all_overrides,
@@ -72,12 +72,12 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 		function_can_fade,
 	])
 
-	_settings_manager.register_networked_signals_auto([
-		on_parameter_changed,
-		on_parameter_erased,
-		on_override_changed,
-		on_override_erased,
-		on_all_override_removed,
+	_settings.register_networked_signals_auto([
+		parameter_changed,
+		parameter_erased,
+		override_changed,
+		override_erased,
+		all_override_removed,
 	])
 
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Liam Sherwin. All rights reserved.
+# Copyright (c) 2026 Liam Sherwin. All rights reserved.
 # This file is part of the Spectrum Lighting Controller, licensed under the GPL v3.0 or later.
 # See the LICENSE file for details.
 
@@ -7,21 +7,22 @@ class_name DMXFixture extends Fixture
 
 
 ## Emitted when the channel is changed
-signal on_channel_changed(channel: int)
+signal channel_changed(channel: int)
 
 ## Emitted when the universe is changed
-signal on_universe_changed(universe: Universe)
+signal universe_changed(universe: Universe)
 
 ## Emitted when the manifest is changed
-signal on_manifest_changed(manifest: Variant, mode: String)
+signal manifest_changed(manifest: Variant, mode: String)
 
 ## Emitted when the mode is changed
-signal on_mode_changed(mode: String)
+signal mode_changed(mode: String)
 
 ## Emitted when the dmx data is updated, this may not contain all the current dmx data, as it will only emit changes
 signal dmx_data_updated(dmx_data: Dictionary)
 
 
+## Enum for BlendMode
 enum BlendMode {HTP, LTP}
 
 
@@ -82,22 +83,22 @@ var _default: Dictionary = {}
 var _manifest: FixtureManifest
 
 ## Is compilation queued
-var _compilation_queued: bool = false
+var _compilatiqueued: bool = false
 
 
 ## init
-func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
-	super._init(p_uuid, p_name)
+func _init(p_uuid: String = UUID.v4(), ...p_args: Array[Variant]) -> void:
+	super._init(p_uuid, p_args)
 	
+	_set_class_name("DMXFixture")
 	set_name("DMXFixture")
-	_set_self_class("DMXFixture")
 	
-	_settings_manager.register_setting("channel", Data.Type.INT, set_channel, get_channel, [on_channel_changed]).set_min_max(1, 512)
-	_settings_manager.register_setting("universe", Data.Type.ENGINECOMPONENT, set_universe, get_universe, [on_universe_changed]).set_class_filter(Universe)
-	_settings_manager.register_setting("manifest", Data.Type.FIXTUREMANIFEST, set_manifest, get_manifest, [on_manifest_changed])
-	_settings_manager.register_status("mode", Data.Type.STRING, get_mode, [on_manifest_changed])
+	_settings.register_setting("Channel", Data.Type.INT, set_channel, get_channel, [channel_changed]).set_min_max(1, 512)
+	_settings.register_setting("Universe", Data.Type.OBJECT, set_universe, get_universe, [universe_changed]).set_sub_type(DataConfig.SubType.Type.OBJECT_ENGINECOMPONENT)
+	_settings.register_setting("Manifest", Data.Type.OBJECT, set_manifest, get_manifest, [manifest_changed]).set_sub_type(DataConfig.SubType.Type.OBJECT_ENGINECOMPONENT)
+	_settings.register_status("Mode", Data.Type.STRING, get_mode, [manifest_changed])
 
-	_settings_manager.register_networked_methods_auto([
+	_settings.register_networked_methods_auto([
 		get_channel,
 		get_universe,
 		get_manifest,
@@ -108,13 +109,13 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 		zero_channels,
 	])
 
-	_settings_manager.register_networked_signals_auto([
-		on_channel_changed,
-		on_universe_changed,
-		on_manifest_changed
+	_settings.register_networked_signals_auto([
+		channel_changed,
+		universe_changed,
+		manifest_changed
 	])
 
-	_settings_manager.set_method_allow_unresolved(set_manifest)
+	_settings.set_method_allow_unresolved(set_manifest)
 
 
 ## Gets the channel
@@ -145,7 +146,7 @@ func set_channel(p_channel: int, p_no_signal: bool = false) -> void:
 		zero_channels()
 
 	if not p_no_signal:
-		on_channel_changed.emit(_channel)
+		channel_changed.emit(_channel)
 
 
 ## Sets the universe this fixture is patched to
@@ -164,7 +165,7 @@ func set_universe_from_universe(p_universe: Universe, p_no_signal: bool = false)
 	_universe = p_universe
 
 	if not p_no_signal:
-		on_universe_changed.emit(_universe)
+		universe_changed.emit(_universe)
 
 
 
@@ -191,8 +192,8 @@ func set_manifest(p_manifest: Variant, p_mode: String, p_no_signal: bool = false
 	_compile_output()
 
 	if not p_no_signal:
-		on_manifest_changed.emit(_manifest, _mode)
-		on_mode_changed.emit(_mode)
+		manifest_changed.emit(_manifest, _mode)
+		mode_changed.emit(_mode)
 	
 	return true
 
@@ -237,7 +238,7 @@ func set_parameter(p_parameter: String, p_function: String, p_value: float, p_la
 				}
 
 				if not p_disable_output:
-					on_parameter_changed.emit(p_zone, p_parameter, p_function, remapped_value)
+					parameter_changed.emit(p_zone, p_parameter, p_function, remapped_value)
 					_queue_compilation()
 		else:
 			var zones: Array = _parameters.keys()
@@ -246,7 +247,7 @@ func set_parameter(p_parameter: String, p_function: String, p_value: float, p_la
 			for zone: String in zones:
 				set_parameter(p_parameter, p_function, p_value, p_layer_id, zone, true)
 
-			on_parameter_changed.emit(p_zone, p_parameter, p_function, p_value)
+			parameter_changed.emit(p_zone, p_parameter, p_function, p_value)
 			_queue_compilation()
 
 		return true
@@ -289,7 +290,7 @@ func erase_parameter(p_parameter: String, p_layer_id: String, p_zone: String = "
 				_active_values.get_or_add(p_zone, {}).erase(p_parameter)
 
 			if not p_disable_output:
-				# on_parameter_erased.emit(p_zone, p_parameter)
+				# parameter_erased.emit(p_zone, p_parameter)
 				_find_and_output_parameter_function(p_parameter, p_zone, new_value)
 				_queue_compilation()
 
@@ -300,17 +301,17 @@ func erase_parameter(p_parameter: String, p_layer_id: String, p_zone: String = "
 			for zone: String in zones:
 				erase_parameter(p_parameter, p_layer_id, zone, true)
 
-			# on_parameter_erased.emit(p_zone, p_parameter)
+			# parameter_erased.emit(p_zone, p_parameter)
 			_find_and_output_parameter_function(p_parameter, p_zone, _current[p_zone][p_parameter])
 
 			_queue_compilation()
 
 
-## Findes a function from a parameter using the current dmx value. and outputs it via on_parameter_changed
+## Findes a function from a parameter using the current dmx value. and outputs it via parameter_changed
 func _find_and_output_parameter_function(p_parameter: String, p_zone: String, p_dmx_value: int) -> void:
 	if not _current[p_zone].has(p_parameter):
 		var function: String = get_default_function(p_zone, p_parameter)
-		on_parameter_changed.emit(p_zone, p_parameter, function, get_default(p_zone, p_parameter, function))
+		parameter_changed.emit(p_zone, p_parameter, function, get_default(p_zone, p_parameter, function))
 		
 	else:
 		for function: String in _parameters[p_zone][p_parameter].functions:
@@ -318,7 +319,7 @@ func _find_and_output_parameter_function(p_parameter: String, p_zone: String, p_
 
 			if p_dmx_value >= dmx_range[0] and p_dmx_value <= dmx_range[1]:
 				var remapped_value: float = remap(p_dmx_value, dmx_range[0], dmx_range[1], 0, 1)
-				on_parameter_changed.emit(p_zone, p_parameter, function, remapped_value)
+				parameter_changed.emit(p_zone, p_parameter, function, remapped_value)
 
 				_active_values.get_or_add(p_zone, {})[p_parameter] = {
 					"value": remapped_value,
@@ -348,7 +349,7 @@ func set_override(p_parameter: String, p_function: String, p_value: float, p_zon
 					_current_override_dmx[offsets[i] + _channel - 1] = channel_value
 
 				if not p_disable_output:
-					on_override_changed.emit(p_zone, p_parameter, p_function, p_value)
+					override_changed.emit(p_zone, p_parameter, p_function, p_value)
 					_queue_compilation()
 
 		else:
@@ -358,7 +359,7 @@ func set_override(p_parameter: String, p_function: String, p_value: float, p_zon
 			for zone: String in zones:
 				set_override(p_parameter, p_function, p_value, zone, true)
 
-			on_override_changed.emit(p_zone, p_parameter, p_function, p_value)
+			override_changed.emit(p_zone, p_parameter, p_function, p_value)
 			_queue_compilation()
 
 		return true
@@ -383,7 +384,7 @@ func erase_override(p_parameter: String, p_zone: String = "root", p_disable_outp
 				_current_override.erase(p_zone)
 
 			if not p_disable_output:
-				on_override_erased.emit(p_zone, p_parameter)
+				override_erased.emit(p_zone, p_parameter)
 				_queue_compilation()
 
 		else:
@@ -393,7 +394,7 @@ func erase_override(p_parameter: String, p_zone: String = "root", p_disable_outp
 			for zone: String in zones:
 				erase_override(p_parameter, zone, true)
 
-			on_override_erased.emit(p_zone, p_parameter)
+			override_erased.emit(p_zone, p_parameter)
 			_queue_compilation()
 
 
@@ -404,7 +405,7 @@ func erase_all_overrides() -> void:
 	_raw_override_layers.clear()
 	_compile_output()
 
-	on_all_override_removed.emit()
+	all_override_removed.emit()
 
 
 ## Gets all the override values
@@ -433,8 +434,8 @@ func get_parameter_functions(p_zone: String, p_parameter: String) -> Array:
 
 
 ## Gets all the parameter functions
-func get_function_control_type(p_zone: String, p_parameter: String, p_function: String) -> ControlType:
-	return _manifest.function_control_type(_mode, p_zone, p_parameter, p_function)
+func get_functicontrol_type(p_zone: String, p_parameter: String, p_function: String) -> ControlType:
+	return _manifest.functicontrol_type(_mode, p_zone, p_parameter, p_function)
 
 
 ## Gets the default value of a parameter
@@ -506,7 +507,7 @@ func get_current_value_layered(p_zone: String, p_parameter: String, p_layer_id: 
 
 
 ## Gets the current function, or the default
-func get_current_function_layered(p_zone: String, p_parameter: String, p_layer_id: String, p_allow_default: bool = true) -> String:
+func get_current_functilayered(p_zone: String, p_parameter: String, p_layer_id: String, p_allow_default: bool = true) -> String:
 	return _raw_layers.get(p_zone, {}).get(p_parameter, {}).get(p_layer_id, {}).get("function", get_default_function(p_zone, p_parameter) if p_allow_default else "")
 
 
@@ -555,8 +556,8 @@ func has_force_default(p_parameter: String) -> bool:
 
 
 ## Checks if this DMXFixture has a function that can fade
-func function_can_fade(p_zone: String, p_parameter: String, p_function: String) -> bool:
-	return _manifest.function_can_fade(_mode, p_zone, p_parameter, p_function)
+func functican_fade(p_zone: String, p_parameter: String, p_function: String) -> bool:
+	return _manifest.functican_fade(_mode, p_zone, p_parameter, p_function)
 
 
 ## Updates dmx data with all zeros
@@ -573,10 +574,10 @@ func zero_channels() -> void:
 
 ## Queues compilation for the end of the frame
 func _queue_compilation() -> void:
-	if _compilation_queued:
+	if _compilatiqueued:
 		return
 
-	_compilation_queued = true
+	_compilatiqueued = true
 	_compile_output.call_deferred()
 
 
@@ -595,18 +596,18 @@ func _compile_output() -> void:
 
 	var final_dmx: Dictionary = _current_dmx.merged(_current_override_dmx, true)
 	dmx_data_updated.emit(final_dmx)
-	_compilation_queued = false
+	_compilatiqueued = false
 
 
 ## Saves this DMXFixture to a dictonary
-func serialize(p_flags: int = 0) -> Dictionary:
+func serialize( p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> Dictionary:
 	var seralized_data: Dictionary = {
 		"channel": _channel,
 		"mode": _mode,
-		"manifest_uuid": _manifest.uuid() if _manifest else ""
+		"manifest_uuid": _manifest.get_uuid() if _manifest else ""
 	}
 
-	if p_flags & Core.SM_NETWORK:
+	if p_flags & Data.SerializationFlags.REALTIME:
 		seralized_data.merge({
 			"raw_override_layers": get_all_override_values(),
 			"active_values": get_all_values()
@@ -616,8 +617,8 @@ func serialize(p_flags: int = 0) -> Dictionary:
 
 
 ## Loads this DMXFixture from a dictonary
-func deserialize(p_serialized_data: Dictionary) -> void:
-	super.deserialize(p_serialized_data)
+func deserialize(p_serialized_data: Dictionary, p_flags: Data.SerializationFlags = Data.SerializationFlags.NONE) -> void:
+	super.deserialize(p_serialized_data, p_flags)
 	
 	_channel = type_convert(p_serialized_data.get("channel"), TYPE_INT)
 	set_manifest(type_convert(p_serialized_data.get("manifest_uuid"), TYPE_STRING), type_convert(p_serialized_data.get("mode", ""), TYPE_STRING), true)

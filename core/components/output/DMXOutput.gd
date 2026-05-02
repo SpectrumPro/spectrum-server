@@ -7,10 +7,10 @@ class_name DMXOutput extends EngineComponent
 
 
 ## Emitted when this output connects or disconnects, added note for reason
-signal on_connection_state_changed(state: bool, note: String)
+signal connection_state_changed(state: bool, note: String)
 
 ## Emitted when the auto start state is changed
-signal on_auto_start_changed(auto_start)
+signal auto_start_changed(auto_start)
 
 
 ## Dictionary containing the dmx data for this output, stored as channel:value
@@ -27,23 +27,23 @@ var _previous_note: String = ""
 
 
 ## init
-func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
-	super._init(p_uuid, p_name)
+func _init(p_uuid: String = UUID.v4(), ...p_args: Array[Variant]) -> void:
+	super._init(p_uuid, p_args)
 	
+	_set_class_name("DMXOutput")
 	set_name("DMXOutput")
-	_set_self_class("DMXOutput")
 	
-	_settings_manager.register_setting("auto_start", Data.Type.BOOL, set_auto_start, get_auto_start, [on_auto_start_changed])
-	_settings_manager.register_control("start", Data.Type.ACTION, start)
-	_settings_manager.register_control("stop", Data.Type.ACTION, stop)
-	_settings_manager.register_status("connection_status", Data.Type.BOOL, get_connection_state, [on_connection_state_changed])
+	_settings.register_setting("AutoStart", Data.Type.BOOL, set_auto_start, get_auto_start, [auto_start_changed])
+	_settings.register_control("Start", Data.Type.ACTION, start)
+	_settings.register_control("Stop", Data.Type.ACTION, stop)
+	_settings.register_status("ConnectionStatus", Data.Type.BOOL, get_connection_state, [connection_state_changed])
 
-	_settings_manager.register_networked_signals_auto([
-		on_connection_state_changed,
-		on_auto_start_changed,
+	_settings.register_networked_signals_auto([
+		connection_state_changed,
+		auto_start_changed,
 	])
 
-	_settings_manager.register_networked_methods_auto([
+	_settings.register_networked_methods_auto([
 		set_auto_start,
 		get_auto_start,
 		get_previous_note,
@@ -56,7 +56,7 @@ func _init(p_uuid: String = UUID_Util.v4(), p_name: String = _name) -> void:
 ## Sets the auto start state
 func set_auto_start(p_auto_start) -> void:
 	_auto_start = p_auto_start
-	on_auto_start_changed.emit(_auto_start)
+	auto_start_changed.emit(_auto_start)
 
 
 ## Gets the auto start state
@@ -76,22 +76,14 @@ func get_connection_state()-> bool:
 
 ## Starts this plugin
 func start() -> void:
-	
-	on_connection_state_changed.emit(true, "Empty Output")
-	# As this is the base class, this script does not connect to anything.
-	print(name, " Started!")
+	connection_state_changed.emit(true, "Empty Output")
 
 
 ## Stops this plugin
 func stop() -> void:
-
-	on_connection_state_changed.emit(false, "Empty Output")
-	# As this is the base class, this script does not connect to anything.
-	print(name, " Stoped")
+	connection_state_changed.emit(false, "Empty Output")
 
 
 ## Outputs [mebmer DMXOutput.dmx_data]
 func output(dmx: Dictionary = dmx_data) -> void:
-
-	# As this is the base class, this script does not really output anything, so we are just printing the dmx data
 	pass
