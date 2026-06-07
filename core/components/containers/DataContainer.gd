@@ -161,7 +161,7 @@ func store_item(p_item: ContainerItem, no_signal: bool = false) -> bool:
 	_fixtures.get_or_add(p_item.get_fixture(), {}).get_or_add(p_item.get_zone(), {})[p_item.get_parameter()] = p_item
 
 	ComponentDB.register_component(p_item)
-	p_item.delete_requested.connect(erase_item.bind(p_item))
+	p_item.delete_requested.connect(erase_item)
 
 	if not no_signal:
 		items_stored.emit([p_item])
@@ -294,7 +294,7 @@ func _load(serialized_data: Dictionary) -> void:
 
 ## Handles delete requests
 func delete() -> void:
-	for item: ContainerItem in _items:
+	for item: ContainerItem in _items.duplicate():
 		item.delete()
 	
 	super.delete()

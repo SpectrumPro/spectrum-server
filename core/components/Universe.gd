@@ -167,7 +167,7 @@ func add_fixture(p_fixture: DMXFixture, p_channel: int = -1, p_no_signal: bool =
 	_fixture_channels[fixture_channel].append(p_fixture)
 	_fixtures[p_fixture.get_uuid()] = p_fixture
 
-	p_fixture.delete_requested.connect(remove_fixture.bind(p_fixture), CONNECT_ONE_SHOT)
+	p_fixture.delete_requested.connect(remove_fixture, CONNECT_ONE_SHOT)
 	p_fixture.dmx_data_updated.connect(self.set_data)
 	set_data(p_fixture.get_current_dmx())
 

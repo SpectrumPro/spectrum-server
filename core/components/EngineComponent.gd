@@ -184,8 +184,8 @@ func duplicate(p_serialize_flags: int = 0) -> EngineComponent:
 ## Always call this function when you want to delete this component.
 ## As godot uses reference counting, this object will not truly be deleted untill no other script holds a refernce to it.
 func delete() -> void:
-	delete_requested.emit()
-	print(get_uuid(), " Has had a delete request send. Currently has:", str(get_reference_count()), " refernces")
+	delete_requested.emit(self)
+	print(_uuid, " \"", _name, "\" Has had a delete request send. Currently has:", str(get_reference_count()), " refernces")
 
 
 ## Returns serialized version of this component
@@ -223,7 +223,7 @@ func _set_class_name(p_class_name: String) -> void:
 ## Debug function to tell if this component is freed from memory
 func _notification(p_what: int) -> void:
 	if p_what == NOTIFICATION_PREDELETE:
-		print("\"", self._name, "\" Is being freed, uuid: ", self._uuid)
+		print("\"", _name, "\" Is being freed, uuid: ", self._uuid)
 
 
 ## This function is called every frame

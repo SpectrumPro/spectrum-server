@@ -168,7 +168,7 @@ func add_cue(p_cue: Cue, p_no_signal: bool = false) -> bool:
 		return false
 	
 	_cues.append(p_cue)
-	p_cue.delete_requested.connect(remove_cue.bind(p_cue))
+	p_cue.delete_requested.connect(remove_cue)
 	ComponentDB.register_component(p_cue)
 	
 	if not p_no_signal:
@@ -575,8 +575,8 @@ func _handle_intensity_change(p_intensity: float) -> void:
 ## Called when this CueList is to be deleted
 func delete(p_local_only: bool = false) -> void:
 	_stop()
-
-	for cue: Cue in _cues:
+	
+	for cue: Cue in _cues.duplicate():
 		remove_cue(cue, true)
 		cue.delete()
 	

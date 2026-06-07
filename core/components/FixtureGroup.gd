@@ -87,7 +87,7 @@ func add_group_item(group_item: FixtureGroupItem, no_signal: bool = false) -> bo
 
 	_fixtures[group_item.get_fixture()] = group_item
 
-	group_item.get_fixture().delete_requested.connect(remove_fixture.bind(group_item.get_fixture()), CONNECT_ONE_SHOT)
+	group_item.get_fixture().delete_requested.connect(remove_fixture, CONNECT_ONE_SHOT)
 	Network.register_network_object(group_item.get_uuid(), group_item.get_settings())
 
 	if not no_signal:
